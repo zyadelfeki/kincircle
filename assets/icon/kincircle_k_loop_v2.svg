@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Plain white background -->
+  <rect width="1024" height="1024" fill="#ffffff"/>
+  
+  <!-- K-Loop monogram - ultra-modern minimalist -->
+  <defs>
+    <!-- Define the K-Loop as a single unified path -->
+    <path id="kloop" d="M 300,200 
+                       L 300,824
+                       Q 300,850 326,850
+                       Q 352,850 352,824
+                       L 352,600
+                       L 500,450
+                       Q 550,400 620,400
+                       Q 690,400 740,450
+                       Q 790,500 790,570
+                       Q 790,640 740,690
+                       Q 690,740 620,740
+                       Q 550,740 500,690
+                       Q 450,640 450,570
+                       Q 450,540 465,515
+                       Q 480,490 500,470
+                       L 352,622
+                       L 352,824
+                       Q 352,850 326,850
+                       Q 300,850 300,824
+                       L 300,200
+                       Q 300,174 326,174
+                       Q 352,174 352,200
+                       L 352,400
+                       L 500,250
+                       Q 520,230 535,205
+                       Q 550,180 550,150
+                       Q 550,80 500,30
+                       Q 450,-20 380,-20
+                       Q 310,-20 260,30
+                       Q 210,80 210,150
+                       Q 210,220 260,270
+                       Q 310,320 380,320
+                       Q 450,320 500,270
+                       L 352,422
+                       L 352,200
+                       Q 352,174 326,174
+                       Q 300,174 300,200 Z"/>
+  </defs>
+  
+  <!-- Render the K-Loop in vibrant blue -->
+  <use href="#kloop" fill="#0078FF"/>
+  
+</svg>

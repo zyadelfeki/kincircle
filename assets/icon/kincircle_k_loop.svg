@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Plain white background -->
+  <rect width="1024" height="1024" fill="#ffffff"/>
+  
+  <!-- K-Loop monogram - ultra-modern minimalist design -->
+  <g transform="translate(362,512)">
+    
+    <!-- Main vertical stem of 'k' -->
+    <rect x="0" y="-250" width="50" height="500" 
+          fill="#0078FF" 
+          rx="25" ry="25"/>
+    
+    <!-- K-Loop: elegant upper diagonal and circular return -->
+    <path d="M 50,-50 
+             L 150,-150
+             Q 200,-200 270,-200
+             Q 340,-200 390,-150
+             Q 440,-100 440,-30
+             Q 440,40 390,90
+             Q 340,140 270,140
+             Q 200,140 150,90
+             Q 100,40 100,-30
+             Q 100,-100 150,-150
+             L 50,-50
+             Q 75,-25 100,0
+             Q 125,25 150,50
+             Q 175,75 200,90
+             Q 225,105 250,110
+             Q 275,115 300,110
+             Q 325,105 345,90
+             Q 365,75 375,50
+             Q 385,25 385,0
+             Q 385,-25 375,-50
+             Q 365,-75 345,-90
+             Q 325,-105 300,-110
+             Q 275,-115 250,-110
+             Q 225,-105 200,-90
+             Q 175,-75 150,-50
+             L 50,50 Z" 
+          fill="#0078FF"
+          stroke="none"/>
+    
+  </g>
+  
+</svg>
