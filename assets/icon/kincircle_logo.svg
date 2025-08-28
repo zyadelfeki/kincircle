@@ -5,23 +5,29 @@
           fill="#4285F4" 
           stroke="none"/>
   
-  <!-- Simplified house structure - flat design -->
-  <g transform="translate(512,512)">
+  <!-- Unified house and dots composition - larger and connected -->
+  <g transform="translate(512,512) scale(1.2)">
     
-    <!-- House base - simple rectangle -->
-    <rect x="-80" y="-20" width="160" height="120" 
-          fill="#34A853"/>
+    <!-- Softened house structure - raised to connect with dots -->
+    <g transform="translate(0,-40)">
+      
+      <!-- House base - softened corners -->
+      <rect x="-75" y="0" width="150" height="110" 
+            fill="#34A853"
+            rx="8" ry="8"/>
+      
+      <!-- Roof - wider, less pointed, softened -->
+      <path d="M-90,0 Q-90,-5 -85,-5 L-5,-80 Q0,-85 5,-80 L85,-5 Q90,-5 90,0 Z" 
+            fill="#34A853"/>
+      
+    </g>
     
-    <!-- Roof - simple triangle -->
-    <path d="M-100,-20 L0,-120 L100,-20 Z" 
-          fill="#34A853"/>
+    <!-- Family dots - positioned to form unified arc that connects with house -->
+    <circle cx="-110" cy="-65" r="14" fill="#ffffff"/>
+    <circle cx="-40" cy="-95" r="14" fill="#ffffff"/>
+    <circle cx="40" cy="-95" r="14" fill="#ffffff"/>
+    <circle cx="110" cy="-65" r="14" fill="#ffffff"/>
     
   </g>
-  
-  <!-- Family dots in protective arc above house -->
-  <circle cx="412" cy="320" r="16" fill="#ffffff"/>
-  <circle cx="480" cy="280" r="16" fill="#ffffff"/>
-  <circle cx="544" cy="280" r="16" fill="#ffffff"/>
-  <circle cx="612" cy="320" r="16" fill="#ffffff"/>
   
 </svg>
