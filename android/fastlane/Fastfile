@@ -1,0 +1,15 @@
+default_platform(:android)
+
+platform :android do
+  desc "Build and upload to Google Play Internal Testing"
+  lane :beta do
+    gradle(task: "clean assembleRelease")
+    supply(track: "internal", skip_upload_metadata: true, skip_upload_images: true, skip_upload_screenshots: true)
+  end
+
+  desc "Build and deploy a production release to Google Play"
+  lane :release do
+    gradle(task: "clean bundleRelease")
+    supply(track: "production", aab: "app/build/outputs/bundle/release/app-release.aab")
+  end
+end 

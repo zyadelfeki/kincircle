@@ -1,0 +1,74 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isFamilyMember(familyId) {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/families/$(familyId)) &&
+             request.auth.uid in get(/databases/$(database)/documents/families/$(familyId)).data.members;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isSignedIn(); // Any signed-in user can read user profiles
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false; // Users cannot be deleted via client
+    }
+
+    // Families collection
+    match /families/{familyId} {
+      allow read: if isSignedIn() && (isFamilyMember(familyId));
+      allow create: if isSignedIn();
+      allow update: if isFamilyMember(familyId);
+      allow delete: if false; // Families cannot be deleted via client
+    }
+
+    // Invites collection
+    match /invites/{inviteId} {
+      allow read: if isSignedIn() && (isOwner(resource.data.inviterId) || isOwner(resource.data.inviteeId));
+      allow create: if isSignedIn() && isOwner(request.resource.data.inviterId);
+      allow update: if isSignedIn() && isOwner(resource.data.inviteeId) &&
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow delete: if isSignedIn() && (isOwner(resource.data.inviterId) || isOwner(resource.data.inviteeId));
+    }
+
+    // Alerts collection
+    match /alerts/{alertId} {
+      allow read: if isSignedIn() && isFamilyMember(resource.data.familyId);
+      allow create: if isSignedIn() && isFamilyMember(request.resource.data.familyId);
+      allow update: if isSignedIn() && isFamilyMember(resource.data.familyId) && 
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'acknowledgedBy']);
+      allow delete: if false; // Alerts cannot be deleted via client
+    }
+
+    // Alert feedback collection
+    match /alert_feedback/{feedbackId} {
+      allow read: if isSignedIn() && isFamilyMember(resource.data.familyId);
+      allow create: if isSignedIn() && isFamilyMember(request.resource.data.familyId);
+      allow update: if isSignedIn() && isOwner(resource.data.userId);
+      allow delete: if false; // Feedback cannot be deleted via client
+    }
+
+    // Location events (subcollection under users)
+    match /users/{userId}/location_events/{eventId} {
+      allow read: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update, delete: if false; // Events cannot be modified or deleted via client
+    }
+
+    // Deny access to all other documents
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+} 

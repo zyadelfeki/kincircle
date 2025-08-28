@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <rect width="1080" height="1920" fill="#0B4DD9"/>
+  <text x="60" y="160" font-family="Segoe UI, Arial" font-size="72" fill="#fff">Clear post-drive Safety Report</text>
+  <rect x="90" y="260" width="900" height="1560" rx="56" fill="#fff"/>
+  <rect x="120" y="320" width="840" height="1440" fill="#F3F4F6"/>
+  <rect x="200" y="520" width="680" height="960" fill="#E5E7EB" stroke="#CBD5E1" stroke-width="4"/>
+  <text x="300" y="1040" font-family="Segoe UI, Arial" font-size="36" fill="#374151">Report UI placeholder</text>
+</svg>

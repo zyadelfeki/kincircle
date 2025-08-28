@@ -1,0 +1,29 @@
+{
+  "name": "kincircle-functions",
+  "description": "Firebase Cloud Functions for KinCircle",
+  "engines": {
+    "node": "20"
+  },
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint . --ext .ts",
+    "clean": "rimraf lib",
+  "deploy": "npm run build && firebase deploy --only functions",
+  "test": "echo \"No unit tests yet\"",
+  "backfill:feedback": "node scripts/backfill_bigquery.js --dataset firestore_export --table alert_feedback_labeled --file scripts/sample_alert_feedback.jsonl"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^4.2.0",
+    "@google-cloud/bigquery": "^7.1.0",
+    "@google-cloud/vertexai": "^0.9.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.17.0",
+    "@typescript-eslint/parser": "^6.17.0",
+    "rimraf": "^5.0.5"
+  }
+} 

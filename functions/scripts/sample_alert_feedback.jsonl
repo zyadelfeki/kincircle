@@ -1,0 +1,2 @@
+{"alert_id":"a1","user_id":"u1","feedback":"true_positive","timestamp":"2024-10-01T12:00:00Z"}
+{"alert_id":"a2","user_id":"u2","feedback":"false_positive","timestamp":"2024-10-01T12:05:00Z"}

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+# Automatically format terraform files and validate before commit
+
+FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.tf$')
+
+if [ -n "$FILES" ]; then
+  echo "Running terraform fmt..."
+  terraform fmt -recursive
+  if [ $? -ne 0 ]; then
+    echo "terraform fmt failed. Aborting commit." >&2
+    exit 1
+  fi
+
+  echo "Running terraform validate..."
+  terraform validate
+  if [ $? -ne 0 ]; then
+    echo "terraform validate failed. Aborting commit." >&2
+    exit 1
+  fi
+fi
+
+exit 0 

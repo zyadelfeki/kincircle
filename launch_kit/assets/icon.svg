@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0EA5E9"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="url(#g)"/>
+  <!-- Compass Pin concept: circle + pointer -->
+  <circle cx="512" cy="420" r="160" fill="#fff"/>
+  <circle cx="512" cy="420" r="110" fill="#0EA5E9"/>
+  <path d="M512 560 L602 760 Q512 840 422 760 Z" fill="#0B4DD9"/>
+  <!-- Subtle highlight -->
+  <ellipse cx="512" cy="900" rx="220" ry="40" fill="#000" opacity="0.1"/>
+</svg>

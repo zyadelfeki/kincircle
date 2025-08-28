@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1051541400762",
+    "project_id": "kincircle-live",
+    "storage_bucket": "kincircle-live.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1051541400762:android:03279598cc8d02bf342683",
+        "android_client_info": {
+          "package_name": "com.zyad.kincircle"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1051541400762-d8htbubbqac682qasafclsmh6fvmpqm0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.zyad.kincircle",
+            "certificate_hash": "5931e9a00fcdb3eea2f1dd76b3cc6e223b5c848a"
+          }
+        },
+        {
+          "client_id": "1051541400762-5v7th1rc8ddcl01elg7t6rsut3gmrmvr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDsO3mr-t2AocSCZVlIjjYIFUjdTSwzk3Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1051541400762-5v7th1rc8ddcl01elg7t6rsut3gmrmvr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

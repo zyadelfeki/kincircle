@@ -1,0 +1,75 @@
+name: kincircle
+description: A Flutter application for connecting with family and friends.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase Core
+  firebase_core: ^3.15.2
+  firebase_auth: ^5.7.0
+  cloud_firestore: ^5.6.12
+  cloud_functions: ^5.6.2
+  firebase_remote_config: ^5.5.0
+  firebase_crashlytics: ^4.3.10
+  firebase_dynamic_links: ^6.1.10
+  shared_preferences: ^2.2.2
+
+  # State Management
+  provider: ^6.1.2
+
+  # Location & Maps
+  geolocator: ^14.0.2
+  google_maps_flutter: ^2.7.0
+
+  # Social Sign-in & Other Utilities
+  google_sign_in: ^7.1.1
+  sign_in_with_apple: ^7.0.1
+
+  # The following are generally useful
+  cupertino_icons: ^1.0.2
+
+  # Added from the code block
+  google_maps_webservice: ^0.0.20-nullsafety
+
+  # UI/UX & Motion
+  animations: ^2.0.11
+  google_fonts: ^4.0.4
+  app_links: ^6.0.0
+  qr_flutter: ^4.1.0
+  share_plus: ^11.1.0
+  package_info_plus: ^8.0.2
+  sensors_plus: ^6.1.2
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.4
+  tflite_flutter: ^0.11.0
+  permission_handler: ^11.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  mockito: ^5.4.4
+  fake_cloud_firestore: ^3.1.0
+  flutter_launcher_icons: ^0.13.1
+  image: ^4.5.4
+
+flutter:
+  uses-material-design: true
+  assets:
+  - assets/models/
+  - docs/FAQ.md
+  - assets/marketing/
+  - assets/icon/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: assets/icon/kincircle_icon_1024.png
