@@ -13,20 +13,21 @@
       
       <!-- House base - softened corners -->
       <rect x="-75" y="0" width="150" height="110" 
-            fill="#34A853"
+            fill="#2D7D32"
             rx="8" ry="8"/>
       
       <!-- Roof - wider, less pointed, softened -->
       <path d="M-90,0 Q-90,-5 -85,-5 L-5,-80 Q0,-85 5,-80 L85,-5 Q90,-5 90,0 Z" 
-            fill="#34A853"/>
+            fill="#2D7D32"/>
       
     </g>
     
-    <!-- Family dots - positioned to form unified arc that connects with house -->
-    <circle cx="-110" cy="-65" r="14" fill="#ffffff"/>
+    <!-- Family dots - organic arc with central dot overlapping roof -->
+    <circle cx="-110" cy="-55" r="14" fill="#ffffff"/>
     <circle cx="-40" cy="-95" r="14" fill="#ffffff"/>
+    <circle cx="0" cy="-110" r="14" fill="#ffffff"/>
     <circle cx="40" cy="-95" r="14" fill="#ffffff"/>
-    <circle cx="110" cy="-65" r="14" fill="#ffffff"/>
+    <circle cx="110" cy="-55" r="14" fill="#ffffff"/>
     
   </g>
   
