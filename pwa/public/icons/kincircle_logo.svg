@@ -1,176 +1,27 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <defs>
-    <!-- Soft protective gradient -->
-    <radialGradient id="protectiveCircle" cx="50%" cy="50%" r="70%">
-      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1"/>
-      <stop offset="70%" style="stop-color:#4285F4;stop-opacity:0.95"/>
-      <stop offset="100%" style="stop-color:#1a73e8;stop-opacity:1"/>
-    </radialGradient>
-    
-    <!-- Warm home gradient -->
-    <linearGradient id="homeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#34A853"/>
-      <stop offset="100%" style="stop-color:#137333"/>
-    </linearGradient>
-    
-    <!-- Soft shadow filter -->
-    <filter id="softShadow">
-      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#1a73e8" flood-opacity="0.15"/>
-    </filter>
-    
-    <!-- Inner glow for warmth -->
-    <filter id="innerGlow">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-      <feMerge> 
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
-  
-  <!-- Main protective circle -->
+  <!-- Main protective circle - solid blue -->
   <circle cx="512" cy="512" r="400" 
-          fill="url(#protectiveCircle)" 
-          filter="url(#softShadow)" 
-          stroke="#ffffff" 
-          stroke-width="8" 
-          opacity="0.98"/>
+          fill="#4285F4" 
+          stroke="none"/>
   
-  <!-- Inner safety ring -->
-  <circle cx="512" cy="512" r="380" 
-          fill="none" 
-          stroke="#ffffff" 
-          stroke-width="2" 
-          opacity="0.6"/>
-  
-  <!-- HOME STRUCTURE -->
-  <g transform="translate(512,512)" filter="url(#innerGlow)">
+  <!-- Simplified house structure - flat design -->
+  <g transform="translate(512,512)">
     
-    <!-- House base -->
-    <rect x="-120" y="-40" width="240" height="160" 
-          fill="url(#homeGradient)" 
-          rx="12" ry="12" 
-          stroke="#ffffff" 
-          stroke-width="3"/>
+    <!-- House base - simple rectangle -->
+    <rect x="-80" y="-20" width="160" height="120" 
+          fill="#34A853"/>
     
-    <!-- Roof -->
-    <path d="M-140,-60 L0,-180 L140,-60 Z" 
-          fill="#34A853" 
-          stroke="#ffffff" 
-          stroke-width="3" 
-          stroke-linejoin="round"/>
+    <!-- Roof - simple triangle -->
+    <path d="M-100,-20 L0,-120 L100,-20 Z" 
+          fill="#34A853"/>
     
-    <!-- Roof highlight -->
-    <path d="M-120,-75 L0,-165 L120,-75" 
-          fill="none" 
-          stroke="#ffffff" 
-          stroke-width="2" 
-          opacity="0.8"/>
-    
-    <!-- Door -->
-    <rect x="-25" y="20" width="50" height="100" 
-          fill="#ffffff" 
-          rx="6" ry="6" 
-          stroke="#34A853" 
-          stroke-width="2"/>
-    
-    <!-- Door handle -->
-    <circle cx="15" cy="70" r="4" 
-            fill="#34A853"/>
-    
-    <!-- Windows -->
-    <rect x="-90" y="-10" width="35" height="35" 
-          fill="#ffffff" 
-          rx="4" ry="4" 
-          stroke="#34A853" 
-          stroke-width="2"/>
-    
-    <rect x="55" y="-10" width="35" height="35" 
-          fill="#ffffff" 
-          rx="4" ry="4" 
-          stroke="#34A853" 
-          stroke-width="2"/>
-    
-    <!-- Window crosses for detail -->
-    <path d="M-72.5,-10 L-72.5,25 M-90,7.5 L-55,7.5" 
-          stroke="#34A853" 
-          stroke-width="1.5" 
-          opacity="0.7"/>
-    
-    <path d="M72.5,-10 L72.5,25 M55,7.5 L90,7.5" 
-          stroke="#34A853" 
-          stroke-width="1.5" 
-          opacity="0.7"/>
-    
-    <!-- Chimney -->
-    <rect x="80" y="-120" width="20" height="60" 
-          fill="#34A853" 
-          stroke="#ffffff" 
-          stroke-width="2"/>
-    
-    <!-- Smoke (subtle comfort element) -->
-    <path d="M95,-115 Q100,-125 95,-135 Q90,-145 95,-155" 
-          fill="none" 
-          stroke="#ffffff" 
-          stroke-width="3" 
-          opacity="0.7" 
-          stroke-linecap="round"/>
   </g>
   
-  <!-- FAMILY SAFETY ELEMENTS -->
+  <!-- Family dots in protective arc above house -->
+  <circle cx="412" cy="320" r="16" fill="#ffffff"/>
+  <circle cx="480" cy="280" r="16" fill="#ffffff"/>
+  <circle cx="544" cy="280" r="16" fill="#ffffff"/>
+  <circle cx="612" cy="320" r="16" fill="#ffffff"/>
   
-  <!-- Family dots around the home (showing protection zone) -->
-  <circle cx="350" cy="400" r="12" fill="#ffffff" opacity="0.9"/>
-  <circle cx="680" cy="420" r="12" fill="#ffffff" opacity="0.9"/>
-  <circle cx="450" cy="650" r="12" fill="#ffffff" opacity="0.9"/>
-  <circle cx="580" cy="350" r="12" fill="#ffffff" opacity="0.9"/>
-  
-  <!-- Subtle connection lines (showing safe zone) -->
-  <circle cx="512" cy="512" r="280" 
-          fill="none" 
-          stroke="#ffffff" 
-          stroke-width="1" 
-          stroke-dasharray="8,12" 
-          opacity="0.3"/>
-  
-  <!-- Corner comfort elements -->
-  <g opacity="0.1">
-    <!-- Top left -->
-    <path d="M150,150 Q200,150 200,200" 
-          fill="none" 
-          stroke="#ffffff" 
-          stroke-width="8" 
-          stroke-linecap="round"/>
-    
-    <!-- Top right -->
-    <path d="M874,150 Q824,150 824,200" 
-          fill="none" 
-          stroke="#ffffff" 
-          stroke-width="8" 
-          stroke-linecap="round"/>
-    
-    <!-- Bottom left -->
-    <path d="M150,874 Q200,874 200,824" 
-          fill="none" 
-          stroke="#ffffff" 
-          stroke-width="8" 
-          stroke-linecap="round"/>
-    
-    <!-- Bottom right -->
-    <path d="M874,874 Q824,874 824,824" 
-          fill="none" 
-          stroke="#ffffff" 
-          stroke-width="8" 
-          stroke-linecap="round"/>
-  </g>
-  
-  <!-- Subtle brand mark -->
-  <text x="512" y="780" 
-        text-anchor="middle" 
-        font-family="system-ui, -apple-system, sans-serif" 
-        font-size="24" 
-        font-weight="300" 
-        fill="#ffffff" 
-        opacity="0.6">KinCircle</text>
 </svg>
