@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <radialGradient id="field" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.95"/>
+      <stop offset="50%" style="stop-color:#4285F4;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:#34A853;stop-opacity:0.9"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <circle cx="512" cy="512" r="480" fill="url(#field)" opacity="0.2"/>
+  <g transform="translate(512,512)" filter="url(#glow)">
+    <rect x="-100" y="-100" width="200" height="200" fill="none" stroke="#4285F4" stroke-width="6" opacity="0.7">
+      <animateTransform attributeName="transform" type="rotate" values="0;360" dur="30s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="-70" y="-70" width="140" height="140" fill="none" stroke="#34A853" stroke-width="4" opacity="0.6">
+      <animateTransform attributeName="transform" type="rotate" values="0;-360" dur="25s" repeatCount="indefinite"/>
+    </rect>
+    <circle r="50" fill="#4285F4" opacity="0.8">
+      <animate attributeName="r" values="40;60;40" dur="8s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="35" fill="#ffffff" opacity="0.95"/>
+    <circle r="20" fill="#34A853">
+      <animate attributeName="r" values="15;25;15" dur="5s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="8" fill="#ffffff">
+      <animate attributeName="opacity" values="0.8;1;0.8" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  <g>
+    <circle cx="362" cy="362" r="30" fill="#34A853" opacity="0.8">
+      <animateTransform attributeName="transform" type="translate" values="0,0;150,0;150,150;0,150;0,0" dur="40s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="662" cy="362" r="30" fill="#4285F4" opacity="0.8">
+      <animateTransform attributeName="transform" type="translate" values="0,0;-150,0;-150,150;0,150;0,0" dur="45s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="512" cy="662" r="30" fill="#ff6b35" opacity="0.8">
+      <animateTransform attributeName="transform" type="translate" values="0,0;0,-150;150,-150;150,0;0,0" dur="35s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  <path d="M512,512 Q437,437 362,362" fill="none" stroke="#4285F4" stroke-width="4" opacity="0.5">
+    <animate attributeName="stroke-dasharray" values="0,200;100,100;0,200" dur="6s" repeatCount="indefinite"/>
+  </path>
+  <path d="M512,512 Q587,437 662,362" fill="none" stroke="#34A853" stroke-width="4" opacity="0.5">
+    <animate attributeName="stroke-dasharray" values="0,200;100,100;0,200" dur="7s" repeatCount="indefinite"/>
+  </path>
+  <path d="M512,512 L512,662" fill="none" stroke="#ff6b35" stroke-width="4" opacity="0.5">
+    <animate attributeName="stroke-dasharray" values="0,200;100,100;0,200" dur="5s" repeatCount="indefinite"/>
+  </path>
+  <ellipse cx="512" cy="512" rx="200" ry="150" fill="none" stroke="#4285F4" stroke-width="3" opacity="0.4">
+    <animateTransform attributeName="transform" type="rotate" values="0 512 512;360 512 512" dur="20s" repeatCount="indefinite"/>
+  </ellipse>
+  <ellipse cx="512" cy="512" rx="280" ry="220" fill="none" stroke="#34A853" stroke-width="2" opacity="0.3">
+    <animateTransform attributeName="transform" type="rotate" values="45 512 512;405 512 512" dur="30s" repeatCount="indefinite"/>
+  </ellipse>
+  <text x="50" y="990" font-family="monospace" font-size="12" fill="#ffffff" opacity="0.1">TRANSCENDENT  BEYOND LIMITS  =1/0</text>
+</svg>
