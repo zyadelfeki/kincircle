@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <title>KinCircle  Connected Node</title>
+  <desc>Refined, flat, balanced mark. Consistent stroke weight, fluid curves, and endpoint nodes only.</desc>
+  <defs>
+    <style>
+      .trust-blue { fill: #2E86AB; }
+      .arm { fill: none; stroke: #A2DEE5; stroke-width: 100; stroke-linecap: round; stroke-linejoin: round; }
+      .node { fill: #5FB49C; }
+    </style>
+  </defs>
+  <rect x="272" y="312" width="100" height="420" rx="50" class="trust-blue"/>
+  <path class="arm" d="M 322 480 C 500 340, 640 340, 848 380"/>
+  <path class="arm" d="M 322 568 C 500 720, 640 700, 848 660"/>
+  <circle cx="322" cy="312" r="44" class="node"/>
+  <circle cx="848" cy="380" r="44" class="node"/>
+  <circle cx="848" cy="660" r="44" class="node"/>
+</svg>

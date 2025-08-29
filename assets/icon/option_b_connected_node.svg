@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .trust-blue { fill: #2E86AB; }
+      .calm-teal-stroke { fill: none; stroke: #A2DEE5; stroke-width: 60; stroke-linecap: round; }
+      .safe-green { fill: #5FB49C; }
+    </style>
+  </defs>
+  <rect class="trust-blue" x="200" y="150" width="80" height="724" rx="40"/>
+  <path class="calm-teal-stroke" d="M 280 350 Q 450 200 650 300 Q 750 350 800 450"/>
+  <path class="calm-teal-stroke" d="M 280 650 Q 450 800 650 700 Q 750 650 800 550"/>
+  <circle class="safe-green" cx="240" cy="200" r="25"/>
+  <circle class="safe-green" cx="240" cy="512" r="30"/>
+  <circle class="safe-green" cx="240" cy="824" r="25"/>
+  <circle class="safe-green" cx="650" cy="300" r="20"/>
+  <circle class="safe-green" cx="800" cy="450" r="18"/>
+  <circle class="safe-green" cx="650" cy="700" r="20"/>
+  <circle class="safe-green" cx="800" cy="550" r="18"/>
+  <circle fill="#2E86AB" cx="280" cy="512" r="40"/>
+  <circle class="safe-green" cx="280" cy="512" r="25"/>
+</svg>
