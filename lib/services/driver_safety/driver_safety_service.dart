@@ -60,6 +60,10 @@ class DriverSafetyService extends ChangeNotifier {
   // Activity recognition for context-aware monitoring
   bool _isVehicleContext = false;
 
+  // Real-time incident stream for UI updates
+  final StreamController<List<DriverIncident>> _incidentStreamController = 
+      StreamController<List<DriverIncident>>.broadcast();
+
   // UI Data Properties
   List<DriverIncident> _recentIncidents = [];
   int _weeklyHarshBrakes = 0;
@@ -77,6 +81,9 @@ class DriverSafetyService extends ChangeNotifier {
   int get weeklyTotalTrips => _weeklyTotalTrips;
   int get safetyScore => _safetyScore;
   bool get isLoading => _isLoading;
+  
+  // Stream for real-time incident updates
+  Stream<List<DriverIncident>> get incidentStream => _incidentStreamController.stream;
 
   Future<void> start() async {
     // lazy init model and repository
@@ -102,6 +109,9 @@ class DriverSafetyService extends ChangeNotifier {
     _accelSub = null;
     _gyroSub = null;
     _activitySub = null;
+    
+    // Close the incident stream controller
+    await _incidentStreamController.close();
     
     if (kDebugMode) {
       print('DriverSafetyService: Service stopped');
@@ -157,6 +167,8 @@ class DriverSafetyService extends ChangeNotifier {
       _safetyScore = 100;
     } finally {
       _isLoading = false;
+      // Emit updated incident list to stream
+      _incidentStreamController.add(_recentIncidents);
       notifyListeners();
     }
   }
@@ -305,6 +317,8 @@ class DriverSafetyService extends ChangeNotifier {
       final totalIncidents = _weeklyHarshBrakes + _weeklyRapidAccel + _weeklySharpTurns;
       _safetyScore = max(100 - (totalIncidents * 5), 0);
       
+      // Emit updated incident list to stream for real-time updates
+      _incidentStreamController.add(_recentIncidents);
       notifyListeners(); // Notify UI of changes
       
       if (kDebugMode) {

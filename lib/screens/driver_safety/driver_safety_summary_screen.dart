@@ -175,8 +175,6 @@ class _DriverSafetySummaryScreenState extends State<DriverSafetySummaryScreen> {
   }
 
   Widget _buildRecentIncidentsCard(DriverSafetyService driverService) {
-    final incidents = driverService.recentIncidents;
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -190,15 +188,37 @@ class _DriverSafetySummaryScreenState extends State<DriverSafetySummaryScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            if (incidents.isEmpty)
-              const ListTile(
-                leading: Icon(Icons.check_circle, color: Colors.green),
-                title: Text('No recent incidents'),
-                subtitle: Text('Keep up the great driving!'),
-                contentPadding: EdgeInsets.zero,
-              )
-            else
-              ...incidents.map((incident) => _buildIncidentListTile(incident)),
+            StreamBuilder<List<DriverIncident>>(
+              stream: driverService.incidentStream,
+              initialData: driverService.recentIncidents,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting && 
+                    snapshot.data?.isEmpty == true) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                final incidents = snapshot.data ?? [];
+                
+                if (incidents.isEmpty) {
+                  return const ListTile(
+                    leading: Icon(Icons.check_circle, color: Colors.green),
+                    title: Text('No recent incidents'),
+                    subtitle: Text('Keep up the great driving!'),
+                    contentPadding: EdgeInsets.zero,
+                  );
+                }
+
+                return Column(
+                  children: incidents.map((incident) => 
+                    _buildIncidentListTile(incident)).toList(),
+                );
+              },
+            ),
           ],
         ),
       ),
