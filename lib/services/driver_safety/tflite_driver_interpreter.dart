@@ -2,9 +2,9 @@ import 'package:tflite_flutter/tflite_flutter.dart' as tfl;
 import 'interpreter.dart';
 
 class TfliteDriverInterpreter implements DriverInterpreter {
-  final tfl.Interpreter _inner;
-
   TfliteDriverInterpreter._(this._inner);
+
+  final tfl.Interpreter _inner;
 
   static Future<TfliteDriverInterpreter> fromAsset(String assetPath) async {
     final interpreter = await tfl.Interpreter.fromAsset(assetPath);

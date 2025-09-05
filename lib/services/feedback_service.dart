@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FeedbackService {
   FeedbackService._private();
-  static final FeedbackService _instance = FeedbackService._private();
   factory FeedbackService() => _instance;
+  static final FeedbackService _instance = FeedbackService._private();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -20,4 +20,3 @@ class FeedbackService {
     });
   }
 }
- 

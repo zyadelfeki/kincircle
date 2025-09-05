@@ -24,7 +24,7 @@ class LocationService {
         return false;
       }
     }
-    
+
     if (permission == LocationPermission.deniedForever) {
       return false;
     }
@@ -68,4 +68,4 @@ class LocationService {
       return null;
     }
   }
-} 
+}

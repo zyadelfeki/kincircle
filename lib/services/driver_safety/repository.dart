@@ -1,11 +1,11 @@
 part of 'driver_safety_service.dart';
 
 class _IncidentRepository {
+  _IncidentRepository(this._box);
+
   static const _boxName = 'driver_incidents';
 
   final Box _box;
-
-  _IncidentRepository(this._box);
 
   static Future<_IncidentRepository> create() async {
     if (!Hive.isAdapterRegistered(0)) {
@@ -26,7 +26,8 @@ class _IncidentRepository {
   }
 
   Future<List<DriverIncident>> getRecent({int limit = 50}) async {
-    final items = _box.values.cast<Map>().toList().reversed.take(limit).toList();
+    final items =
+        _box.values.cast<Map>().toList().reversed.take(limit).toList();
     return items.map(DriverIncident.fromJson).toList();
   }
 

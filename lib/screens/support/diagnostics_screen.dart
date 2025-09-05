@@ -66,7 +66,8 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Crash status', style: Theme.of(context).textTheme.titleMedium),
+            Text('Crash status',
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             if (_lastCrash == null)
               const Text('No crash detected in last session.')
@@ -77,7 +78,7 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(_lastCrash!),

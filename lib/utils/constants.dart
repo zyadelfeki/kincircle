@@ -30,4 +30,7 @@ class AppConstants {
 
   // Deep Link base
   static const String inviteLinkBase = 'https://links.kincircle.app/invite/';
+
+  // Branding
+  static const String brandLogoAsset = 'assets/icon/kin_arc_final.svg';
 }

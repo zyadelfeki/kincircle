@@ -28,6 +28,8 @@
 	<string>This app needs access to location when open to show your position on the map.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>This app needs access to location when in the background to show your position on the map.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>This app uses motion and activity data to automatically detect when you're traveling in a vehicle.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
