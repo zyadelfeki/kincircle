@@ -18,14 +18,14 @@ Future<void> main() async {
   const cx = 512, cy = 512;
   const outerR = 450;
   const innerR = 410;
-  img.drawCircle(
+  img.fillCircle(
     icon1024,
     x: cx,
     y: cy,
     radius: outerR,
     color: blue,
   );
-  img.drawCircle(
+  img.fillCircle(
     icon1024,
     x: cx,
     y: cy,
@@ -34,7 +34,7 @@ Future<void> main() async {
   );
   // Simple compass-pin glyph in center: blue circle with small tail
   const glyphR = 280;
-  img.drawCircle(
+  img.fillCircle(
     icon1024,
     x: cx,
     y: cy - 40,
@@ -42,12 +42,12 @@ Future<void> main() async {
     color: blue,
   );
   // Tail (triangle)
-  final points = <img.Point>[
+  final points = [
     img.Point(cx - 60, cy + 50),
     img.Point(cx + 60, cy + 50),
     img.Point(cx, cy + 230),
   ];
-  img.drawPolygon(
+  img.fillPolygon(
     icon1024,
     vertices: points,
     color: blue,
@@ -58,22 +58,22 @@ Future<void> main() async {
 
   // 512x512 foreground icon: transparent with same glyph only
   final fg = img.Image(width: 512, height: 512);
-  img.fill(fg, color: const img.ColorRgba8(0, 0, 0, 0));
+  img.fill(fg, color: img.ColorRgba8(0, 0, 0, 0));
   const fcx = 256, fcy = 256;
   const fgR = 150;
-  img.drawCircle(
+  img.fillCircle(
     fg,
     x: fcx,
     y: fcy - 20,
     radius: fgR,
     color: blue,
   );
-  final fpoints = <img.Point>[
+  final fpoints = [
     img.Point(fcx - 35, fcy + 30),
     img.Point(fcx + 35, fcy + 30),
     img.Point(fcx, fcy + 140),
   ];
-  img.drawPolygon(
+  img.fillPolygon(
     fg,
     vertices: fpoints,
     color: blue,
