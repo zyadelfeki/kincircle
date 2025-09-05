@@ -7,6 +7,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sensors_plus/sensors_plus.dart';
+import 'package:activity_recognition_flutter/activity_recognition_flutter.dart';
 import 'interpreter.dart';
 
 part 'pipeline.dart';
@@ -48,40 +50,40 @@ class DriverSafetyService {
   final Future<dynamic> Function() _repoFactory;
   final String _modelAsset;
 
-  // TODO: Re-implement with activity recognition when needed
-  // StreamSubscription<AccelerometerEvent>? _accelSub;
-  // StreamSubscription<GyroscopeEvent>? _gyroSub;
+  // Active sensor monitoring
+  StreamSubscription<AccelerometerEvent>? _accelSub;
+  StreamSubscription<GyroscopeEvent>? _gyroSub;
+  StreamSubscription<ActivityEvent>? _activitySub;
   DriverInterpreter? _interpreter;
   final Future<DriverInterpreter> Function(String asset)? _interpreterFactory;
+  
+  // Activity recognition for context-aware monitoring
+  bool _isVehicleContext = false;
 
   Future<void> start() async {
     // lazy init model and repository
     _interpreter ??= await (_interpreterFactory?.call(_modelAsset) ??
         (throw StateError('No interpreterFactory provided')));
-  await _repoFactory(); // ensure repository initialized
+    await _repoFactory(); // ensure repository initialized
 
-    // TODO: Re-implement sensor listening with new architecture
+    // Start activity recognition for context awareness
+    await _startActivityRecognition();
+    
+    // Start sensor monitoring for driving incident detection
+    await _startSensorMonitoring();
+
     if (kDebugMode) {
-      print('DriverSafetyService: Service started (sensor functionality temporarily disabled)');
+      print('DriverSafetyService: Service started with full sensor monitoring');
     }
-
-    // Note: Sensor subscriptions temporarily commented out during activity recognition upgrade
-    // _accelSub = accelerometerEventStream().listen((e) {
-    //   _pipeline.addAccel(e.x, e.y, e.z);
-    //   _maybeInfer(repo);
-    // });
-    // _gyroSub = gyroscopeEventStream().listen((e) {
-    //   _pipeline.addGyro(e.x, e.y, e.z);
-    //   _maybeInfer(repo);
-    // });
   }
 
   Future<void> stop() async {
-    // TODO: Update when sensor subscriptions are re-implemented
-    // await _accelSub?.cancel();
-    // await _gyroSub?.cancel();
-    // _accelSub = null;
-    // _gyroSub = null;
+    await _accelSub?.cancel();
+    await _gyroSub?.cancel();
+    await _activitySub?.cancel();
+    _accelSub = null;
+    _gyroSub = null;
+    _activitySub = null;
     
     if (kDebugMode) {
       print('DriverSafetyService: Service stopped');
@@ -158,6 +160,44 @@ class DriverSafetyService {
     return '$y-$m-$day';
   }
 
+  /// Start activity recognition to detect vehicle context
+  Future<void> _startActivityRecognition() async {
+    try {
+      // Start activity recognition stream
+      _activitySub = ActivityRecognition().activityStream().listen((activity) {
+        _isVehicleContext = activity.type == ActivityType.IN_VEHICLE;
+        if (kDebugMode) {
+          print('DriverSafetyService: Activity detected - ${activity.type}, confidence: ${activity.confidence}');
+        }
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print('DriverSafetyService: Failed to start activity recognition - $e');
+      }
+    }
+  }
+
+  /// Start sensor monitoring for driving incident detection
+  Future<void> _startSensorMonitoring() async {
+    final repo = await _repoFactory();
+    
+    // Monitor accelerometer for harsh braking and rapid acceleration
+    _accelSub = accelerometerEventStream().listen((event) {
+      if (_isVehicleContext) {
+        _pipeline.addAccel(event.x, event.y, event.z);
+        _maybeInfer(repo);
+      }
+    });
+
+    // Monitor gyroscope for sharp turns
+    _gyroSub = gyroscopeEventStream().listen((event) {
+      if (_isVehicleContext) {
+        _pipeline.addGyro(event.x, event.y, event.z);
+        _maybeInfer(repo);
+      }
+    });
+  }
+
   // Exposed for testing: run a single feature vector through the model and persist if above threshold
   Future<void> processFeatures(List<double> features,
       {double threshold = 0.7}) async {
@@ -171,13 +211,16 @@ class DriverSafetyService {
     }
   }
 
-  // ignore: unused_element
+  // Run inference when pipeline has sufficient data and we're in vehicle context
   void _maybeInfer(_IncidentRepository repo) {
-    if (!_pipeline.ready) return;
+    if (!_pipeline.ready || !_isVehicleContext) return;
     final input = _pipeline.popWindow();
     final result = _infer(input);
     if (result != null && result.score > 0.7) {
       repo.save(result);
+      if (kDebugMode) {
+        print('DriverSafetyService: Incident detected - ${result.type} (score: ${result.score})');
+      }
     }
   }
 
