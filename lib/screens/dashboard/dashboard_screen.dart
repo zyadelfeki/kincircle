@@ -17,6 +17,7 @@ import '../../models/user_model.dart';
 import '../../services/firestore_service.dart';
 import '../../widgets/frosted_panel.dart';
 import '../alerts/alert_details_screen.dart';
+import '../driver_safety/driver_safety_summary_screen.dart';
 // Removed unused keep_alive import
 import '../../widgets/empty_state.dart';
 import '../../services/ui_prefs.dart';
@@ -766,6 +767,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   physics: const ClampingScrollPhysics(),
                   children: [
                     _buildRecapCard(),
+                    const SizedBox(height: 12),
+                    _buildDriverSafetyCard(),
+                    const SizedBox(height: 12),
                     // Family list
                     _buildFamilyListSection(),
                     const SizedBox(height: 12),
@@ -1199,6 +1203,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
               actionLabel: 'Create Family',
               onAction: () => Navigator.of(context).pushNamed('/create-family'),
             ),
+    );
+  }
+
+  // Driver Safety Card for quick access to safety reports
+  Widget _buildDriverSafetyCard() {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const DriverSafetySummaryScreen(),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.drive_eta,
+                  color: Colors.blue,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Driver Safety',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'View your weekly safety report',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Colors.grey),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
