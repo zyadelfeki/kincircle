@@ -60,6 +60,7 @@ flutter:
   - assets/models/
   - docs/FAQ.md
   - assets/icon/kin_arc_final.svg
+  - assets/logo/
   - assets/google_g.png
 
 flutter_launcher_icons:
