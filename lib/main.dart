@@ -237,6 +237,9 @@ class _KinCircleAppState extends State<KinCircleApp> {
         ),
         ChangeNotifierProvider<PendingInviteStore>.value(value: _pending),
         ChangeNotifierProvider<ThemeController>.value(value: _themeController),
+        ChangeNotifierProvider<DriverSafetyService>(
+          create: (_) => DriverSafetyService(),
+        ),
       ],
       child: Builder(
         builder: (context) {

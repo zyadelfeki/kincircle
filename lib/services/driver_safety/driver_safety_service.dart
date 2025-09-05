@@ -37,7 +37,7 @@ class DriverIncident {
 
 /// On-device driver safety service: collects data and stores incidents in Hive.
 /// Note: Sensor-based functionality temporarily disabled during activity recognition upgrade.
-class DriverSafetyService {
+class DriverSafetyService extends ChangeNotifier {
   DriverSafetyService({
     String modelAsset = 'assets/models/driver_safety.tflite',
     Future<dynamic> Function()? repoFactory,
@@ -59,6 +59,24 @@ class DriverSafetyService {
   
   // Activity recognition for context-aware monitoring
   bool _isVehicleContext = false;
+
+  // UI Data Properties
+  List<DriverIncident> _recentIncidents = [];
+  int _weeklyHarshBrakes = 0;
+  int _weeklyRapidAccel = 0;
+  int _weeklySharpTurns = 0;
+  int _weeklyTotalTrips = 0;
+  int _safetyScore = 85; // Default score
+  bool _isLoading = false;
+
+  // Getters for UI consumption
+  List<DriverIncident> get recentIncidents => _recentIncidents;
+  int get weeklyHarshBrakes => _weeklyHarshBrakes;
+  int get weeklyRapidAccel => _weeklyRapidAccel;
+  int get weeklySharpTurns => _weeklySharpTurns;
+  int get weeklyTotalTrips => _weeklyTotalTrips;
+  int get safetyScore => _safetyScore;
+  bool get isLoading => _isLoading;
 
   Future<void> start() async {
     // lazy init model and repository
@@ -93,6 +111,54 @@ class DriverSafetyService {
   Future<List<DriverIncident>> getRecent({int limit = 50}) async {
     final repo = await _repoFactory();
     return repo.getRecent(limit: limit);
+  }
+
+  /// Fetches and calculates weekly summary data for UI display
+  Future<void> fetchWeeklySummary() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final repo = await _repoFactory();
+      final now = DateTime.now().toUtc();
+      final weekStart = now.subtract(const Duration(days: 7));
+      
+      // Get incidents from the last 7 days
+      final incidents = await repo.getSince(weekStart);
+      _recentIncidents = incidents.take(10).toList(); // Show last 10 incidents
+      
+      // Calculate weekly counts
+      _weeklyHarshBrakes = incidents.where((i) => i.type == 'harsh_brake').length;
+      _weeklyRapidAccel = incidents.where((i) => i.type == 'rapid_accel').length;
+      _weeklySharpTurns = incidents.where((i) => i.type == 'sharp_turn').length;
+      
+      // Calculate estimated trips (rough estimation based on incident patterns)
+      // For now, use a simple heuristic: incidents typically happen during trips
+      final incidentDays = incidents.map((i) => DateTime(i.timestamp.year, i.timestamp.month, i.timestamp.day)).toSet();
+      _weeklyTotalTrips = max(incidentDays.length * 2, 1); // Estimate 2 trips per active day
+      
+      // Calculate safety score (100 = perfect, decreases with incidents)
+      final totalIncidents = _weeklyHarshBrakes + _weeklyRapidAccel + _weeklySharpTurns;
+      _safetyScore = max(100 - (totalIncidents * 5), 0); // Decrease by 5 points per incident
+      
+      if (kDebugMode) {
+        print('DriverSafetyService: Weekly summary updated - Score: $_safetyScore, Incidents: $totalIncidents');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('DriverSafetyService: Error fetching weekly summary - $e');
+      }
+      // Set default values on error
+      _recentIncidents = [];
+      _weeklyHarshBrakes = 0;
+      _weeklyRapidAccel = 0;
+      _weeklySharpTurns = 0;
+      _weeklyTotalTrips = 0;
+      _safetyScore = 100;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// Reads last 7 days of incidents from local Hive, aggregates counts, and uploads
@@ -218,6 +284,29 @@ class DriverSafetyService {
     final result = _infer(input);
     if (result != null && result.score > 0.7) {
       repo.save(result);
+      // Update UI data and notify listeners
+      _recentIncidents.insert(0, result);
+      if (_recentIncidents.length > 10) {
+        _recentIncidents = _recentIncidents.take(10).toList();
+      }
+      // Update weekly counts
+      switch (result.type) {
+        case 'harsh_brake':
+          _weeklyHarshBrakes++;
+          break;
+        case 'rapid_accel':
+          _weeklyRapidAccel++;
+          break;
+        case 'sharp_turn':
+          _weeklySharpTurns++;
+          break;
+      }
+      // Recalculate safety score
+      final totalIncidents = _weeklyHarshBrakes + _weeklyRapidAccel + _weeklySharpTurns;
+      _safetyScore = max(100 - (totalIncidents * 5), 0);
+      
+      notifyListeners(); // Notify UI of changes
+      
       if (kDebugMode) {
         print('DriverSafetyService: Incident detected - ${result.type} (score: ${result.score})');
       }
