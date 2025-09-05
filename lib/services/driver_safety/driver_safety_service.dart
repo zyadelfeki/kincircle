@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:sensors_plus/sensors_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,11 +14,11 @@ part 'repository.dart';
 
 /// Contract for driver incidents captured on-device.
 class DriverIncident {
+  DriverIncident(
+      {required this.timestamp, required this.type, required this.score});
   final DateTime timestamp;
   final String type; // e.g., harsh_brake, sharp_turn, rapid_accel
   final double score; // 0..1 severity
-
-  DriverIncident({required this.timestamp, required this.type, required this.score});
 
   Map<String, dynamic> toJson() => {
         'timestamp': timestamp.toIso8601String(),
@@ -34,46 +33,59 @@ class DriverIncident {
       );
 }
 
-/// On-device driver safety service: collects sensors, infers with TFLite locally, and stores incidents in Hive.
+/// On-device driver safety service: collects data and stores incidents in Hive.
+/// Note: Sensor-based functionality temporarily disabled during activity recognition upgrade.
 class DriverSafetyService {
-  final _pipeline = DriverSensorPipeline(windowSize: 64, sampleHz: 50);
-  final Future<dynamic> Function() _repoFactory;
-  final String _modelAsset;
-
-  StreamSubscription<AccelerometerEvent>? _accelSub;
-  StreamSubscription<GyroscopeEvent>? _gyroSub;
-  DriverInterpreter? _interpreter;
-  final Future<DriverInterpreter> Function(String asset)? _interpreterFactory;
-
   DriverSafetyService({
     String modelAsset = 'assets/models/driver_safety.tflite',
     Future<dynamic> Function()? repoFactory,
     Future<DriverInterpreter> Function(String asset)? interpreterFactory,
-  })
-      : _modelAsset = modelAsset,
+  })  : _modelAsset = modelAsset,
         _repoFactory = repoFactory ?? _IncidentRepository.create,
         _interpreterFactory = interpreterFactory;
 
-  Future<void> start() async {
-  // lazy init model and repository
-  _interpreter ??= await (_interpreterFactory?.call(_modelAsset) ?? (throw StateError('No interpreterFactory provided')));
-  final repo = await _repoFactory();
+  final _pipeline = DriverSensorPipeline(windowSize: 64, sampleHz: 50);
+  final Future<dynamic> Function() _repoFactory;
+  final String _modelAsset;
 
-    _accelSub = accelerometerEventStream().listen((e) {
-      _pipeline.addAccel(e.x, e.y, e.z);
-      _maybeInfer(repo);
-    });
-    _gyroSub = gyroscopeEventStream().listen((e) {
-      _pipeline.addGyro(e.x, e.y, e.z);
-      _maybeInfer(repo);
-    });
+  // TODO: Re-implement with activity recognition when needed
+  // StreamSubscription<AccelerometerEvent>? _accelSub;
+  // StreamSubscription<GyroscopeEvent>? _gyroSub;
+  DriverInterpreter? _interpreter;
+  final Future<DriverInterpreter> Function(String asset)? _interpreterFactory;
+
+  Future<void> start() async {
+    // lazy init model and repository
+    _interpreter ??= await (_interpreterFactory?.call(_modelAsset) ??
+        (throw StateError('No interpreterFactory provided')));
+  await _repoFactory(); // ensure repository initialized
+
+    // TODO: Re-implement sensor listening with new architecture
+    if (kDebugMode) {
+      print('DriverSafetyService: Service started (sensor functionality temporarily disabled)');
+    }
+
+    // Note: Sensor subscriptions temporarily commented out during activity recognition upgrade
+    // _accelSub = accelerometerEventStream().listen((e) {
+    //   _pipeline.addAccel(e.x, e.y, e.z);
+    //   _maybeInfer(repo);
+    // });
+    // _gyroSub = gyroscopeEventStream().listen((e) {
+    //   _pipeline.addGyro(e.x, e.y, e.z);
+    //   _maybeInfer(repo);
+    // });
   }
 
   Future<void> stop() async {
-    await _accelSub?.cancel();
-    await _gyroSub?.cancel();
-    _accelSub = null;
-    _gyroSub = null;
+    // TODO: Update when sensor subscriptions are re-implemented
+    // await _accelSub?.cancel();
+    // await _gyroSub?.cancel();
+    // _accelSub = null;
+    // _gyroSub = null;
+    
+    if (kDebugMode) {
+      print('DriverSafetyService: Service stopped');
+    }
   }
 
   Future<List<DriverIncident>> getRecent({int limit = 50}) async {
@@ -125,7 +137,8 @@ class DriverSafetyService {
   }
 
   /// Attempts an upload only if 7 days have passed since the last upload marker.
-  Future<void> uploadWeeklySummaryIfNeeded({Duration minInterval = const Duration(days: 7)}) async {
+  Future<void> uploadWeeklySummaryIfNeeded(
+      {Duration minInterval = const Duration(days: 7)}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final lastMs = prefs.getInt('driver_last_summary_upload_ms') ?? 0;
@@ -146,16 +159,19 @@ class DriverSafetyService {
   }
 
   // Exposed for testing: run a single feature vector through the model and persist if above threshold
-  Future<void> processFeatures(List<double> features, {double threshold = 0.7}) async {
-  final repo = await _repoFactory();
-  // Ensure interpreter is available in non-start() contexts (e.g., tests)
-  _interpreter ??= await (_interpreterFactory?.call(_modelAsset) ?? (throw StateError('No interpreterFactory provided')));
+  Future<void> processFeatures(List<double> features,
+      {double threshold = 0.7}) async {
+    final repo = await _repoFactory();
+    // Ensure interpreter is available in non-start() contexts (e.g., tests)
+    _interpreter ??= await (_interpreterFactory?.call(_modelAsset) ??
+        (throw StateError('No interpreterFactory provided')));
     final result = _infer(features);
     if (result != null && result.score > threshold) {
       await repo.save(result);
     }
   }
 
+  // ignore: unused_element
   void _maybeInfer(_IncidentRepository repo) {
     if (!_pipeline.ready) return;
     final input = _pipeline.popWindow();
@@ -173,6 +189,7 @@ class DriverSafetyService {
     final classes = ['harsh_brake', 'sharp_turn', 'rapid_accel'];
     final maxIdx = scores.indexed.reduce((a, b) => a.$2 > b.$2 ? a : b).$1;
     final score = scores[maxIdx];
-    return DriverIncident(timestamp: DateTime.now(), type: classes[maxIdx], score: score);
+    return DriverIncident(
+        timestamp: DateTime.now(), type: classes[maxIdx], score: score);
   }
 }

@@ -6,13 +6,13 @@ import '../utils/deeplink_parser.dart';
 import 'app_links_adapter.dart';
 
 class AppLinksDynamicLinkService implements DynamicLinkService {
-  final AppLinksAdapter _appLinks;
   AppLinksDynamicLinkService({AppLinksAdapter? adapter})
       : _appLinks = adapter ?? RealAppLinksAdapter();
+  final AppLinksAdapter _appLinks;
   @override
   Future<String?> getInitialInviteId() async {
     try {
-  final uri = await _appLinks.getInitialLink();
+      final uri = await _appLinks.getInitialLink();
       if (uri == null) return null;
       return extractInviteId(uri);
     } catch (_) {
@@ -23,7 +23,7 @@ class AppLinksDynamicLinkService implements DynamicLinkService {
 
   @override
   void listenForInvites(void Function(String inviteId) onInvite) {
-  _appLinks.uriLinkStream.listen((uri) {
+    _appLinks.uriLinkStream.listen((uri) {
       final id = extractInviteId(uri);
       if (id != null) onInvite(id);
     });

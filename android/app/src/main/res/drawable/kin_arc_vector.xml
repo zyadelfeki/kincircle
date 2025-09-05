@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    <!-- Blue ring -->
+    <path android:fillColor="#2E86AB" android:pathData="M512,24 a488,488 0 1,0 0,976 a488,488 0 1,0 0,-976 z M512,68 a444,444 0 1,1 0,888 a444,444 0 1,1 0,-888 z"/>
+    <!-- Stem -->
+    <path android:fillColor="#2E86AB" android:pathData="M492,280 h40 a20,20 0 0,1 20,20 v328 a20,20 0 0,1 -20,20 h-40 a20,20 0 0,1 -20,-20 v-328 a20,20 0 0,1 20,-20 z"/>
+    <!-- C arc -->
+    <path android:fillColor="#00000000" android:strokeColor="#2E86AB" android:strokeWidth="56"
+        android:strokeLineCap="round"
+        android:pathData="M540,302 A210,210 0 1,1 540,722"/>
+</vector>

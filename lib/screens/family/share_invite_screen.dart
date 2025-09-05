@@ -4,8 +4,8 @@ import 'package:share_plus/share_plus.dart';
 import '../../utils/link_builder.dart';
 
 class ShareInviteScreen extends StatelessWidget {
-  final String inviteId;
   const ShareInviteScreen({super.key, required this.inviteId});
+  final String inviteId;
 
   @override
   Widget build(BuildContext context) {

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+  <!-- Kin Arc: Trust Blue (#2E86AB), clean geometry, no distortion -->
+  <defs>
+    <style>
+      .trustBlue{fill:#2E86AB}
+      .ringStroke{fill:none;stroke:#2E86AB;stroke-width:88}
+      .stem{fill:#2E86AB}
+      .arc{fill:none;stroke:#2E86AB;stroke-width:56;stroke-linecap:round}
+    </style>
+  </defs>
+  <!-- Outer blue ring with white center -->
+  <circle cx="512" cy="512" r="488" class="ringStroke"/>
+  <circle cx="512" cy="512" r="444" fill="#FFFFFF"/>
+  <!-- Vertical stem (rounded) -->
+  <rect x="492" y="280" width="40" height="368" rx="20" ry="20" class="stem"/>
+  <!-- Clean C arc (center 540,512; radius 210; sweeping downwards) -->
+  <path d="M 540 302 A 210 210 0 1 1 540 722" class="arc"/>
+</svg>

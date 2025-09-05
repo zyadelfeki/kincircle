@@ -2,24 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class AppUser {
-  final String uid;
-  final String displayName;
-  final String photoURL;
-  final LatLng? lastKnownLocation;
-  final DateTime? lastUpdated;
-  final bool isInvisible;
-  final String? currentFamilyId;
-
-  AppUser({
-    required this.uid,
-    required this.displayName,
-    required this.photoURL,
-    required this.isInvisible,
-    this.lastKnownLocation,
-    this.lastUpdated,
-    this.currentFamilyId,
-  });
-
   factory AppUser.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     LatLng? location;
@@ -27,7 +9,7 @@ class AppUser {
       final geoPoint = data['lastKnownLocation'] as GeoPoint;
       location = LatLng(geoPoint.latitude, geoPoint.longitude);
     }
-    
+
     return AppUser(
       uid: doc.id,
       displayName: data['displayName'] ?? 'No Name',
@@ -39,37 +21,40 @@ class AppUser {
     );
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      'displayName': displayName,
-      'photoURL': photoURL,
-      'invisibleMode': isInvisible,
-      'currentFamilyId': currentFamilyId,
-      if (lastKnownLocation != null)
-        'lastKnownLocation': GeoPoint(
-          lastKnownLocation!.latitude,
-          lastKnownLocation!.longitude,
-        ),
-      'lastUpdated': lastUpdated != null ? Timestamp.fromDate(lastUpdated!) : null,
-    };
-  }
-
-  // Create AppUser from a Map
   factory AppUser.fromMap(Map<String, dynamic> map) {
     return AppUser(
       uid: map['uid'] ?? '',
       displayName: map['displayName'] ?? '',
       photoURL: map['photoURL'] ?? '',
       isInvisible: map['invisibleMode'] ?? false,
-      lastKnownLocation: map['lastKnownLocation'] != null 
-          ? LatLng(map['lastKnownLocation']['latitude'], map['lastKnownLocation']['longitude']) 
+      lastKnownLocation: map['lastKnownLocation'] != null
+          ? LatLng(map['lastKnownLocation']['latitude'],
+              map['lastKnownLocation']['longitude'])
           : null,
-      lastUpdated: map['lastUpdated'] != null 
-          ? DateTime.fromMillisecondsSinceEpoch(map['lastUpdated']) 
+      lastUpdated: map['lastUpdated'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['lastUpdated'])
           : null,
       currentFamilyId: map['currentFamilyId'],
     );
   }
+
+  AppUser({
+    required this.uid,
+    required this.displayName,
+    required this.photoURL,
+    required this.isInvisible,
+    this.lastKnownLocation,
+    this.lastUpdated,
+    this.currentFamilyId,
+  });
+
+  final String uid;
+  final String displayName;
+  final String photoURL;
+  final LatLng? lastKnownLocation;
+  final DateTime? lastUpdated;
+  final bool isInvisible;
+  final String? currentFamilyId;
 
   // Create a copy of AppUser with some fields updated
   AppUser copyWith({
@@ -91,4 +76,20 @@ class AppUser {
       currentFamilyId: currentFamilyId ?? this.currentFamilyId,
     );
   }
-} 
+
+  Map<String, dynamic> toMap() {
+    return {
+      'displayName': displayName,
+      'photoURL': photoURL,
+      'invisibleMode': isInvisible,
+      'currentFamilyId': currentFamilyId,
+      if (lastKnownLocation != null)
+        'lastKnownLocation': GeoPoint(
+          lastKnownLocation!.latitude,
+          lastKnownLocation!.longitude,
+        ),
+      'lastUpdated':
+          lastUpdated != null ? Timestamp.fromDate(lastUpdated!) : null,
+    };
+  }
+}

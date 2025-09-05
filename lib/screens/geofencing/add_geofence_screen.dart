@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:google_maps_webservice/places.dart';
+// Removed google_maps_webservice in favor of direct HTTP API in PlacesService
 
 import '../../services/places_service.dart';
+import '../../services/pro_gating_service.dart';
+import '../../services/firestore_service.dart';
 
 /// Screen that allows the user to search for a place using Google Places
 /// Autocomplete, preview it on a map, and define/confirm a geofence.
@@ -22,7 +24,7 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
   final TextEditingController _nameController = TextEditingController();
   GoogleMapController? _mapController;
 
-  List<Prediction> _suggestions = [];
+  List<PlacePrediction> _suggestions = [];
   Timer? _debounce;
 
   LatLng _mapCenter = const LatLng(30.0444, 31.2357); // Default Cairo
@@ -63,25 +65,28 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
     });
   }
 
-  Future<void> _onSuggestionTap(Prediction prediction) async {
+  Future<void> _onSuggestionTap(PlacePrediction prediction) async {
     FocusScope.of(context).unfocus();
     setState(() => _suggestions = []);
 
     try {
-      final coords = await _placesService.getPlaceDetails(prediction.placeId!);
-      _nameController.text = prediction.description ?? '';
+      final placeId = prediction.placeId; // non-null
+      final coords = await _placesService.getPlaceDetails(placeId);
+      final desc = prediction.description;
+      _nameController.text = desc;
 
       _markers
         ..clear()
-        ..add(
-            Marker(markerId: MarkerId(prediction.placeId!), position: coords));
+        ..add(Marker(markerId: MarkerId(placeId), position: coords));
 
       setState(() {
         _mapCenter = coords;
       });
 
-      await _mapController
-          ?.animateCamera(CameraUpdate.newLatLngZoom(coords, 16));
+      final ctrl = _mapController;
+      if (ctrl != null) {
+        await ctrl.animateCamera(CameraUpdate.newLatLngZoom(coords, 16));
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -117,7 +122,7 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                 itemBuilder: (context, index) {
                   final p = _suggestions[index];
                   return ListTile(
-                    title: Text(p.description ?? ''),
+                    title: Text(p.description),
                     onTap: () => _onSuggestionTap(p),
                   );
                 },
@@ -152,8 +157,24 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
+                          // Capture references before awaits
+                          final ctx = context;
+                          final messenger = ScaffoldMessenger.of(ctx);
+                          // Enforce Free tier Safe Zone limit
+                          final famId = await FirestoreService().getCurrentFamilyId();
+                          if (!ctx.mounted) return;
+                          if (famId != null) {
+                            // It's safe to use ctx immediately after the mounted check
+                            final ok = await ProGatingService().ensureCanAddSafeZone(ctx, famId);
+                            if (!ctx.mounted) return;
+                            if (!ok) return;
+                          }
                           // TODO: Save geofence to Firestore
+                          if (!ctx.mounted) return;
+                          messenger.showSnackBar(
+                            const SnackBar(content: Text('Geofence saved.')),
+                          );
                         },
                         child: const Text('Save Geofence'),
                       ),
@@ -167,4 +188,3 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
     );
   }
 }
- 

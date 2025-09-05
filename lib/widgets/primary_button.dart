@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
 class PrimaryButton extends StatefulWidget {
-  final String text;
-  final VoidCallback? onPressed; // Allow null to disable the button
-  final bool isLoading;
-
   const PrimaryButton({
     super.key,
     required this.text,
     required this.onPressed,
     this.isLoading = false,
   });
+
+  final String text;
+  final VoidCallback? onPressed; // Allow null to disable the button
+  final bool isLoading;
 
   @override
   State<PrimaryButton> createState() => _PrimaryButtonState();
@@ -32,7 +32,10 @@ class _PrimaryButtonState extends State<PrimaryButton>
       upperBound: 1.0,
     );
     _scale = Tween<double>(begin: 1.0, end: 0.97).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut, reverseCurve: Curves.easeIn),
+      CurvedAnimation(
+          parent: _controller,
+          curve: Curves.easeOut,
+          reverseCurve: Curves.easeIn),
     );
   }
 
@@ -89,4 +92,4 @@ class _PrimaryButtonState extends State<PrimaryButton>
       ),
     );
   }
-} 
+}

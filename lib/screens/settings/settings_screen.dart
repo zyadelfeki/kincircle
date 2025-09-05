@@ -6,6 +6,8 @@ import '../settings/ai_consent_screen.dart';
 import '../../services/consent_service.dart';
 import 'ai_settings_screen.dart';
 import '../family/manage_invites_screen.dart';
+import '../../services/theme_controller.dart';
+import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -73,11 +75,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Divider(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Text('Tips & Hints', style: Theme.of(context).textTheme.titleSmall),
+            child: Text('Appearance',
+                style: Theme.of(context).textTheme.titleSmall),
+          ),
+          Consumer<ThemeController>(
+            builder: (context, theme, _) {
+              final selected = theme.mode;
+              return Column(
+                children: [
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: const Text('Theme'),
+                    trailing: DropdownButton<ThemeMode>(
+                      value: selected,
+                      items: const [
+                        DropdownMenuItem(
+                          value: ThemeMode.system,
+                          child: Text('System'),
+                        ),
+                        DropdownMenuItem(
+                          value: ThemeMode.light,
+                          child: Text('Light'),
+                        ),
+                        DropdownMenuItem(
+                          value: ThemeMode.dark,
+                          child: Text('Dark'),
+                        ),
+                      ],
+                      onChanged: (mode) {
+                        if (mode != null) theme.setMode(mode);
+                      },
+                    ),
+                  ),
+                  SwitchListTile(
+                    title: const Text('Use Pro Accent (Preview)'),
+                    subtitle:
+                        const Text('Shows premium accent color when active'),
+                    value: theme.isPro,
+                    onChanged: (v) => theme.setPro(v),
+                  ),
+                ],
+              );
+            },
+          ),
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Text('Tips & Hints',
+                style: Theme.of(context).textTheme.titleSmall),
           ),
           SwitchListTile(
             title: const Text('Show “Actions” Tip'),
-            subtitle: const Text('Show the small hint label near the action button when collapsed'),
+            subtitle: const Text(
+                'Show the small hint label near the action button when collapsed'),
             value: !_fabTipDisabled,
             onChanged: (val) async {
               setState(() => _fabTipDisabled = !val);
@@ -89,16 +139,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('Reset Tip Seen State'),
             subtitle: const Text('Reshow the tip even if it was faded before'),
             onTap: () async {
+              final messenger = ScaffoldMessenger.of(context);
               await _resetFabTipSeen();
               if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Tip will be shown next time the sheet is collapsed.')),
+              messenger.showSnackBar(
+                const SnackBar(
+                    content: Text(
+                        'Tip will be shown next time the sheet is collapsed.')),
               );
             },
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text('Smart Alerts', style: Theme.of(context).textTheme.titleSmall),
+            child: Text('Smart Alerts',
+                style: Theme.of(context).textTheme.titleSmall),
           ),
           SwitchListTile(
             title: const Text('Enable Smart Alerts'),
@@ -128,7 +182,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               subtitle: const Text('Learn how Smart Alerts work and opt in.'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () async {
-                final agreed = await Navigator.of(context).push<bool>(
+                final nav = Navigator.of(context);
+                final agreed = await nav.push<bool>(
                   MaterialPageRoute(builder: (_) => const AiConsentScreen()),
                 );
                 if (agreed == true && mounted) {
@@ -146,33 +201,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Divider(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Text('Account', style: Theme.of(context).textTheme.titleSmall),
+            child:
+                Text('Account', style: Theme.of(context).textTheme.titleSmall),
           ),
           ListTile(
             leading: const Icon(Icons.manage_accounts_outlined),
             title: const Text('Account & Profile'),
-            subtitle: Text(AuthService().user?.email ?? 'View and edit your account details'),
+            subtitle: Text(AuthService().user?.email ??
+                'View and edit your account details'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              // Placeholder: navigate when Account screen exists
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Account screen coming soon')),
-              );
+              Navigator.of(context).pushNamed('/account');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.family_restroom),
+            title: const Text('Manage Family'),
+            subtitle: const Text('Add or remove family members'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.of(context).pushNamed('/manage-family');
             },
           ),
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Sign Out'),
             onTap: () async {
+              final nav = Navigator.of(context);
               await AuthService().signOut();
               if (!mounted) return;
-              Navigator.of(context).popUntil((r) => r.isFirst);
+              nav.pushNamedAndRemoveUntil('/welcome', (route) => false);
             },
           ),
           const Divider(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Text('Subscription', style: Theme.of(context).textTheme.titleSmall),
+            child: Text('Subscription',
+                style: Theme.of(context).textTheme.titleSmall),
           ),
           ListTile(
             leading: const Icon(Icons.workspace_premium_outlined),
@@ -180,9 +245,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: const Text('Plans, billing, and benefits'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Subscription management coming soon')),
-              );
+              Navigator.of(context).pushNamed('/subscription');
             },
           ),
           const Divider(),

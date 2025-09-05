@@ -39,7 +39,8 @@ class _SafetyReportScreenState extends State<SafetyReportScreen> {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
-        final snap = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        final snap =
+            await FirebaseFirestore.instance.collection('users').doc(uid).get();
         final v = snap.data()?['driverSafetyScore'];
         if (v is int) score = v;
       }
@@ -69,15 +70,18 @@ class _SafetyReportScreenState extends State<SafetyReportScreen> {
                     if (index == 0) {
                       final s = _driverSafetyScore;
                       return ListTile(
-                        leading: const Icon(Icons.speed_rounded, color: Colors.blueAccent),
+                        leading: const Icon(Icons.speed_rounded,
+                            color: Colors.blueAccent),
                         title: const Text('Weekly Driver Safety Score'),
-                        subtitle: const Text('Calculated from anonymized summaries'),
+                        subtitle:
+                            const Text('Calculated from anonymized summaries'),
                         trailing: Text(s != null ? '$s / 100' : '—'),
                       );
                     }
                     final i = _incidents[index - 1];
                     return ListTile(
-                      leading: const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                      leading: const Icon(Icons.warning_amber_rounded,
+                          color: Colors.orange),
                       title: Text(_formatType(i.type)),
                       subtitle: Text(i.timestamp.toLocal().toString()),
                       trailing: Text(i.score.toStringAsFixed(2)),
@@ -95,7 +99,8 @@ class _SafetyReportScreenState extends State<SafetyReportScreen> {
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.cloud_upload_rounded),
                   label: const Text('Upload Summary Now'),

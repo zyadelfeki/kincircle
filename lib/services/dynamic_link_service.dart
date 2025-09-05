@@ -1,31 +1,12 @@
-// A small abstraction around Firebase Dynamic Links so we can swap it out in tests
-// and contain deprecations in one place.
-// ignore_for_file: deprecated_member_use
+// Dynamic Link abstraction; default implementation uses native App/Universal Links (see AppLinksDynamicLinkService).
+// Firebase Dynamic Links has been removed due to deprecation. A legacy implementation can be reintroduced in a
+// separate file if ever needed, without adding a hard dependency here.
 
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
-import '../utils/deeplink_parser.dart';
+// Removed unused import of deeplink_parser.dart
 
 abstract class DynamicLinkService {
   Future<String?> getInitialInviteId();
   void listenForInvites(void Function(String inviteId) onInvite);
-}
-
-class FirebaseDynamicLinkService implements DynamicLinkService {
-  @override
-  Future<String?> getInitialInviteId() async {
-    final PendingDynamicLinkData? initialLink =
-        await FirebaseDynamicLinks.instance.getInitialLink();
-  if (initialLink == null) return null;
-  return extractInviteId(initialLink.link);
-  }
-
-  @override
-  void listenForInvites(void Function(String inviteId) onInvite) {
-    FirebaseDynamicLinks.instance.onLink.listen((event) {
-      final id = extractInviteId(event.link);
-      if (id != null) onInvite(id);
-    });
-  }
 }
 
 class NoopDynamicLinkService implements DynamicLinkService {

@@ -15,10 +15,25 @@ class _PermissionScreenState extends State<PermissionScreen> {
   bool _locationGranted = false;
   bool _askedNotifications = false;
   String? _notifStatusLabel;
+  bool _busy = false; // serialize requests
 
   Future<void> _requestLocation() async {
-    setState(() => _requesting = true);
+    if (_busy) {
+      return;
+    }
+    setState(() {
+      _requesting = true;
+      _busy = true;
+    });
     try {
+      final services = await Geolocator.isLocationServiceEnabled();
+      if (!services) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Please enable Location Services to continue')),
+        );
+      }
       LocationPermission perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
         perm = await Geolocator.requestPermission();
@@ -26,20 +41,35 @@ class _PermissionScreenState extends State<PermissionScreen> {
       if (perm == LocationPermission.deniedForever) {
         await Geolocator.openAppSettings();
       }
-      setState(() => _locationGranted = perm == LocationPermission.always || perm == LocationPermission.whileInUse);
+      setState(() => _locationGranted = perm == LocationPermission.always ||
+          perm == LocationPermission.whileInUse);
     } catch (e) {
       if (kDebugMode) debugPrint('Location request failed: $e');
     } finally {
-      if (mounted) setState(() => _requesting = false);
+      if (mounted) {
+        setState(() {
+          _requesting = false;
+          _busy = false;
+        });
+      }
     }
   }
 
   Future<void> _requestNotifications() async {
+    if (_busy) {
+      return;
+    }
+    setState(() {
+      _busy = true;
+    });
     final status = await Permission.notification.status;
     if (status.isGranted) {
       setState(() {
         _askedNotifications = true;
         _notifStatusLabel = 'Enabled';
+      });
+      setState(() {
+        _busy = false;
       });
       return;
     }
@@ -55,15 +85,29 @@ class _PermissionScreenState extends State<PermissionScreen> {
               ? 'Denied (settings)'
               : 'Denied';
     });
+    setState(() {
+      _busy = false;
+    });
   }
 
   Future<void> _continue() async {
+    if (_busy) {
+      return;
+    }
+    setState(() {
+      _busy = true;
+    });
     if (!_locationGranted) {
       await _requestLocation();
     }
+    // brief gap to avoid platform warning when requesting sequentially
+    await Future.delayed(const Duration(milliseconds: 250));
     if (!_askedNotifications) {
       await _requestNotifications();
     }
+    setState(() {
+      _busy = false;
+    });
     if (!mounted) return;
     Navigator.of(context).pushReplacementNamed('/dashboard');
   }
@@ -79,20 +123,25 @@ class _PermissionScreenState extends State<PermissionScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Power key features with two quick permissions', style: theme.textTheme.headlineSmall),
+              Text('Power key features with two quick permissions',
+                  style: theme.textTheme.headlineSmall),
               const SizedBox(height: 8),
-              Text('• Location powers the family map and driving safety.\n• Notifications keep you informed about important updates.',
+              Text(
+                  '• Location powers the family map and driving safety.\n• Notifications keep you informed about important updates.',
                   style: theme.textTheme.bodyMedium),
               const SizedBox(height: 24),
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.location_on),
                   title: const Text('Location'),
-                  subtitle: Text(_locationGranted ? 'Enabled' : 'Needed for map and safety features'),
+                  subtitle: Text(_locationGranted
+                      ? 'Enabled'
+                      : 'Needed for map and safety features'),
                   trailing: _locationGranted
                       ? const Icon(Icons.check_circle, color: Colors.green)
                       : FilledButton(
-                          onPressed: _requesting ? null : _requestLocation,
+                          onPressed:
+                              _requesting || _busy ? null : _requestLocation,
                           child: const Text('Allow'),
                         ),
                 ),
@@ -102,18 +151,21 @@ class _PermissionScreenState extends State<PermissionScreen> {
                 child: ListTile(
                   leading: const Icon(Icons.notifications_active),
                   title: const Text('Notifications'),
-                  subtitle: Text(_notifStatusLabel ?? (_askedNotifications ? 'Enabled' : 'Recommended for timely alerts')),
+                  subtitle: Text(_notifStatusLabel ??
+                      (_askedNotifications
+                          ? 'Enabled'
+                          : 'Recommended for timely alerts')),
                   trailing: _askedNotifications
                       ? const Icon(Icons.check_circle, color: Colors.green)
                       : FilledButton(
-                          onPressed: _requestNotifications,
+                          onPressed: _busy ? null : _requestNotifications,
                           child: const Text('Enable'),
                         ),
                 ),
               ),
               const Spacer(),
               FilledButton.icon(
-                onPressed: _continue,
+                onPressed: _busy ? null : _continue,
                 icon: const Icon(Icons.arrow_forward),
                 label: const Text('Continue'),
               ),

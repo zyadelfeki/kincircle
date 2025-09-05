@@ -1,0 +1,42 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'dev.flutter.flutter-gradle-plugin'
+}
+
+android {
+    namespace 'com.example.kincircle'
+    compileSdk 36
+    ndkVersion flutter.ndkVersion
+
+    defaultConfig {
+        applicationId 'com.zyad.kincircle'
+    // Bump minSdk to satisfy transitive plugin requirements (e.g., activity_recognition_flutter requires >=26)
+    minSdkVersion 26
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode flutter.versionCode
+        versionName flutter.versionName
+        multiDexEnabled true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+        }
+    }
+}
+
+// ...existing code...
+
+dependencies {
+    implementation 'androidx.multidex:multidex:2.0.1'
+}

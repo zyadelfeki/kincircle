@@ -32,11 +32,15 @@ class ManageInvitesScreen extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.inbox_outlined, size: 48, color: Theme.of(context).colorScheme.primary),
+                    Icon(Icons.inbox_outlined,
+                        size: 48, color: Theme.of(context).colorScheme.primary),
                     const SizedBox(height: 12),
-                    Text('No invite activity yet', style: Theme.of(context).textTheme.titleMedium),
+                    Text('No invite activity yet',
+                        style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    const Text('Accept or decline an invite to see events here.', textAlign: TextAlign.center),
+                    const Text(
+                        'Accept or decline an invite to see events here.',
+                        textAlign: TextAlign.center),
                   ],
                 ),
               ),
@@ -53,7 +57,9 @@ class ManageInvitesScreen extends StatelessWidget {
               final ts = data['timestamp'];
               final tsText = ts == null
                   ? ''
-                  : (ts is Timestamp ? ts.toDate().toLocal().toString() : ts.toString());
+                  : (ts is Timestamp
+                      ? ts.toDate().toLocal().toString()
+                      : ts.toString());
               return ListTile(
                 title: Text('$event · $inviteId'),
                 subtitle: Text(uid.isEmpty ? '' : uid),
@@ -74,7 +80,8 @@ class ManageInvitesScreen extends StatelessWidget {
                         if (value == 'open') {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => AcceptInviteScreen(inviteId: inviteId),
+                              builder: (_) =>
+                                  AcceptInviteScreen(inviteId: inviteId),
                             ),
                           );
                         } else if (value == 'copy') {
@@ -91,9 +98,11 @@ class ManageInvitesScreen extends StatelessWidget {
                         }
                       },
                       itemBuilder: (context) => const [
-                        PopupMenuItem(value: 'open', child: Text('Open invite')),
+                        PopupMenuItem(
+                            value: 'open', child: Text('Open invite')),
                         PopupMenuItem(value: 'copy', child: Text('Copy ID')),
-                        PopupMenuItem(value: 'copylink', child: Text('Copy link')),
+                        PopupMenuItem(
+                            value: 'copylink', child: Text('Copy link')),
                       ],
                     ),
                   ],
