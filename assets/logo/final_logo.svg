@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .ring-blue { fill: #2196F3; }
+      .ring-green { fill: #4CAF50; }
+    </style>
+  </defs>
+  
+  <!-- Background (transparent) -->
+  <rect width="1024" height="1024" fill="none"/>
+  
+  <!-- Connected Rings Logo -->
+  <g transform="translate(512, 512)">
+    
+    <!-- Blue Ring (Left/Primary) -->
+    <circle cx="-80" cy="0" r="180" 
+            fill="none" 
+            stroke="#2196F3" 
+            stroke-width="60" 
+            class="ring-blue"/>
+    
+    <!-- Green Ring (Right/Secondary) - Interlocked -->
+    <circle cx="80" cy="0" r="180" 
+            fill="none" 
+            stroke="#4CAF50" 
+            stroke-width="60" 
+            class="ring-green"/>
+    
+    <!-- Intersection Enhancement for Visual Clarity -->
+    <g>
+      <!-- Blue ring segment over green (creating interlocking effect) -->
+      <path d="M -80 -180 A 180 180 0 0 1 20 -155" 
+            fill="none" 
+            stroke="#2196F3" 
+            stroke-width="62" 
+            stroke-linecap="round"/>
+      
+      <!-- Green ring segment over blue (creating interlocking effect) -->
+      <path d="M 80 180 A 180 180 0 0 1 -20 155" 
+            fill="none" 
+            stroke="#4CAF50" 
+            stroke-width="62" 
+            stroke-linecap="round"/>
+    </g>
+    
+  </g>
+  
+  <!-- Logo Metadata -->
+  <metadata>
+    <title>KinCircle Connected Rings Logo</title>
+    <description>Two interlocking rings in blue and green representing family connection and trust</description>
+    <creator>KinCircle Development Team</creator>
+    <created>2025-09-06</created>
+  </metadata>
+</svg>
