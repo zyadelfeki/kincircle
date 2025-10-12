@@ -66,6 +66,28 @@ service cloud.firestore {
       allow update, delete: if false; // Events cannot be modified or deleted via client
     }
 
+    // Emergency contacts collection
+    match /emergency_contacts/{contactId} {
+      allow read: if isSignedIn() && isOwner(resource.data.userId);
+      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+      allow update: if isSignedIn() && isOwner(resource.data.userId);
+      allow delete: if isSignedIn() && isOwner(resource.data.userId);
+    }
+
+    // Emergency events collection (read-only for users, created by service)
+    match /emergency_events/{eventId} {
+      allow read: if isSignedIn() && isOwner(resource.data.userId);
+      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+      allow update, delete: if false; // Events cannot be modified or deleted via client
+    }
+
+    // Emergency notifications collection (read-only for users)
+    match /emergency_notifications/{notificationId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false; // Notifications cannot be modified or deleted via client
+    }
+
     // Deny access to all other documents
     match /{document=**} {
       allow read, write: if false;
