@@ -22,6 +22,7 @@ import 'screens/family/accept_invite_screen.dart';
 import 'screens/family/manage_invites_screen.dart';
 import 'screens/geofencing/add_geofence_screen.dart';
 import 'screens/driving/driver_safety_hub_screen.dart';
+import 'screens/emergency/emergency_contacts_screen.dart';
 import 'services/driver_safety/driver_safety_service.dart';
 import 'services/auth_service.dart';
 import 'services/remote_config_service.dart';
@@ -195,6 +196,7 @@ class _KinCircleAppState extends State<KinCircleApp> {
           '/alerts': (context) => const AlertsScreen(),
           '/add-geofence': (context) => const AddGeofenceScreen(),
           '/driver-safety': (context) => const DriverSafetyHubScreen(),
+          '/emergency-contacts': (context) => const EmergencyContactsScreen(),
           '/accept-invite': (context) => const Scaffold(),
           '/manage-invites': (context) => const ManageInvitesScreen(),
           '/diagnostics': (context) => const DiagnosticsScreen(),

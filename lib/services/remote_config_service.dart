@@ -21,6 +21,9 @@ class RemoteConfigService {
       'driver_safety_enabled': true,
       'driver_safety_threshold_brake': 0.7,
       'driver_safety_threshold_accel': 0.7,
+      // Emergency Response feature flags
+      'emergency_response_enabled': true,
+      'wandering_prediction_enabled': true,
     });
 
     await _remoteConfig.setConfigSettings(RemoteConfigSettings(
@@ -68,6 +71,20 @@ class RemoteConfigService {
 
   Future<void> setDriverSafetyEnabled(bool enabled) async {
     await _remoteConfig.setDefaults({'driver_safety_enabled': enabled});
+    await _remoteConfig.fetchAndActivate();
+  }
+
+  // Emergency Response flags
+  bool get emergencyResponseEnabled => _remoteConfig.getBool('emergency_response_enabled');
+  bool get wanderingPredictionEnabled => _remoteConfig.getBool('wandering_prediction_enabled');
+
+  Future<void> setEmergencyResponseEnabled(bool enabled) async {
+    await _remoteConfig.setDefaults({'emergency_response_enabled': enabled});
+    await _remoteConfig.fetchAndActivate();
+  }
+
+  Future<void> setWanderingPredictionEnabled(bool enabled) async {
+    await _remoteConfig.setDefaults({'wandering_prediction_enabled': enabled});
     await _remoteConfig.fetchAndActivate();
   }
 }
