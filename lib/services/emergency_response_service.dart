@@ -2,16 +2,37 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/emergency_contact.dart';
-import '../models/behavioral_data.dart';
+
+/// Emergency risk levels
+enum EmergencyRiskLevel { low, medium, high, critical }
+
+/// Simple emergency alert data
+class EmergencyAlert {
+  final double currentLat;
+  final double currentLng;
+  final EmergencyRiskLevel riskLevel;
+  final int? estimatedTimeUntilDanger;
+  final double? predictedDirection;
+  final List<String> riskFactors;
+
+  EmergencyAlert({
+    required this.currentLat,
+    required this.currentLng,
+    required this.riskLevel,
+    this.estimatedTimeUntilDanger,
+    this.predictedDirection,
+    this.riskFactors = const [],
+  });
+}
 
 /// Emergency Response Service - AI-powered crisis coordination
 class EmergencyResponseService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Main entry point: Trigger emergency response based on wandering alert
+  /// Main entry point: Trigger emergency response based on emergency alert
   static Future<EmergencyResponse> triggerEmergencyResponse({
     required String userId,
-    required WanderingAlert alert,
+    required EmergencyAlert alert,
   }) async {
     // Create response record
     final response = EmergencyResponse(
@@ -34,13 +55,13 @@ class EmergencyResponseService {
 
     // Execute appropriate cascade based on risk level
     switch (alert.riskLevel) {
-      case WanderingRiskLevel.medium:
+      case EmergencyRiskLevel.medium:
         await _executeMediumRiskResponse(response, contacts, alert);
         break;
-      case WanderingRiskLevel.high:
+      case EmergencyRiskLevel.high:
         await _executeHighRiskResponse(response, contacts, alert);
         break;
-      case WanderingRiskLevel.critical:
+      case EmergencyRiskLevel.critical:
         await _executeCriticalRiskResponse(response, contacts, alert);
         break;
       default:
@@ -55,7 +76,7 @@ class EmergencyResponseService {
   static Future<void> _executeMediumRiskResponse(
     EmergencyResponse response,
     List<EmergencyContact> contacts,
-    WanderingAlert alert,
+    EmergencyAlert alert,
   ) async {
     // 1. Contact primary family members (top 2 by priority)
     final primaryContacts = contacts
@@ -81,7 +102,7 @@ class EmergencyResponseService {
   static Future<void> _executeHighRiskResponse(
     EmergencyResponse response,
     List<EmergencyContact> contacts,
-    WanderingAlert alert,
+    EmergencyAlert alert,
   ) async {
     // 1. Contact ALL family members
     final allFamily = contacts.where((c) =>
@@ -126,7 +147,7 @@ class EmergencyResponseService {
   static Future<void> _executeCriticalRiskResponse(
     EmergencyResponse response,
     List<EmergencyContact> contacts,
-    WanderingAlert alert,
+    EmergencyAlert alert,
   ) async {
     // 1. IMMEDIATE 911 CALL
     final emergency911 =
@@ -167,7 +188,7 @@ class EmergencyResponseService {
   /// Contact a person using their preferred methods
   static Future<bool> _contactPerson(
     EmergencyContact contact,
-    WanderingAlert alert,
+    EmergencyAlert alert,
     String urgencyLevel,
   ) async {
     try {
@@ -205,7 +226,7 @@ class EmergencyResponseService {
   /// Make phone call
   static Future<bool> _makePhoneCall(
     EmergencyContact contact,
-    WanderingAlert alert,
+    EmergencyAlert alert,
     String urgencyLevel,
   ) async {
     try {
@@ -235,7 +256,7 @@ class EmergencyResponseService {
   /// Send SMS message
   static Future<bool> _sendSMS(
     EmergencyContact contact,
-    WanderingAlert alert,
+    EmergencyAlert alert,
     String urgencyLevel,
   ) async {
     try {
@@ -260,7 +281,7 @@ class EmergencyResponseService {
   /// Send email
   static Future<bool> _sendEmail(
     EmergencyContact contact,
-    WanderingAlert alert,
+    EmergencyAlert alert,
     String urgencyLevel,
   ) async {
     if (contact.email == null) return false;
@@ -292,7 +313,7 @@ class EmergencyResponseService {
   /// Contact medical professional with specialized alert
   static Future<bool> _contactMedicalProfessional(
     EmergencyContact medical,
-    WanderingAlert alert,
+    EmergencyAlert alert,
   ) async {
     return await _contactPerson(medical, alert, 'MEDICAL_EMERGENCY');
   }
@@ -300,7 +321,7 @@ class EmergencyResponseService {
   /// Call 911
   static Future<bool> _call911(
     EmergencyContact emergency911,
-    WanderingAlert alert,
+    EmergencyAlert alert,
   ) async {
     try {
       final Uri phoneUri = Uri(scheme: 'tel', path: '911');
@@ -327,7 +348,7 @@ class EmergencyResponseService {
   /// Generate context-aware emergency message
   static String _generateEmergencyMessage(
     EmergencyContact contact,
-    WanderingAlert alert,
+    EmergencyAlert alert,
     String urgencyLevel,
   ) {
     final location =
@@ -443,28 +464,28 @@ Contact family coordinator or respond to this emergency.''';
 
   static Future<void> _sendLocationToContacts(
     List<EmergencyContact> contacts,
-    WanderingAlert alert,
+    EmergencyAlert alert,
   ) async {
     // TODO: Send real-time location updates
   }
 
   static Future<void> _activateLiveLocationSharing(
     String userId,
-    WanderingAlert alert,
+    EmergencyAlert alert,
   ) async {
     // TODO: Enable live location streaming
   }
 
   static Future<void> _activateEmergencyBeacon(
     String userId,
-    WanderingAlert alert,
+    EmergencyAlert alert,
   ) async {
     // TODO: Maximum frequency tracking + beacon mode
   }
 
   static Future<void> _broadcastMedicalInfo(
     List<EmergencyContact> contacts,
-    WanderingAlert alert,
+    EmergencyAlert alert,
   ) async {
     // TODO: Send medical information to responders
   }
@@ -476,7 +497,7 @@ Contact family coordinator or respond to this emergency.''';
     // TODO: Create group chat for coordination
   }
 
-  static Future<void> _prepare911Info(WanderingAlert alert) async {
+  static Future<void> _prepare911Info(EmergencyAlert alert) async {
     // TODO: Prepare information packet for 911 dispatcher
   }
 
@@ -488,7 +509,7 @@ Contact family coordinator or respond to this emergency.''';
     // TODO: Escalate response to next level
   }
 
-  static Future<void> _emergencyFallback(WanderingAlert alert) async {
+  static Future<void> _emergencyFallback(EmergencyAlert alert) async {
     // Last resort: Direct 911 call if all systems fail
     final Uri phoneUri = Uri(scheme: 'tel', path: '911');
     if (await canLaunchUrl(phoneUri)) {

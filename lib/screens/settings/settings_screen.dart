@@ -259,6 +259,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           const Divider(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Text('Safety & Emergency',
+                style: Theme.of(context).textTheme.titleSmall),
+          ),
+          ListTile(
+            leading: Icon(Icons.emergency, color: Colors.red.shade700),
+            title: const Text('🚨 Emergency Contacts'),
+            subtitle: const Text('Crisis coordination & response'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.of(context).pushNamed('/emergency-contacts');
+            },
+          ),
+          const Divider(),
           ListTile(
             title: const Text('Manage Invites (Debug)'),
             leading: const Icon(Icons.bug_report_outlined),

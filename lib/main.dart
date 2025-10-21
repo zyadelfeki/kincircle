@@ -43,6 +43,7 @@ import 'utils/constants.dart';
 import 'screens/account/profile_management_screen.dart';
 import 'screens/account/subscription_management_screen.dart';
 import 'screens/account/pro_paywall_screen.dart';
+import 'screens/emergency/emergency_contacts_screen.dart';
 
 Future<void> main() async {
   if (kDebugMode) {
@@ -282,6 +283,7 @@ class _KinCircleAppState extends State<KinCircleApp> {
               '/subscription': (context) =>
                   const SubscriptionManagementScreen(),
               '/paywall': (context) => const ProPaywallScreen(),
+              '/emergency-contacts': (context) => const EmergencyContactsScreen(),
             },
             builder: (context, widget) {
               // Brand-aligned fatal error UI with retry and support
