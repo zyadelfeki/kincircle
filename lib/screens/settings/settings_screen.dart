@@ -293,6 +293,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Navigator.of(context).pushNamed('/community/feed');
                     },
                   ),
+                  ListTile(
+                    leading: const Icon(Icons.analytics),
+                    title: const Text('Wellbeing & Analytics'),
+                    subtitle: const Text('Family health insights and trends'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.of(context).pushNamed('/analytics/wellbeing');
+                    },
+                  ),
                 ],
               );
             },

@@ -51,8 +51,10 @@ import 'services/feature_unlock_service.dart';
 import 'services/sensory_regulation_service.dart';
 import 'services/companion_service.dart';
 import 'services/social_contagion_service.dart';
+import 'services/wellbeing_analytics_service.dart';
 import 'design/dark_academia_theme.dart';
 import 'screens/emotion_feed_screen.dart';
+import 'screens/analytics/wellbeing_dashboard_screen.dart';
 import 'widgets/companion_widgets.dart';
 
 Future<void> main() async {
@@ -187,6 +189,18 @@ Future<void> main() async {
   } catch (e, st) {
     if (kDebugMode) {
       debugPrint('!!! SocialContagionService init failed: $e\n$st');
+    }
+  }
+
+  // Initialize WellbeingAnalyticsService for family health tracking
+  try {
+    await WellbeingAnalyticsService().initialize();
+    if (kDebugMode) {
+      debugPrint('--- WellbeingAnalyticsService initialized ---');
+    }
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('!!! WellbeingAnalyticsService init failed: $e\n$st');
     }
   }
 
@@ -327,6 +341,9 @@ class _KinCircleAppState extends State<KinCircleApp> {
         ChangeNotifierProvider<SocialContagionService>(
           create: (_) => SocialContagionService(),
         ),
+        ChangeNotifierProvider<WellbeingAnalyticsService>(
+          create: (_) => WellbeingAnalyticsService(),
+        ),
       ],
       child: Builder(
         builder: (context) {
@@ -380,6 +397,7 @@ class _KinCircleAppState extends State<KinCircleApp> {
               '/settings/sensory-controls': (context) => const SensoryControlsScreen(),
               '/community/feed': (context) => const EmotionFeedScreen(),
               '/companion/select': (context) => const CompanionSelectionScreen(),
+              '/analytics/wellbeing': (context) => const WellbeingDashboardScreen(),
             },
             builder: (context, widget) {
               // Brand-aligned fatal error UI with retry and support
