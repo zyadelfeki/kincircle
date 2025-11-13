@@ -8,6 +8,9 @@ import 'ai_settings_screen.dart';
 import '../family/manage_invites_screen.dart';
 import '../../services/theme_controller.dart';
 import 'package:provider/provider.dart';
+import '../../services/age_detection_service.dart';
+import '../../services/feature_unlock_service.dart';
+import '../../services/companion_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -201,6 +204,102 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Divider(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Text('Accessibility',
+                style: Theme.of(context).textTheme.titleSmall),
+          ),
+          Consumer<AgeDetectionService>(
+            builder: (context, ageDetection, _) {
+              return Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.accessibility_new),
+                    title: const Text('Elderly UI Mode'),
+                    subtitle: Text(
+                      ageDetection.isElderlyMode
+                          ? 'Active - Larger text and buttons'
+                          : 'Inactive - Will auto-activate when detected',
+                    ),
+                    trailing: Switch(
+                      value: ageDetection.isElderlyMode,
+                      onChanged: (val) {
+                        if (val) {
+                          ageDetection.setManualCategory(AgeCategory.elderly);
+                        } else {
+                          ageDetection.setManualCategory(AgeCategory.young);
+                        }
+                      },
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.support_agent),
+                    title: const Text('Remote Tech Support'),
+                    subtitle: const Text('Get help from family members'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.of(context).pushNamed('/support/remote');
+                    },
+                  ),
+                  Consumer<FeatureUnlockService>(
+                    builder: (context, featureUnlock, _) {
+                      final progress = featureUnlock.progressPercentage;
+                      final totalScore = featureUnlock.totalScore;
+                      final maxScore = featureUnlock.maxScore;
+
+                      return ListTile(
+                        leading: const Icon(Icons.emoji_events),
+                        title: const Text('Feature Progress'),
+                        subtitle: Text(
+                          '$totalScore / $maxScore points - ${(progress * 100).toInt()}% unlocked',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          _showFeatureProgressDialog(context, featureUnlock);
+                        },
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.spa),
+                    title: const Text('Sensory & Comfort'),
+                    subtitle: const Text('Accessibility for neurodivergent users'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.of(context).pushNamed('/settings/sensory-controls');
+                    },
+                  ),
+                  Consumer<CompanionService>(
+                    builder: (context, companion, _) {
+                      return ListTile(
+                        leading: const Icon(Icons.favorite),
+                        title: const Text('Your Companion'),
+                        subtitle: Text(
+                          companion.personality == null
+                              ? 'Choose your AI companion'
+                              : '${companion.profile.name} - Bond: ${companion.relationshipScore}/100',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.of(context).pushNamed('/companion/select');
+                        },
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.auto_awesome),
+                    title: const Text('Community Moments'),
+                    subtitle: const Text('Share and celebrate with others'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.of(context).pushNamed('/community/feed');
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child:
                 Text('Account', style: Theme.of(context).textTheme.titleSmall),
           ),
@@ -285,6 +384,92 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showFeatureProgressDialog(
+      BuildContext context, FeatureUnlockService featureUnlock) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Feature Unlock Progress'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Total Score: ${featureUnlock.totalScore} / ${featureUnlock.maxScore}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                LinearProgressIndicator(
+                  value: featureUnlock.progressPercentage,
+                  backgroundColor: Colors.grey.shade300,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(context).primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Unlocked Features:',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...featureUnlock.getUnlockedFeatures().map((featureId) {
+                  final config = featureUnlock.getFeatureConfig(featureId);
+                  return ListTile(
+                    leading: Text(
+                      config?.icon ?? '✅',
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                    title: Text(config?.name ?? featureId.name),
+                    subtitle: Text(config?.description ?? ''),
+                    dense: true,
+                  );
+                }),
+                const SizedBox(height: 16),
+                const Text(
+                  'Locked Features:',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...featureUnlock.getLockedFeatures().map((featureId) {
+                  final config = featureUnlock.getFeatureConfig(featureId);
+                  final state = featureUnlock.getFeatureState(featureId);
+                  return ListTile(
+                    leading: Text(
+                      '🔒',
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                    title: Text(config?.name ?? featureId.name),
+                    subtitle: Text(
+                      '${state?.progressCount ?? 0} / ${config?.threshold ?? 0} - ${config?.description ?? ''}',
+                    ),
+                    dense: true,
+                  );
+                }),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

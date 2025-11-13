@@ -22,6 +22,12 @@ import '../driver_safety/driver_safety_summary_screen.dart';
 import '../../widgets/empty_state.dart';
 import '../../services/ui_prefs.dart';
 import '../../widgets/error_handler.dart';
+import '../../widgets/elderly_ui_wrapper.dart';
+import '../../services/age_detection_service.dart';
+import '../../services/sensory_regulation_service.dart';
+import '../../design/biophilic_design.dart';
+import '../../widgets/companion_widgets.dart';
+import 'package:provider/provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -411,43 +417,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final ageDetection = Provider.of<AgeDetectionService>(context);
+    final sensoryService = Provider.of<SensoryRegulationService>(context);
+    
+    // Track interaction for age detection
+    ageDetection.startSession();
+    
+    final Widget scaffoldContent = Scaffold(
       appBar: AppBar(
         title: const Text('Kin Arc'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.safety_check),
-            onPressed: () async {
-              final allowed = await ProGatingService()
-                  .ensureProFeature(context, 'Driver Safety Reports');
-              if (allowed && context.mounted) {
-                Navigator.of(context).pushNamed('/driver-safety');
-              }
-            },
-            tooltip: 'Driver Safety',
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_add),
-            onPressed: () => Navigator.of(context)
-                .pushNamed(_hasFamily ? '/invite' : '/create-family'),
-            tooltip: _hasFamily ? 'Invite Members' : 'Create Family',
-          ),
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            onPressed: () => Navigator.of(context).pushNamed('/help'),
-            tooltip: 'Help',
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.of(context).pushNamed('/settings'),
-            tooltip: 'Settings',
-          ),
-          // Log Out is available in Settings; keep app bar focused
-        ],
-      ),
-      body: Stack(
-        children: [
-          // Base layer: full-screen Google Map with overlays
+            IconButton(
+              icon: const Icon(Icons.safety_check),
+              onPressed: () async {
+                ageDetection.recordTap();
+                final allowed = await ProGatingService()
+                    .ensureProFeature(context, 'Driver Safety Reports');
+                if (allowed && context.mounted) {
+                  Navigator.of(context).pushNamed('/driver-safety');
+                }
+              },
+              tooltip: 'Driver Safety',
+            ),
+            IconButton(
+              icon: const Icon(Icons.person_add),
+              onPressed: () {
+                ageDetection.recordTap();
+                Navigator.of(context)
+                    .pushNamed(_hasFamily ? '/invite' : '/create-family');
+              },
+              tooltip: _hasFamily ? 'Invite Members' : 'Create Family',
+            ),
+            IconButton(
+              icon: const Icon(Icons.help_outline),
+              onPressed: () {
+                ageDetection.recordTap();
+                Navigator.of(context).pushNamed('/help');
+              },
+              tooltip: 'Help',
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                ageDetection.recordTap();
+                Navigator.of(context).pushNamed('/settings');
+              },
+              tooltip: 'Settings',
+            ),
+            // Log Out is available in Settings; keep app bar focused
+          ],
+        ),
+        body: Stack(
+          children: [
+            // Base layer: full-screen Google Map with overlays
           Positioned.fill(child: _buildMapPage()),
           // Family Sheet: layered contextual info
           _buildFamilySheet(),
@@ -457,6 +479,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       // floatingActionButton removed in favor of docked positioning within the Stack
+    );
+
+    // Apply biophilic design overlay if stimulation level is low
+    Widget wrappedContent = scaffoldContent;
+    if (sensoryService.useBiophilicDesign()) {
+      wrappedContent = Stack(
+        children: [
+          scaffoldContent,
+          // Nature pattern overlay
+          Positioned.fill(
+            child: IgnorePointer(
+              child: NaturePatternOverlay(
+                opacity: 0.05,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return ElderlyUIWrapper(
+      child: wrappedContent,
     );
   }
 
@@ -766,6 +810,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   physics: const ClampingScrollPhysics(),
                   children: [
+                    const CompanionDashboardWidget(),
+                    const SizedBox(height: 12),
                     _buildRecapCard(),
                     const SizedBox(height: 12),
                     _buildDriverSafetyCard(),

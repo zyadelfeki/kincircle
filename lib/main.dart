@@ -44,6 +44,16 @@ import 'screens/account/profile_management_screen.dart';
 import 'screens/account/subscription_management_screen.dart';
 import 'screens/account/pro_paywall_screen.dart';
 import 'screens/emergency/emergency_contacts_screen.dart';
+import 'screens/support/remote_support_screen.dart';
+import 'screens/settings/sensory_controls_screen.dart';
+import 'services/age_detection_service.dart';
+import 'services/feature_unlock_service.dart';
+import 'services/sensory_regulation_service.dart';
+import 'services/companion_service.dart';
+import 'services/social_contagion_service.dart';
+import 'design/dark_academia_theme.dart';
+import 'screens/emotion_feed_screen.dart';
+import 'widgets/companion_widgets.dart';
 
 Future<void> main() async {
   if (kDebugMode) {
@@ -119,6 +129,67 @@ Future<void> main() async {
       debugPrint('!!! TripServiceManager init failed: $e\n$st');
     }
   }
+
+  // Initialize AgeDetectionService for elderly UI adaptation
+  try {
+    await AgeDetectionService().initialize();
+    if (kDebugMode) {
+      debugPrint('--- AgeDetectionService initialized ---');
+    }
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('!!! AgeDetectionService init failed: $e\n$st');
+    }
+  }
+
+  // Initialize FeatureUnlockService for progressive feature reveals
+  try {
+    await FeatureUnlockService().initialize();
+    if (kDebugMode) {
+      debugPrint('--- FeatureUnlockService initialized ---');
+    }
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('!!! FeatureUnlockService init failed: $e\n$st');
+    }
+  }
+
+  // Initialize SensoryRegulationService for neurodivergent accessibility
+  try {
+    await SensoryRegulationService().initialize();
+    if (kDebugMode) {
+      debugPrint('--- SensoryRegulationService initialized ---');
+    }
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('!!! SensoryRegulationService init failed: $e\n$st');
+    }
+  }
+
+  // Initialize CompanionService for AI companion features
+  try {
+    await CompanionService().initialize();
+    if (kDebugMode) {
+      debugPrint('--- CompanionService initialized ---');
+    }
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('!!! CompanionService init failed: $e\n$st');
+    }
+  }
+
+  // Initialize SocialContagionService for community positivity
+  try {
+    await SocialContagionService().initialize();
+    if (kDebugMode) {
+      debugPrint('--- SocialContagionService initialized ---');
+    }
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('!!! SocialContagionService init failed: $e\n$st');
+    }
+  }
+
   // Pass uncaught errors to Crashlytics if Firebase is initialized.
   FlutterError.onError = (errorDetails) {
     try {
@@ -241,15 +312,36 @@ class _KinCircleAppState extends State<KinCircleApp> {
         ChangeNotifierProvider<DriverSafetyService>(
           create: (_) => DriverSafetyService(),
         ),
+        ChangeNotifierProvider<AgeDetectionService>(
+          create: (_) => AgeDetectionService(),
+        ),
+        ChangeNotifierProvider<FeatureUnlockService>(
+          create: (_) => FeatureUnlockService(),
+        ),
+        ChangeNotifierProvider<SensoryRegulationService>(
+          create: (_) => SensoryRegulationService(),
+        ),
+        ChangeNotifierProvider<CompanionService>(
+          create: (_) => CompanionService(),
+        ),
+        ChangeNotifierProvider<SocialContagionService>(
+          create: (_) => SocialContagionService(),
+        ),
       ],
       child: Builder(
         builder: (context) {
           final pro = context.watch<ThemeController>().isPro;
-          // Recreate themes to reflect Pro accent dynamically
-          final ThemeData light =
-              kinTheme(brightness: Brightness.light, pro: pro);
-          final ThemeData dark =
-              kinTheme(brightness: Brightness.dark, pro: pro);
+          final sensoryService = context.watch<SensoryRegulationService>();
+          final useDarkAcademia = sensoryService.profile.darkAcademiaMode;
+          
+          // Recreate themes to reflect Pro accent dynamically or Dark Academia
+          final ThemeData light = useDarkAcademia
+              ? DarkAcademiaTheme.moodyCalmTheme
+              : kinTheme(brightness: Brightness.light, pro: pro);
+          final ThemeData dark = useDarkAcademia
+              ? DarkAcademiaTheme.moodyCalmTheme
+              : kinTheme(brightness: Brightness.dark, pro: pro);
+          
           return MaterialApp(
             title: 'Kin Arc',
             theme: light,
@@ -284,6 +376,10 @@ class _KinCircleAppState extends State<KinCircleApp> {
                   const SubscriptionManagementScreen(),
               '/paywall': (context) => const ProPaywallScreen(),
               '/emergency-contacts': (context) => const EmergencyContactsScreen(),
+              '/support/remote': (context) => const RemoteSupportScreen(),
+              '/settings/sensory-controls': (context) => const SensoryControlsScreen(),
+              '/community/feed': (context) => const EmotionFeedScreen(),
+              '/companion/select': (context) => const CompanionSelectionScreen(),
             },
             builder: (context, widget) {
               // Brand-aligned fatal error UI with retry and support
