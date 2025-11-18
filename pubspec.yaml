@@ -68,4 +68,6 @@ flutter_launcher_icons:
   android: true
   ios: true
   remove_alpha_ios: true
-  image_path: assets/icon/kin_arc_launcher_icon.png
+  image_path: assets/logo/kincircle_logo_final.svg
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/logo/kincircle_logo_final.svg
