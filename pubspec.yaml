@@ -60,14 +60,13 @@ flutter:
   assets:
   - assets/models/
   - docs/FAQ.md
-  - assets/icon/kin_arc_final.svg
-  - assets/logo/
+  - assets/logo/Gemini_Generated_Image_7egx8i7egx8i7egx.png
   - assets/google_g.png
 
 flutter_launcher_icons:
   android: true
   ios: true
   remove_alpha_ios: true
-  image_path: assets/logo/kincircle_logo_final.svg
+  image_path: assets/logo/Gemini_Generated_Image_7egx8i7egx8i7egx.png
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: assets/logo/kincircle_logo_final.svg
+  adaptive_icon_foreground: assets/logo/Gemini_Generated_Image_7egx8i7egx8i7egx.png
