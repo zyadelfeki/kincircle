@@ -308,7 +308,7 @@ class _WellbeingDashboardScreenState extends State<WellbeingDashboardScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: insight.color.withOpacity(0.2),
+              backgroundColor: insight.color.withValues(alpha: 0.2),
               child: Icon(insight.icon, color: insight.color),
             ),
             title: Text(
@@ -345,7 +345,7 @@ class _WellbeingDashboardScreenState extends State<WellbeingDashboardScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: rec.categoryColor.withOpacity(0.2),
+              backgroundColor: rec.categoryColor.withValues(alpha: 0.2),
               child: Icon(rec.icon, color: rec.categoryColor),
             ),
             title: Row(
@@ -377,7 +377,7 @@ class _WellbeingDashboardScreenState extends State<WellbeingDashboardScreen> {
                         rec.categoryLabel,
                         style: const TextStyle(fontSize: 10),
                       ),
-                      backgroundColor: rec.categoryColor.withOpacity(0.2),
+                      backgroundColor: rec.categoryColor.withValues(alpha: 0.2),
                       visualDensity: VisualDensity.compact,
                     ),
                     const SizedBox(width: 8),
@@ -392,7 +392,7 @@ class _WellbeingDashboardScreenState extends State<WellbeingDashboardScreen> {
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: rec.priorityColor.withOpacity(0.2),
+                color: rec.priorityColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(

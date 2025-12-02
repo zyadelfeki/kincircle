@@ -130,8 +130,8 @@ class _SensoryControlsScreenState extends State<SensoryControlsScreen> {
       return BiophilicCard(child: cardWidget);
     }
     return SensoryCard(
-      child: cardWidget,
       enableHaptics: service.shouldUseHaptics,
+      child: cardWidget,
     );
   }
 
@@ -473,8 +473,8 @@ class _SensoryControlsScreenState extends State<SensoryControlsScreen> {
       return BiophilicCard(child: content);
     }
     return SensoryCard(
-      child: content,
       enableHaptics: service.shouldUseHaptics,
+      child: content,
     );
   }
 

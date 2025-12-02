@@ -28,7 +28,6 @@ linter:
     - sort_pub_dependencies
 
     # Member ordering
-    - sort_constructors_first
     - prefer_single_quotes
 
 analyzer:

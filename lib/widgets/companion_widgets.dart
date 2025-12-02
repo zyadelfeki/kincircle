@@ -63,7 +63,7 @@ class _CompanionAvatarState extends State<CompanionAvatar>
           gradient: _getGradientForPersonality(),
           boxShadow: [
             BoxShadow(
-              color: _getColorForPersonality().withOpacity(0.3),
+              color: _getColorForPersonality().withValues(alpha: 0.3),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -188,10 +188,10 @@ class _CompanionMessageBubbleState extends State<CompanionMessageBubble>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: _getColorForPersonality().withOpacity(0.1),
+            color: _getColorForPersonality().withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: _getColorForPersonality().withOpacity(0.3),
+              color: _getColorForPersonality().withValues(alpha: 0.3),
               width: 2,
             ),
           ),
@@ -253,7 +253,7 @@ class CompanionDashboardWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),

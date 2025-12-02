@@ -196,7 +196,6 @@ class WellbeingAnalyticsService extends ChangeNotifier {
 
     for (int i = 1; i < locations.length; i++) {
       final prev = locations[i - 1];
-      final curr = locations[i];
 
       if (prev['speed'] != null) {
         totalSpeed += (prev['speed'] as num).toDouble();

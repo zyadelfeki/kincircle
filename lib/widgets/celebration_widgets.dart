@@ -93,7 +93,7 @@ class _ParticleExplosionState extends State<ParticleExplosion>
 
   void _updateParticles() {
     setState(() {
-      final dt = 0.016; // ~60fps
+      const double dt = 0.016; // ~60fps
       for (var particle in particles) {
         // Update position
         particle.position += particle.velocity * dt;
@@ -139,7 +139,7 @@ class _ParticlePainter extends CustomPainter {
 
     for (var particle in particles) {
       final paint = Paint()
-        ..color = particle.color.withOpacity(particle.life)
+        ..color = particle.color.withValues(alpha: particle.life)
         ..style = PaintingStyle.fill;
 
       canvas.save();
@@ -248,7 +248,7 @@ class _CommunityCelebrationDialogState
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -271,7 +271,7 @@ class _CommunityCelebrationDialogState
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.amber.withOpacity(0.5),
+                            color: Colors.amber.withValues(alpha: 0.5),
                             blurRadius: 20,
                             spreadRadius: 5,
                           ),
@@ -307,7 +307,7 @@ class _CommunityCelebrationDialogState
                             fontSize: 48,
                             fontWeight: FontWeight.bold,
                             foreground: Paint()
-                              ..shader = LinearGradient(
+                              ..shader = const LinearGradient(
                                 colors: [Colors.purple, Colors.blue],
                               ).createShader(
                                 const Rect.fromLTWH(0, 0, 200, 70),
@@ -449,7 +449,7 @@ class _WavePainter extends CustomPainter {
       final opacity = (1.0 - waveProgress) * 0.5;
 
       final paint = Paint()
-        ..color = Colors.blue.withOpacity(opacity)
+        ..color = Colors.blue.withValues(alpha: opacity)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3;
 
@@ -500,7 +500,7 @@ class CelebrationBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.purple.withOpacity(0.3),
+            color: Colors.purple.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

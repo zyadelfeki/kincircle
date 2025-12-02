@@ -126,7 +126,7 @@ class BiophilicCard extends StatelessWidget {
         borderRadius: borderRadius ?? OrganicShapes.pebbleShape,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: elevation * 2,
             offset: Offset(0, elevation),
           ),
@@ -460,7 +460,7 @@ class NatureIconButton extends StatelessWidget {
         customBorder: const CircleBorder(),
         child: Container(
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             shape: BoxShape.circle,
             gradient: BiophilicGradients.natureMorning,
           ),

@@ -243,7 +243,7 @@ class DriverSafetyService extends ChangeNotifier {
     try {
       // Start activity recognition stream
       _activitySub = ActivityRecognition().activityStream().listen((activity) {
-        _isVehicleContext = activity.type == ActivityType.IN_VEHICLE;
+        _isVehicleContext = activity.type == ActivityType.inVehicle;
         if (kDebugMode) {
           print('DriverSafetyService: Activity detected - ${activity.type}, confidence: ${activity.confidence}');
         }

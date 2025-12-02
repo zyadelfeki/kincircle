@@ -196,7 +196,8 @@ class FeatureUnlockService extends ChangeNotifier {
   // Getters
   Map<FeatureId, FeatureUnlockState> get unlockStates => _unlockStates;
   int get totalScore => _totalScore;
-  int get maxScore => _featureConfigs.values.fold(0, (sum, config) => sum + config.unlockScore);
+  int get maxScore =>
+      _featureConfigs.values.fold(0, (accumulated, config) => accumulated + config.unlockScore);
   double get progressPercentage => maxScore > 0 ? _totalScore / maxScore : 0.0;
 
   /// Initialize the service

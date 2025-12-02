@@ -237,6 +237,7 @@ class CompanionService extends ChangeNotifier {
   CompanionPersonality get personality => _personality;
   CompanionProfile get profile => _profile ?? CompanionProfile.forPersonality(_personality);
   int get relationshipScore => _relationshipScore;
+  DateTime? get lastInteraction => _lastInteraction;
   List<String> get recentMessages => _messageHistory;
 
   /// Initialize the service

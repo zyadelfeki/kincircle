@@ -488,7 +488,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           scaffoldContent,
           // Nature pattern overlay
-          Positioned.fill(
+          const Positioned.fill(
             child: IgnorePointer(
               child: NaturePatternOverlay(
                 opacity: 0.05,

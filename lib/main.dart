@@ -32,6 +32,8 @@ import 'services/auth_service.dart';
 import 'services/remote_config_service.dart';
 import 'services/pending_invite_store.dart';
 import 'services/theme_controller.dart';
+import 'services/encryption_service.dart';
+import 'services/privacy_controls_service.dart';
 import 'utils/theme.dart';
 import 'widgets/error_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -52,6 +54,7 @@ import 'services/sensory_regulation_service.dart';
 import 'services/companion_service.dart';
 import 'services/social_contagion_service.dart';
 import 'services/wellbeing_analytics_service.dart';
+import 'screens/privacy/privacy_dashboard_screen.dart';
 import 'design/dark_academia_theme.dart';
 import 'screens/emotion_feed_screen.dart';
 import 'screens/analytics/wellbeing_dashboard_screen.dart';
@@ -117,6 +120,17 @@ Future<void> main() async {
   } catch (e, st) {
     if (kDebugMode) {
       debugPrint('!!! RemoteConfig init failed or timed out: $e\n$st');
+    }
+  }
+
+  try {
+    await EncryptionService.ensureInitialized();
+    if (kDebugMode) {
+      debugPrint('--- EncryptionService initialized ---');
+    }
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('!!! EncryptionService init failed: $e\n$st');
     }
   }
 
@@ -344,6 +358,9 @@ class _KinCircleAppState extends State<KinCircleApp> {
         ChangeNotifierProvider<WellbeingAnalyticsService>(
           create: (_) => WellbeingAnalyticsService(),
         ),
+        ChangeNotifierProvider<PrivacyControlsService>(
+          create: (_) => PrivacyControlsService(),
+        ),
       ],
       child: Builder(
         builder: (context) {
@@ -398,6 +415,7 @@ class _KinCircleAppState extends State<KinCircleApp> {
               '/community/feed': (context) => const EmotionFeedScreen(),
               '/companion/select': (context) => const CompanionSelectionScreen(),
               '/analytics/wellbeing': (context) => const WellbeingDashboardScreen(),
+              '/privacy/dashboard': (context) => const PrivacyDashboardScreen(),
             },
             builder: (context, widget) {
               // Brand-aligned fatal error UI with retry and support

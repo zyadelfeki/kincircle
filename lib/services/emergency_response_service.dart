@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/emergency_contact.dart';
@@ -218,7 +219,7 @@ class EmergencyResponseService {
 
       return true;
     } catch (e) {
-      print('Error contacting ${contact.name}: $e');
+      debugPrint('Error contacting ${contact.name}: $e');
       return false;
     }
   }
@@ -248,7 +249,7 @@ class EmergencyResponseService {
       }
       return false;
     } catch (e) {
-      print('Error making phone call: $e');
+      debugPrint('Error making phone call: $e');
       return false;
     }
   }
@@ -273,7 +274,7 @@ class EmergencyResponseService {
       }
       return false;
     } catch (e) {
-      print('Error sending SMS: $e');
+      debugPrint('Error sending SMS: $e');
       return false;
     }
   }
@@ -305,7 +306,7 @@ class EmergencyResponseService {
       }
       return false;
     } catch (e) {
-      print('Error sending email: $e');
+      debugPrint('Error sending email: $e');
       return false;
     }
   }
@@ -338,9 +339,11 @@ class EmergencyResponseService {
         await launchUrl(phoneUri);
         return true;
       }
+      await _emergencyFallback(alert);
       return false;
     } catch (e) {
-      print('Error calling 911: $e');
+      debugPrint('Error calling 911: $e');
+      await _emergencyFallback(alert);
       return false;
     }
   }
@@ -452,7 +455,7 @@ Contact family coordinator or respond to this emergency.''';
 
       return contacts;
     } catch (e) {
-      print('Error loading emergency contacts: $e');
+      debugPrint('Error loading emergency contacts: $e');
       return [];
     }
   }
@@ -502,11 +505,28 @@ Contact family coordinator or respond to this emergency.''';
   }
 
   static void _scheduleEscalation(String responseId, Duration delay) {
-    // TODO: Implement escalation timer with auto-escalation
+    Future<void>.delayed(delay, () async {
+      try {
+        await _escalateResponse(responseId);
+      } catch (e) {
+        debugPrint('Error escalating response $responseId: $e');
+      }
+    });
   }
 
   static Future<void> _escalateResponse(String responseId) async {
-    // TODO: Escalate response to next level
+    try {
+      await _firestore.collection('emergency_responses').doc(responseId).set(
+        {
+          'status': EmergencyResponseStatus.escalated.name,
+          'notes': 'Auto-escalated after timeout',
+          'resolvedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } catch (e) {
+      debugPrint('Error persisting escalation for $responseId: $e');
+    }
   }
 
   static Future<void> _emergencyFallback(EmergencyAlert alert) async {

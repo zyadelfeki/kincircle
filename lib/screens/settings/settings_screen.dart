@@ -11,6 +11,9 @@ import 'package:provider/provider.dart';
 import '../../services/age_detection_service.dart';
 import '../../services/feature_unlock_service.dart';
 import '../../services/companion_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/privacy_controls_service.dart';
+import '../../services/data_export_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -25,6 +28,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool? _mlAlerts;
   bool? _consentGiven;
   bool _fabTipDisabled = false;
+  bool _privacyLoaded = false;
+  bool _exportingData = false;
 
   @override
   void initState() {
@@ -35,6 +40,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (mounted) setState(() => _consentGiven = v);
     });
     _loadFabTipPref();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initPrivacySettings());
   }
 
   Future<void> _loadFabTipPref() async {
@@ -58,6 +64,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final p = await SharedPreferences.getInstance();
       await p.setBool('fab_actions_label_seen', false);
     } catch (_) {}
+  }
+
+  Future<void> _initPrivacySettings() async {
+    try {
+      final String? userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
+      final privacy = context.read<PrivacyControlsService>();
+      await privacy.loadPrivacySettings(userId);
+      if (!mounted) return;
+      setState(() => _privacyLoaded = true);
+    } catch (_) {}
+  }
+
+  Future<void> _quickExportData() async {
+    setState(() => _exportingData = true);
+    try {
+      final file = await DataExportService.exportUserData(format: 'json');
+      if (!mounted) return;
+      await DataExportService.shareExport(file);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: $error')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _exportingData = false);
+      }
+    }
   }
 
   @override
@@ -116,6 +152,75 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         const Text('Shows premium accent color when active'),
                     value: theme.isPro,
                     onChanged: (v) => theme.setPro(v),
+                  ),
+                ],
+              );
+            },
+          ),
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Text('Privacy & Security',
+                style: Theme.of(context).textTheme.titleSmall),
+          ),
+          Consumer<PrivacyControlsService>(
+            builder: (context, privacy, _) {
+              final bool hasScore = _privacyLoaded && privacy.isLoaded;
+              final int score = hasScore ? privacy.calculatePrivacyScore() : 0;
+              final Color chipColor = score >= 80
+                  ? Colors.green
+                  : score >= 60
+                      ? Colors.orange
+                      : Colors.red;
+              return Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.privacy_tip_outlined),
+                    title: const Text('Privacy & Data'),
+                    subtitle: const Text(
+                        'Control encryption, consent, and GDPR exports'),
+                    trailing: hasScore
+                        ? Chip(
+                            label: Text('$score'),
+                            avatar: const Icon(Icons.shield,
+                                size: 16, color: Colors.white),
+                            backgroundColor: chipColor,
+                            labelStyle: const TextStyle(color: Colors.white),
+                          )
+                        : const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.of(context)
+                        .pushNamed('/privacy/dashboard'),
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextButton.icon(
+                            icon: _exportingData
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.download),
+                            label: Text(
+                                _exportingData ? 'Exporting…' : 'Quick Export'),
+                            onPressed:
+                                _exportingData ? null : () => _quickExportData(),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton(
+                          onPressed: () => Navigator.of(context)
+                              .pushNamed('/privacy/dashboard'),
+                          child: const Text('Manage'),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               );
@@ -269,13 +374,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   Consumer<CompanionService>(
                     builder: (context, companion, _) {
+                      final hasActiveCompanion =
+                          companion.relationshipScore > 0 ||
+                              companion.recentMessages.isNotEmpty;
                       return ListTile(
                         leading: const Icon(Icons.favorite),
                         title: const Text('Your Companion'),
                         subtitle: Text(
-                          companion.personality == null
-                              ? 'Choose your AI companion'
-                              : '${companion.profile.name} - Bond: ${companion.relationshipScore}/100',
+                          hasActiveCompanion
+                              ? '${companion.profile.name} - Bond: ${companion.relationshipScore}/100'
+                              : 'Choose your AI companion',
                         ),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () {
@@ -457,9 +565,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   final config = featureUnlock.getFeatureConfig(featureId);
                   final state = featureUnlock.getFeatureState(featureId);
                   return ListTile(
-                    leading: Text(
+                    leading: const Text(
                       '🔒',
-                      style: const TextStyle(fontSize: 24),
+                      style: TextStyle(fontSize: 24),
                     ),
                     title: Text(config?.name ?? featureId.name),
                     subtitle: Text(

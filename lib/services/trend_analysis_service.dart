@@ -141,7 +141,7 @@ class TrendAnalysisService {
 
     if (consistency < 0.3) {
       // High variability
-      insights.add(Insight(
+      insights.add(const Insight(
         type: InsightType.suggestion,
         title: 'Wellbeing Fluctuating',
         description: 'Your health scores vary significantly day-to-day',
@@ -160,7 +160,7 @@ class TrendAnalysisService {
           recentWeek.length;
 
       if (recentAvg > 75) {
-        insights.add(Insight(
+        insights.add(const Insight(
           type: InsightType.positive,
           title: 'Excellent Week!',
           description: 'Your wellbeing is in the top 20%',

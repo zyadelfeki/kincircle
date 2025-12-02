@@ -30,7 +30,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
       // In production, load from Firestore using EmergencyResponseService.getEmergencyContacts()
       _contacts = _getDemoContacts();
     } catch (e) {
-      print('Error loading contacts: $e');
+      debugPrint('Error loading contacts: $e');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -329,7 +329,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Icon(iconData, color: color, size: 24),

@@ -27,11 +27,9 @@ class DarkAcademiaTheme {
         primary: primaryBrass,
         secondary: accentGold,
         surface: cardVintage,
-        background: backgroundDark,
         onPrimary: textAgedPaper,
         onSecondary: backgroundDark,
         onSurface: textAgedPaper,
-        onBackground: textAgedPaper,
       ),
 
       // Text theme with scholarly serif fonts
@@ -176,7 +174,7 @@ class VintageCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -187,7 +185,7 @@ class VintageCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             DarkAcademiaTheme.cardVintage,
-            DarkAcademiaTheme.cardVintage.withOpacity(0.95),
+            DarkAcademiaTheme.cardVintage.withValues(alpha: 0.95),
           ],
         ),
       ),
@@ -255,7 +253,7 @@ class BrassButton extends StatelessWidget {
           backgroundColor: DarkAcademiaTheme.primaryBrass,
           foregroundColor: DarkAcademiaTheme.textAgedPaper,
           elevation: 6,
-          shadowColor: Colors.black.withOpacity(0.4),
+          shadowColor: Colors.black.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -417,7 +415,7 @@ class BrassIconButton extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: DarkAcademiaTheme.primaryBrass.withOpacity(0.2),
+            color: DarkAcademiaTheme.primaryBrass.withValues(alpha: 0.2),
             border: Border.all(
               color: DarkAcademiaTheme.primaryBrass,
               width: 1.5,

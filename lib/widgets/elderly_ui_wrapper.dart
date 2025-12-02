@@ -192,8 +192,8 @@ class _ElderlyButtonState extends State<ElderlyButton> {
       elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: Colors.black.withOpacity(0.2),
+          side: BorderSide(
+            color: Colors.black.withValues(alpha: 0.2),
           width: 2,
         ),
       ),
@@ -204,11 +204,9 @@ class _ElderlyButtonState extends State<ElderlyButton> {
       onLongPressEnd: widget.enableVoiceGuidance ? _handleLongPressEnd : null,
       child: Container(
         margin: const EdgeInsets.all(8), // Extra spacing between buttons
-        child: AnimatedContainer(
+        child: AnimatedScale(
           duration: const Duration(milliseconds: 200),
-          transform: _isLongPressing
-              ? (Matrix4.identity()..scale(1.05))
-              : Matrix4.identity(),
+          scale: _isLongPressing ? 1.05 : 1.0,
           child: ElevatedButton(
             onPressed: widget.onPressed,
             style: widget.style?.merge(defaultStyle) ?? defaultStyle,
@@ -319,7 +317,7 @@ class ElderlyListTile extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: Colors.grey.withOpacity(0.3),
+                color: Colors.grey.withValues(alpha: 0.3),
               width: 1,
             ),
           ),
@@ -424,10 +422,10 @@ class ElderlyIconButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Colors.grey.withOpacity(0.3),
+              color: Colors.grey.withValues(alpha: 0.3),
               width: 1,
             ),
           ),
@@ -535,7 +533,7 @@ class ElderlyNavigationBar extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),

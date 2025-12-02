@@ -42,7 +42,7 @@ class TripDetectionService {
   }
 
   void _onActivity(ar.ActivityEvent event) {
-    if (event.type == ar.ActivityType.IN_VEHICLE) {
+    if (event.type == ar.ActivityType.inVehicle) {
       if (!_isInTrip) {
         _startTrip();
       }
