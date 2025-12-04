@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/onboarding_prefs.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import '../../utils/constants.dart';
+
+class _OnboardingPage {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String body;
+  
+  const _OnboardingPage({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.body,
+  });
+}
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key, required this.userId});
@@ -17,22 +29,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _index = 0;
   bool _saving = false;
 
-  final _pages = const [
-    (
-      image: AppConstants.brandLogoAsset,
+  static const _pages = [
+    _OnboardingPage(
+      icon: Icons.family_restroom,
+      color: Color(0xFF4CAF50),
       title: 'Together is safer',
-      body:
-          'Create a private circle for your family so everyone can be in the loop.'
+      body: 'Create a private circle for your family so everyone can be in the loop.',
     ),
-    (
-      image: AppConstants.brandLogoAsset,
+    _OnboardingPage(
+      icon: Icons.map_outlined,
+      color: Color(0xFF2196F3),
       title: 'See what matters',
-      body: 'A calm map and timely alerts—no clutter, just peace of mind.'
+      body: 'A calm map and timely alerts - no clutter, just peace of mind.',
     ),
-    (
-      image: AppConstants.brandLogoAsset,
-      title: 'You’re in control',
-      body: 'You choose what to share and when. Change settings anytime.'
+    _OnboardingPage(
+      icon: Icons.shield_outlined,
+      color: Color(0xFF9C27B0),
+      title: 'You are in control',
+      body: 'You choose what to share and when. Change settings anytime.',
     ),
   ];
 
@@ -69,35 +83,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 onPageChanged: (i) => setState(() => _index = i),
                 itemBuilder: (context, i) {
                   final p = _pages[i];
-                  return LayoutBuilder(
-                    builder: (context, constraints) {
-                      final maxH = constraints.maxHeight;
-                      final imageH = (maxH * 0.42).clamp(160, 320);
-                      return Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(p.title,
-                                style: theme.textTheme.headlineSmall,
-                                textAlign: TextAlign.center),
-                            const SizedBox(height: 8),
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(p.title,
+                            style: theme.textTheme.headlineSmall,
+                            textAlign: TextAlign.center),
+                        const SizedBox(height: 8),
                             Text(
                               p.body,
                               style: theme.textTheme.bodyLarge
                                   ?.copyWith(color: theme.hintColor),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 16),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: SizedBox(
-                                height: imageH.toDouble(),
-                                width: double.infinity,
-                                child: SvgPicture.asset(
-                                  p.image,
-                                  fit: BoxFit.contain,
-                                ),
+                            const Spacer(),
+                            Container(
+                              width: 160,
+                              height: 160,
+                              decoration: BoxDecoration(
+                                color: p.color.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                p.icon,
+                                size: 80,
+                                color: p.color,
                               ),
                             ),
                             const Spacer(),
@@ -157,8 +169,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ],
                         ),
                       );
-                    },
-                  );
                 },
               ),
             ),

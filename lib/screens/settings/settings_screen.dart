@@ -316,25 +316,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             builder: (context, ageDetection, _) {
               return Column(
                 children: [
-                  ListTile(
-                    leading: const Icon(Icons.accessibility_new),
-                    title: const Text('Elderly UI Mode'),
-                    subtitle: Text(
-                      ageDetection.isElderlyMode
-                          ? 'Active - Larger text and buttons'
-                          : 'Inactive - Will auto-activate when detected',
-                    ),
-                    trailing: Switch(
-                      value: ageDetection.isElderlyMode,
-                      onChanged: (val) {
-                        if (val) {
-                          ageDetection.setManualCategory(AgeCategory.elderly);
-                        } else {
-                          ageDetection.setManualCategory(AgeCategory.young);
-                        }
-                      },
-                    ),
-                  ),
+                  // Elderly UI Mode is now automatically handled by age input in Sensory Controls
                   ListTile(
                     leading: const Icon(Icons.support_agent),
                     title: const Text('Remote Tech Support'),

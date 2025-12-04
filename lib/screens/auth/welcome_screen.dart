@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/primary_button.dart';
 import '../../utils/theme.dart';
-import '../../widgets/floaty_background.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../utils/constants.dart';
 
@@ -18,150 +17,147 @@ class WelcomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: 'Help',
-            icon: const Icon(Icons.help_outline),
+            icon: const Icon(Icons.help_outline, color: Colors.white70),
             onPressed: () => Navigator.of(context).pushNamed('/help'),
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          const FloatyBackground(),
-          SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                // Responsive paddings and logo size based on height
-                final isCompact = constraints.maxHeight < 600;
-                final edge = isCompact ? 12.0 : 24.0;
-
-                return Padding(
-                  padding: EdgeInsets.all(edge),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Top hero/logo section grows but can shrink as needed
-                      Flexible(
-                        flex: 5,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Center(
-                            child: FittedBox(
-                              fit: BoxFit.contain,
-                              child: SizedBox(
-                                width: 360,
-                                height: 360,
-                                child: SvgPicture.asset(
-                                  AppConstants.brandLogoAsset,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
-                          ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF1A237E), // Deep indigo
+              Color(0xFF3949AB), // Indigo
+              Color(0xFF5C6BC0), // Light indigo
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Centered Logo with subtle glow
+                  Container(
+                    width: 160,
+                    height: 160,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          blurRadius: 30,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: SvgPicture.asset(
+                        AppConstants.brandLogoAsset,
+                        fit: BoxFit.contain,
+                        colorFilter: const ColorFilter.mode(
+                          Colors.white,
+                          BlendMode.srcIn,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      // Title row
-                      Flexible(
-                        flex: 2,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Hero(
-                                  tag: 'kc-logo',
-                                  child: Container(
-                                    width: 44,
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: AppTheme.primaryBlue
-                                          .withValues(alpha: 0.10),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(6.0),
-                                      child: SvgPicture.asset(
-                                        AppConstants.brandLogoAsset,
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Flexible(
-                                  child: Text(
-                                    'Kin Arc',
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Peace of mind, powered by AI.',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Stay connected and keep your loved ones safe.',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Buttons and legal section pinned to bottom but responsive
-                      Flexible(
-                        flex: 3,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          children: [
-                            PrimaryButton(
-                              text: 'Get Started',
-                              onPressed: () =>
-                                  Navigator.of(context).pushNamed('/auth'),
-                            ),
-                            const SizedBox(height: 12),
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pushNamed(
-                                '/auth',
-                                arguments: {'mode': 'login'},
-                              ),
-                              style: TextButton.styleFrom(
-                                foregroundColor: AppTheme.primaryBlue,
-                                minimumSize: const Size(44, 44),
-                              ),
-                              child: const Text('Log In'),
-                            ),
-                            const SizedBox(height: 12),
-                            Flexible(
-                              child: SingleChildScrollView(
-                                physics: const NeverScrollableScrollPhysics(),
-                                child: Text(
-                                  'By continuing, you agree to our Terms of Service and Privacy Policy.',
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(color: Colors.grey[700]),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                );
-              },
+                  const SizedBox(height: 40),
+                  // App Name
+                  const Text(
+                    'KinCircle',
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Tagline
+                  Text(
+                    'Peace of mind, powered by AI.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.w300,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Stay connected and keep your loved ones safe.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 60),
+                  // Get Started Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () =>
+                          Navigator.of(context).pushNamed('/auth'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppTheme.primaryBlue,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Get Started',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Log In Button
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pushNamed(
+                      '/auth',
+                      arguments: {'mode': 'login'},
+                    ),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(44, 44),
+                    ),
+                    child: const Text(
+                      'Already have an account? Log In',
+                      style: TextStyle(
+                        decoration: TextDecoration.underline,
+                        decorationColor: Colors.white70,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  // Legal text
+                  Text(
+                    'By continuing, you agree to our Terms of Service and Privacy Policy.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

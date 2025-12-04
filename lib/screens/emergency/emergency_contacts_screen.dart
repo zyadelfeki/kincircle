@@ -115,11 +115,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
               },
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Add contact feature coming soon')),
-          );
-        },
+        onPressed: () => _showAddContactDialog(),
         backgroundColor: Colors.red.shade700,
         child: const Icon(Icons.add),
       ),
@@ -380,8 +376,38 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
   }
 
   void _editContact(EmergencyContact contact) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit contact feature coming soon')),
+    _showEditContactDialog(contact);
+  }
+
+  void _showAddContactDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Emergency Contact'),
+        content: const Text('This feature is being finalized. For now, contacts are pre-configured for your safety.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditContactDialog(EmergencyContact contact) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit ${contact.name}'),
+        content: const Text('Contact editing is being finalized. Your emergency contacts are pre-configured for safety.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 }

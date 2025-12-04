@@ -161,6 +161,8 @@ Future<void> main() async {
   // Initialize FeatureUnlockService for progressive feature reveals
   try {
     await FeatureUnlockService().initialize();
+    // Record login for streak tracking
+    await FeatureUnlockService().recordLogin();
     if (kDebugMode) {
       debugPrint('--- FeatureUnlockService initialized ---');
     }

@@ -137,6 +137,33 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
     }
   }
 
+  Widget _buildCircularSocialButton({
+    required VoidCallback? onPressed,
+    required Widget child,
+  }) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(30),
+      child: Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white,
+          border: Border.all(color: Colors.grey.shade300),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Center(child: child),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -183,8 +210,8 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                       const SizedBox(height: 4),
                       Text(
                         _isLoginView
-                            ? 'Log in with Google, Apple, or your email.'
-                            : 'Sign up with Google, Apple, or your email.',
+                            ? 'Log in with your social account or email.'
+                            : 'Sign up with your social account or email.',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       if (_inlineError != null) ...[
@@ -217,31 +244,39 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                         ),
                       ],
                       const SizedBox(height: 16),
-                      SocialAuthButton(
-                        text: 'Continue with Google',
-                        leading: Image.asset(
-                          'assets/google_g.png',
-                          width: 18,
-                          height: 18,
-                          filterQuality: FilterQuality.medium,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.g_mobiledata, size: 20),
-                        ),
-                        onPressed: _isLoading
-                            ? null
-                            : () => _handleAuthAction(
-                                  _authService.signInWithGoogle,
-                                ),
-                      ),
-                      const SizedBox(height: 16),
-                      SocialAuthButton(
-                        text: 'Continue with Apple',
-                        icon: Icons.apple,
-                        onPressed: _isLoading
-                            ? null
-                            : () => _handleAuthAction(
-                                  _authService.signInWithApple,
-                                ),
+                      // Social Login Buttons - Circular Design
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Google Button
+                          _buildCircularSocialButton(
+                            onPressed: _isLoading
+                                ? null
+                                : () => _handleAuthAction(
+                                      _authService.signInWithGoogle,
+                                    ),
+                            child: ClipOval(
+                              child: Image.asset(
+                                'assets/sq-google-g-logo-update_dezeen_2364_col_0.jpg',
+                                width: 32,
+                                height: 32,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Text('G', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF4285F4))),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 24),
+                          // Apple Button
+                          _buildCircularSocialButton(
+                            onPressed: _isLoading
+                                ? null
+                                : () => _handleAuthAction(
+                                      _authService.signInWithApple,
+                                    ),
+                            child: const Icon(Icons.apple, size: 28, color: Colors.black87),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 20),
                       // "OR" Divider

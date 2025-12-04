@@ -531,7 +531,7 @@ class CompanionSelectionScreen extends StatelessWidget {
       final profile = CompanionProfile.forPersonality(personality);
       showDialog(
         context: context,
-        builder: (context) => Dialog(
+        builder: (dialogContext) => Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -562,8 +562,8 @@ class CompanionSelectionScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).pop(); // Close dialog
-                    Navigator.of(context).pop(); // Back to app
+                    Navigator.of(dialogContext).pop(); // Close dialog
+                    Navigator.of(context).pop(); // Return to previous screen
                   },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(

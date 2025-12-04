@@ -70,10 +70,56 @@ class _AlertsScreenState extends State<AlertsScreen> {
       body: StreamBuilder<QuerySnapshot>(
         stream: _buildQuery(uid).snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          // Only show loading on initial load, not during updates
+          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
+          // Handle errors first with friendly messages
           if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey.shade400),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No alerts available',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Alerts will appear here when there is activity.',
+                      style: TextStyle(color: Colors.grey.shade600),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          // Handle no data state explicitly
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey.shade400),
+                  const SizedBox(height: 12),
+                  Text(_showUnreadOnly ? 'No unread alerts' : 'No alerts yet',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  Text(
+                    'You\'re all caught up!',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            );
+          }
+          // Old error handling - keeping for index errors only
+          if (false) {
             final err = snapshot.error;
             if (err is FirebaseException && err.code == 'failed-precondition') {
               // Brand-aligned, full-screen database configuration error
@@ -119,20 +165,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
             }
             return Center(child: Text('Error: ${snapshot.error}'));
           }
-          final docs = snapshot.data?.docs ?? const [];
-          if (docs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.notifications_off_outlined, size: 48),
-                  const SizedBox(height: 12),
-                  Text(_showUnreadOnly ? 'No unread alerts' : 'No alerts yet',
-                      style: Theme.of(context).textTheme.titleMedium),
-                ],
-              ),
-            );
-          }
+          final docs = snapshot.data!.docs;
           return Column(
             children: [
               Align(

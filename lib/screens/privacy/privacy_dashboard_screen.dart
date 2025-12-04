@@ -40,10 +40,36 @@ class _PrivacyDashboardScreenState extends State<PrivacyDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading || !_privacyService.isLoaded) {
+    // Handle empty data gracefully - show empty state rather than infinite spinner
+    if (_isLoading) {
       return Scaffold(
         appBar: AppBar(title: const Text('Privacy & Data')),
         body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (!_privacyService.isLoaded) {
+      // Settings didn't load; show empty state instead of spinner
+      return Scaffold(
+        appBar: AppBar(title: const Text('Privacy & Data')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.shield_outlined, size: 64, color: Colors.grey.shade400),
+              const SizedBox(height: 16),
+              Text(
+                'No privacy settings found',
+                style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: _loadPrivacyState,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
       );
     }
 

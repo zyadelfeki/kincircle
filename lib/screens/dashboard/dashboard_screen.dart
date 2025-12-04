@@ -28,6 +28,7 @@ import '../../services/sensory_regulation_service.dart';
 import '../../design/biophilic_design.dart';
 import '../../widgets/companion_widgets.dart';
 import 'package:provider/provider.dart';
+import '../../services/feature_unlock_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -425,7 +426,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     
     final Widget scaffoldContent = Scaffold(
       appBar: AppBar(
-        title: const Text('Kin Arc'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('KinCircle'),
+            const SizedBox(width: 8),
+            _buildStreakBadge(),
+          ],
+        ),
         actions: [
             IconButton(
               icon: const Icon(Icons.safety_check),
@@ -465,23 +473,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
               tooltip: 'Settings',
             ),
             // Log Out is available in Settings; keep app bar focused
+            ],
+        ),
+        body: SafeArea(
+          top: false, // AppBar handles the top
+          child: Stack(
+            children: [
+              // Base layer: full-screen Google Map with overlays
+            Positioned.fill(child: _buildMapPage()),
+            // Family Sheet: layered contextual info
+            _buildFamilySheet(),
+            // Docked FAB that sits above the sheet top edge
+            _buildDockedFab(context),
+            if (_showPermissionTile) _buildPermissionTile(context),
           ],
         ),
-        body: Stack(
-          children: [
-            // Base layer: full-screen Google Map with overlays
-          Positioned.fill(child: _buildMapPage()),
-          // Family Sheet: layered contextual info
-          _buildFamilySheet(),
-          // Docked FAB that sits above the sheet top edge
-          _buildDockedFab(context),
-          if (_showPermissionTile) _buildPermissionTile(context),
-        ],
-      ),
+        ),
       // floatingActionButton removed in favor of docked positioning within the Stack
-    );
-
-    // Apply biophilic design overlay if stimulation level is low
+    );    // Apply biophilic design overlay if stimulation level is low
     Widget wrappedContent = scaffoldContent;
     if (sensoryService.useBiophilicDesign()) {
       wrappedContent = Stack(
@@ -979,6 +988,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
           },
         );
       },
+    );
+  }
+
+  Widget _buildStreakBadge() {
+    final featureUnlockService = FeatureUnlockService();
+    final streakDays = featureUnlockService.consecutiveLoginDays;
+    
+    if (streakDays <= 0) {
+      return const SizedBox.shrink();
+    }
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('🔥', style: TextStyle(fontSize: 14)),
+          const SizedBox(width: 4),
+          Text(
+            '$streakDays',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.orange,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

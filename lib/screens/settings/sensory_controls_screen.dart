@@ -56,7 +56,7 @@ class _SensoryControlsScreenState extends State<SensoryControlsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildStimulationSlider(context, service, profile, isDarkAcademia),
+          _buildAgeInput(context, service, profile, isDarkAcademia),
           SizedBox(height: service.getPadding(24)),
           _buildMotionControls(context, service, profile, isDarkAcademia),
           SizedBox(height: service.getPadding(24)),
@@ -76,21 +76,32 @@ class _SensoryControlsScreenState extends State<SensoryControlsScreen> {
     );
   }
 
-  Widget _buildStimulationSlider(
+  Widget _buildAgeInput(
     BuildContext context,
     SensoryRegulationService service,
     SensoryProfile profile,
     bool isDarkAcademia,
   ) {
+    final ageController = TextEditingController(
+      text: profile.familyMemberAge?.toString() ?? '',
+    );
+
+    String getAgeProfileDescription(int? age) {
+      if (age == null) return 'Enter age to auto-configure comfort settings';
+      if (age < 25) return 'Young profile: High stimulation, reduced motion, high contrast';
+      if (age > 60) return 'Elderly profile: Low stimulation, large text, breathing space';
+      return 'Standard profile: Balanced settings';
+    }
+
     final cardWidget = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Icon(Icons.tune, size: 28),
+            const Icon(Icons.cake, size: 28),
             const SizedBox(width: 12),
             Text(
-              'Stimulation Level',
+              'Family Member Age',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
           ],
@@ -98,27 +109,58 @@ class _SensoryControlsScreenState extends State<SensoryControlsScreen> {
         const SizedBox(height: 16),
         Row(
           children: [
-            const Text('🧘 Minimal'),
             Expanded(
-              child: Slider(
-                value: profile.stimulationLevel,
-                min: 0.0,
-                max: 1.0,
-                divisions: 10,
-                label: _getStimulationLabel(profile.stimulationLevel),
-                onChanged: (value) async {
-                  if (service.shouldUseHaptics) {
-                    TactileFeedback.softButton();
+              child: TextField(
+                controller: ageController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Age',
+                  hintText: 'Enter age',
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (value) async {
+                  final age = int.tryParse(value);
+                  if (age != null && age > 0 && age < 120) {
+                    if (service.shouldUseHaptics) {
+                      TactileFeedback.softButton();
+                    }
+                    await service.applyAgeBasedProfile(age);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Profile updated for age $age'),
+                        ),
+                      );
+                    }
                   }
-                  await service.setStimulationLevel(value);
                 },
               ),
             ),
-            const Text('⚡ Energizing'),
+            const SizedBox(width: 12),
+            ElevatedButton(
+              onPressed: () async {
+                final age = int.tryParse(ageController.text);
+                if (age != null && age > 0 && age < 120) {
+                  if (service.shouldUseHaptics) {
+                    TactileFeedback.softButton();
+                  }
+                  await service.applyAgeBasedProfile(age);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Profile updated for age $age'),
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('Apply'),
+            ),
           ],
         ),
+        const SizedBox(height: 8),
         Text(
-          _getStimulationDescription(profile.stimulationLevel),
+          getAgeProfileDescription(profile.familyMemberAge),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       ],

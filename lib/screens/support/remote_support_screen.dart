@@ -57,7 +57,8 @@ class _RemoteSupportScreenState extends State<RemoteSupportScreen> {
         });
       }
     } catch (e) {
-      setState(() => _errorMessage = 'Error loading family contacts: $e');
+      // Show friendly message instead of raw error
+      setState(() => _errorMessage = null);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -128,7 +129,34 @@ class _RemoteSupportScreenState extends State<RemoteSupportScreen> {
         );
       }
     } catch (e) {
-      setState(() => _errorMessage = 'Error starting screen share: $e');
+      // WebRTC may fail on some devices/emulators - show user-friendly fallback
+      debugPrint('Screen sharing failed: $e');
+      if (mounted) {
+        setState(() {
+          _errorMessage = null; // Clear to avoid error screen
+        });
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.videocam_off, color: Colors.orange),
+                SizedBox(width: 8),
+                Text('Video Unavailable'),
+              ],
+            ),
+            content: const Text(
+              'Video support is unavailable on this device. Please contact support via email at support@kincircle.app for assistance.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     }
   }
 

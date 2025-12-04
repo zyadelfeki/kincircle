@@ -14,6 +14,8 @@ class SensoryProfile {
   final bool darkAcademiaMode;
   final bool breakRemindersEnabled;
   final int breakInterval; // minutes
+  final bool largeText; // Elderly mode large text
+  final int? familyMemberAge; // Age used to auto-configure profile
 
   const SensoryProfile({
     this.reduceMotion = false,
@@ -24,6 +26,8 @@ class SensoryProfile {
     this.darkAcademiaMode = false,
     this.breakRemindersEnabled = false,
     this.breakInterval = 10,
+    this.largeText = false,
+    this.familyMemberAge,
   });
 
   Map<String, dynamic> toJson() => {
@@ -35,6 +39,8 @@ class SensoryProfile {
         'darkAcademiaMode': darkAcademiaMode,
         'breakRemindersEnabled': breakRemindersEnabled,
         'breakInterval': breakInterval,
+        'largeText': largeText,
+        'familyMemberAge': familyMemberAge,
       };
 
   factory SensoryProfile.fromJson(Map<String, dynamic> json) {
@@ -47,6 +53,8 @@ class SensoryProfile {
       darkAcademiaMode: json['darkAcademiaMode'] ?? false,
       breakRemindersEnabled: json['breakRemindersEnabled'] ?? false,
       breakInterval: json['breakInterval'] ?? 10,
+      largeText: json['largeText'] ?? false,
+      familyMemberAge: json['familyMemberAge'] as int?,
     );
   }
 
@@ -59,6 +67,8 @@ class SensoryProfile {
     bool? darkAcademiaMode,
     bool? breakRemindersEnabled,
     int? breakInterval,
+    bool? largeText,
+    int? familyMemberAge,
   }) {
     return SensoryProfile(
       reduceMotion: reduceMotion ?? this.reduceMotion,
@@ -69,7 +79,33 @@ class SensoryProfile {
       darkAcademiaMode: darkAcademiaMode ?? this.darkAcademiaMode,
       breakRemindersEnabled: breakRemindersEnabled ?? this.breakRemindersEnabled,
       breakInterval: breakInterval ?? this.breakInterval,
+      largeText: largeText ?? this.largeText,
+      familyMemberAge: familyMemberAge ?? this.familyMemberAge,
     );
+  }
+
+  /// Create a profile auto-configured based on age
+  static SensoryProfile forAge(int age) {
+    if (age < 25) {
+      // Young / dopamine-fried profile
+      return const SensoryProfile(
+        stimulationLevel: 0.9,
+        reduceMotion: true,
+        highContrast: true,
+      );
+    } else if (age > 60) {
+      // Elderly profile
+      return const SensoryProfile(
+        stimulationLevel: 0.2,
+        largeText: true,
+        breathingSpace: true,
+      );
+    } else {
+      // Default profile
+      return const SensoryProfile(
+        stimulationLevel: 0.5,
+      );
+    }
   }
 
   /// Quick comfort mode presets
@@ -253,6 +289,25 @@ class SensoryRegulationService extends ChangeNotifier {
       breakRemindersEnabled: enabled,
       breakInterval: interval,
     ));
+  }
+
+  Future<void> setLargeText(bool enabled) async {
+    await updateProfile(_profile.copyWith(largeText: enabled));
+  }
+
+  /// Apply age-based sensory profile
+  Future<void> applyAgeBasedProfile(int age) async {
+    final ageProfile = SensoryProfile.forAge(age);
+    await updateProfile(_profile.copyWith(
+      stimulationLevel: ageProfile.stimulationLevel,
+      reduceMotion: ageProfile.reduceMotion,
+      highContrast: ageProfile.highContrast,
+      largeText: ageProfile.largeText,
+      breathingSpace: ageProfile.breathingSpace,
+      familyMemberAge: age,
+    ));
+    // Ensure UI rebuilds immediately after age profile is applied
+    notifyListeners();
   }
 
   /// Quick comfort mode presets

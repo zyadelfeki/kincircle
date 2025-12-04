@@ -39,11 +39,46 @@ class _EmotionFeedScreenState extends State<EmotionFeedScreen> {
                   .limit(50)
                   .snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    !snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                final events = snapshot.data!.docs;
+                final events = snapshot.data?.docs ?? [];
+
+                if (events.isEmpty) {
+                  return ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      _buildHeader(social),
+                      const SizedBox(height: 48),
+                      Center(
+                        child: Column(
+                          children: [
+                            Icon(Icons.favorite_border,
+                                size: 64, color: Colors.grey.shade400),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No community moments yet',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Be the first to share positivity!',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }
 
                 return ListView.builder(
                   padding: const EdgeInsets.all(16),
@@ -225,6 +260,7 @@ class _EmotionFeedScreenState extends State<EmotionFeedScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _getIconForEventType(type),
                 const SizedBox(width: 12),
@@ -235,6 +271,8 @@ class _EmotionFeedScreenState extends State<EmotionFeedScreen> {
                       fontSize: 16,
                       fontFamily: 'Lora',
                     ),
+                    softWrap: true,
+                    overflow: TextOverflow.visible,
                   ),
                 ),
               ],

@@ -89,6 +89,31 @@ class FeatureUnlockState {
   double get progressPercentage => progressCount / threshold;
 }
 
+/// Login streak data
+class LoginStreak {
+  final int consecutiveDays;
+  final DateTime? lastLoginDate;
+
+  const LoginStreak({
+    this.consecutiveDays = 0,
+    this.lastLoginDate,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'consecutiveDays': consecutiveDays,
+        'lastLoginDate': lastLoginDate?.toIso8601String(),
+      };
+
+  factory LoginStreak.fromJson(Map<String, dynamic> json) {
+    return LoginStreak(
+      consecutiveDays: json['consecutiveDays'] ?? 0,
+      lastLoginDate: json['lastLoginDate'] != null
+          ? DateTime.parse(json['lastLoginDate'])
+          : null,
+    );
+  }
+}
+
 /// Service for managing progressive feature reveals
 class FeatureUnlockService extends ChangeNotifier {
   static final FeatureUnlockService _instance = FeatureUnlockService._internal();
@@ -192,6 +217,7 @@ class FeatureUnlockService extends ChangeNotifier {
   final Map<FeatureId, FeatureUnlockState> _unlockStates = {};
   int _totalScore = 0;
   StreamSubscription? _firestoreSubscription;
+  LoginStreak _loginStreak = const LoginStreak();
 
   // Getters
   Map<FeatureId, FeatureUnlockState> get unlockStates => _unlockStates;
@@ -199,11 +225,14 @@ class FeatureUnlockService extends ChangeNotifier {
   int get maxScore =>
       _featureConfigs.values.fold(0, (accumulated, config) => accumulated + config.unlockScore);
   double get progressPercentage => maxScore > 0 ? _totalScore / maxScore : 0.0;
+  LoginStreak get loginStreak => _loginStreak;
+  int get consecutiveLoginDays => _loginStreak.consecutiveDays;
 
   /// Initialize the service
   Future<void> initialize() async {
     try {
       await _loadUnlockStates();
+      await _loadLoginStreak();
       _listenToProgress();
 
       if (kDebugMode) {
@@ -466,6 +495,103 @@ class FeatureUnlockService extends ChangeNotifier {
 
   Future<void> recordDarkModeToggled() async {
     await recordProgress(UnlockCondition.darkModeToggled);
+  }
+
+  /// Record a login and update streak
+  Future<void> recordLogin() async {
+    try {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      
+      if (_loginStreak.lastLoginDate != null) {
+        final lastDate = DateTime(
+          _loginStreak.lastLoginDate!.year,
+          _loginStreak.lastLoginDate!.month,
+          _loginStreak.lastLoginDate!.day,
+        );
+        
+        final difference = today.difference(lastDate).inDays;
+        
+        if (difference == 0) {
+          // Same day, no update needed
+          return;
+        } else if (difference == 1) {
+          // Consecutive day - increment streak
+          _loginStreak = LoginStreak(
+            consecutiveDays: _loginStreak.consecutiveDays + 1,
+            lastLoginDate: now,
+          );
+        } else {
+          // Streak broken - reset to 1
+          _loginStreak = LoginStreak(
+            consecutiveDays: 1,
+            lastLoginDate: now,
+          );
+        }
+      } else {
+        // First login ever
+        _loginStreak = LoginStreak(
+          consecutiveDays: 1,
+          lastLoginDate: now,
+        );
+      }
+      
+      await _saveLoginStreak();
+      notifyListeners();
+      
+      if (kDebugMode) {
+        debugPrint('🔥 Login streak: ${_loginStreak.consecutiveDays} days');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error recording login: $e');
+      }
+    }
+  }
+
+  /// Load login streak from Firestore
+  Future<void> _loadLoginStreak() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('achievements')
+          .doc('login_streak')
+          .get();
+
+      if (doc.exists) {
+        _loginStreak = LoginStreak.fromJson(doc.data()!);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error loading login streak: $e');
+      }
+    }
+  }
+
+  /// Save login streak to Firestore
+  Future<void> _saveLoginStreak() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('achievements')
+          .doc('login_streak')
+          .set({
+        ..._loginStreak.toJson(),
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error saving login streak: $e');
+      }
+    }
   }
 
   @override
