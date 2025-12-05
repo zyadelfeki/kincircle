@@ -1,6 +1,7 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
 class LocationService {
@@ -50,9 +51,23 @@ class LocationService {
         'lastKnownLocation': GeoPoint(position.latitude, position.longitude),
         'lastUpdated': FieldValue.serverTimestamp(),
       });
+    } on FirebaseException catch (e) {
+      // Log Firebase-specific errors with context
+      debugPrint('Firebase error updating location: ${e.code} - ${e.message}');
+      // Retry logic for transient failures
+      if (e.code == 'unavailable' || e.code == 'deadline-exceeded') {
+        await Future.delayed(const Duration(seconds: 2));
+        try {
+          await _firestore.collection('users').doc(user.uid).update({
+            'lastKnownLocation': GeoPoint(position.latitude, position.longitude),
+            'lastUpdated': FieldValue.serverTimestamp(),
+          });
+        } catch (_) {
+          // Silent fail on retry - location will update on next position change
+        }
+      }
     } catch (e) {
       debugPrint('Error updating location: $e');
-      // You might want to handle this error more gracefully
     }
   }
 

@@ -278,9 +278,11 @@ class _SensoryControlsScreenState extends State<SensoryControlsScreen> {
       service,
       isDarkAcademia,
       title: 'QUICK COMFORT MODES',
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
           _buildQuickModeButton(
             context,
             service,
@@ -299,6 +301,7 @@ class _SensoryControlsScreenState extends State<SensoryControlsScreen> {
               }
             },
           ),
+          const SizedBox(width: 8),
           _buildQuickModeButton(
             context,
             service,
@@ -317,6 +320,7 @@ class _SensoryControlsScreenState extends State<SensoryControlsScreen> {
               }
             },
           ),
+          const SizedBox(width: 8),
           _buildQuickModeButton(
             context,
             service,
@@ -336,6 +340,7 @@ class _SensoryControlsScreenState extends State<SensoryControlsScreen> {
             },
           ),
         ],
+        ),
       ),
     );
   }

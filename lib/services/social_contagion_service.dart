@@ -168,7 +168,31 @@ class SocialContagionService extends ChangeNotifier {
       debugPrint('🔔 FOMO Notification: $message');
     }
 
-    // TODO: Integrate with actual notification service
+    // Store notification for display in app UI (in-app notification system)
+    _storeInAppNotification(message);
+  }
+  
+  /// Store in-app notification for display
+  Future<void> _storeInAppNotification(String message) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('in_app_notifications')
+          .add({
+        'message': message,
+        'type': 'fomo',
+        'read': false,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error storing in-app notification: $e');
+      }
+    }
   }
 
   /// Generate community milestone message

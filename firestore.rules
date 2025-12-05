@@ -94,6 +94,107 @@ service cloud.firestore {
       allow update, delete: if false; // Trips cannot be modified or deleted via client
     }
 
+    // Emergency responses collection
+    match /emergency_responses/{responseId} {
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+      allow update: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow delete: if false;
+    }
+
+    // Emergency location shares (for contacts to access)
+    match /emergency_location_shares/{shareId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // Emergency beacons (public for responders)
+    match /emergency_beacons/{beaconId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow delete: if false;
+    }
+
+    // Emergency chats
+    match /emergency_chats/{chatId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if false;
+      
+      match /messages/{messageId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update, delete: if false;
+      }
+    }
+
+    // Medical broadcasts
+    match /medical_broadcasts/{broadcastId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // 911 info packets (readable by emergency services)
+    match /911_info_packets/{packetId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // Community stats (for social contagion features)
+    match /community/{docId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if false;
+      
+      match /{subcollection}/{subDocId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update, delete: if false;
+      }
+    }
+
+    // In-app notifications (user's own notifications)
+    match /users/{userId}/in_app_notifications/{notificationId} {
+      allow read: if isOwnerUser(userId);
+      allow create: if isSignedIn();
+      allow update: if isOwnerUser(userId);
+      allow delete: if isOwnerUser(userId);
+    }
+
+    // Support tickets
+    match /support_tickets/{ticketId} {
+      allow read: if isSignedIn() && request.auth.uid == resource.data.uid;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && request.auth.uid == resource.data.uid;
+      allow delete: if false;
+    }
+
+    // Check-ins collection (for wellbeing)
+    match /check_ins/{checkInId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // Wellbeing analytics (subcollection under users)
+    match /users/{userId}/wellbeing_analytics/{analyticsId} {
+      allow read: if isOwnerUser(userId);
+      allow create: if isOwnerUser(userId);
+      allow update, delete: if false;
+    }
+
+    // Driver safety summaries
+    match /users/{userId}/driver_safety_summaries/{summaryId} {
+      allow read: if isOwnerUser(userId);
+      allow create: if isOwnerUser(userId);
+      allow update, delete: if false;
+    }
+
     // Deny access to all other documents
     match /{document=**} {
       allow read, write: if false;

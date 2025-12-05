@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../widgets/primary_button.dart';
 import '../../utils/theme.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import '../../utils/constants.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -47,24 +44,20 @@ class WelcomeScreen extends StatelessWidget {
                     height: 160,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.1),
+                      color: Colors.white.withValues(alpha: 0.15),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          blurRadius: 30,
-                          spreadRadius: 5,
+                          color: Colors.white.withValues(alpha: 0.25),
+                          blurRadius: 40,
+                          spreadRadius: 8,
                         ),
                       ],
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: SvgPicture.asset(
-                        AppConstants.brandLogoAsset,
-                        fit: BoxFit.contain,
-                        colorFilter: const ColorFilter.mode(
-                          Colors.white,
-                          BlendMode.srcIn,
-                        ),
+                    child: Center(
+                      child: Icon(
+                        Icons.family_restroom,
+                        size: 80,
+                        color: Colors.white.withValues(alpha: 0.9),
                       ),
                     ),
                   ),

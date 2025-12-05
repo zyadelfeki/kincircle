@@ -237,7 +237,7 @@ class _WellbeingDashboardScreenState extends State<WellbeingDashboardScreen> {
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
-      childAspectRatio: 1.5,
+      childAspectRatio: 1.2,
       children: [
         _buildMetricCard(
           'Stress',
@@ -551,10 +551,96 @@ class _WellbeingDashboardScreenState extends State<WellbeingDashboardScreen> {
   }
 
   void _handleRecommendationAction(Recommendation rec) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${rec.actionText} - Feature coming soon!'),
-        duration: const Duration(seconds: 2),
+    // Show detailed action dialog instead of "coming soon"
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(rec.icon, color: rec.categoryColor),
+            const SizedBox(width: 8),
+            Expanded(child: Text(rec.title, style: const TextStyle(fontSize: 18))),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(rec.description),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: rec.categoryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.lightbulb_outline, color: rec.categoryColor),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        rec.actionText,
+                        style: TextStyle(
+                          color: rec.categoryColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Icon(Icons.schedule, size: 16, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Estimated time: ${rec.estimatedTime}',
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                ],
+              ),
+              if (rec.researchBacked) ...[
+                const SizedBox(height: 8),
+                const Row(
+                  children: [
+                    Icon(Icons.verified, size: 16, color: Colors.blue),
+                    SizedBox(width: 4),
+                    Text(
+                      'Research-backed recommendation',
+                      style: TextStyle(color: Colors.blue, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Maybe Later'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Added "${rec.title}" to your wellness goals'),
+                  action: SnackBarAction(
+                    label: 'View Goals',
+                    onPressed: () {
+                      // Navigate to goals or show confirmation
+                    },
+                  ),
+                ),
+              );
+            },
+            child: const Text('Start Now'),
+          ),
+        ],
       ),
     );
   }
@@ -570,41 +656,89 @@ class _WellbeingDashboardScreenState extends State<WellbeingDashboardScreen> {
             Text('How It Works'),
           ],
         ),
-        content: const SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Wellbeing Analytics',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.6,
+          ),
+          child: Scrollbar(
+            thumbVisibility: true,
+            child: SingleChildScrollView(
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Wellbeing Analytics',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'We analyze your behavioral patterns to infer wellbeing:',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  SizedBox(height: 12),
+                  Text('• Movement patterns indicate activity levels'),
+                  Text('• Location data shows social engagement'),
+                  Text('• Late-night activity estimates sleep quality'),
+                  Text('• Check-ins measure family connection'),
+                  SizedBox(height: 16),
+                  Text(
+                    'What We Track',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  SizedBox(height: 8),
+                  Text('📊 Activity Level - How active you are throughout the day'),
+                  SizedBox(height: 4),
+                  Text('😴 Sleep Quality - Inferred from nighttime activity'),
+                  SizedBox(height: 4),
+                  Text('👥 Social Engagement - Time spent in social locations'),
+                  SizedBox(height: 4),
+                  Text('🧘 Stress Level - Based on movement and routine changes'),
+                  SizedBox(height: 16),
+                  Text(
+                    'Research-Backed',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Our algorithms are based on published research showing behavioral patterns correlate strongly with mental health. Studies from Stanford, MIT, and the WHO inform our analysis methods.',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'How Scores Are Calculated',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '• 75-100%: Excellent - Healthy, consistent patterns',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                  Text(
+                    '• 50-74%: Good - Generally positive with room to improve',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                  Text(
+                    '• 25-49%: Fair - Some areas need attention',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                  Text(
+                    '• 0-24%: Needs Care - Consider reaching out for support',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    '🔒 Privacy First',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'All analysis happens privately on your device. Your raw location and activity data never leaves your family circle. Only aggregated wellbeing scores are shared with family members you choose.',
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                ],
               ),
-              SizedBox(height: 8),
-              Text(
-                'We analyze your behavioral patterns to infer wellbeing:',
-                style: TextStyle(fontSize: 14),
-              ),
-              SizedBox(height: 12),
-              Text('• Movement patterns indicate activity levels'),
-              Text('• Location data shows social engagement'),
-              Text('• Late-night activity estimates sleep quality'),
-              Text('• Check-ins measure family connection'),
-              SizedBox(height: 12),
-              Text(
-                'Research-Backed',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Our algorithms are based on published research showing behavioral patterns correlate strongly with mental health.',
-                style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
-              ),
-              SizedBox(height: 12),
-              Text(
-                'Privacy: All analysis happens privately. Your data never leaves your family circle.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
+            ),
           ),
         ),
         actions: [

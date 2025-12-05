@@ -15,6 +15,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/privacy_controls_service.dart';
 import '../../services/data_export_service.dart';
 
+/// Redesigned Settings Screen - Clean, organized, intuitive
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -27,9 +28,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool? _smartAlertsEnabled;
   bool? _mlAlerts;
   bool? _consentGiven;
-  bool _fabTipDisabled = false;
   bool _privacyLoaded = false;
-  bool _exportingData = false;
 
   @override
   void initState() {
@@ -39,31 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ConsentService().isConsentGiven().then((v) {
       if (mounted) setState(() => _consentGiven = v);
     });
-    _loadFabTipPref();
     WidgetsBinding.instance.addPostFrameCallback((_) => _initPrivacySettings());
-  }
-
-  Future<void> _loadFabTipPref() async {
-    try {
-      final p = await SharedPreferences.getInstance();
-      setState(() {
-        _fabTipDisabled = p.getBool('fab_actions_label_disabled') ?? false;
-      });
-    } catch (_) {}
-  }
-
-  Future<void> _setFabTipDisabled(bool disabled) async {
-    try {
-      final p = await SharedPreferences.getInstance();
-      await p.setBool('fab_actions_label_disabled', disabled);
-    } catch (_) {}
-  }
-
-  Future<void> _resetFabTipSeen() async {
-    try {
-      final p = await SharedPreferences.getInstance();
-      await p.setBool('fab_actions_label_seen', false);
-    } catch (_) {}
   }
 
   Future<void> _initPrivacySettings() async {
@@ -74,196 +49,128 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await privacy.loadPrivacySettings(userId);
       if (!mounted) return;
       setState(() => _privacyLoaded = true);
-    } catch (_) {}
-  }
-
-  Future<void> _quickExportData() async {
-    setState(() => _exportingData = true);
-    try {
-      final file = await DataExportService.exportUserData(format: 'json');
-      if (!mounted) return;
-      await DataExportService.shareExport(file);
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: $error')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _exportingData = false);
-      }
+    } catch (_) {
+      if (mounted) setState(() => _privacyLoaded = true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
-        actions: [
-          IconButton(
-            tooltip: 'Help',
-            icon: const Icon(Icons.help_outline),
-            onPressed: () => Navigator.of(context).pushNamed('/help'),
-          ),
-        ],
+        elevation: 0,
       ),
       body: ListView(
+        padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Text('Appearance',
-                style: Theme.of(context).textTheme.titleSmall),
+          // Profile Card at top
+          _buildProfileCard(user),
+          const SizedBox(height: 16),
+          
+          // SECTION: Family & Safety
+          _buildSectionHeader('Family & Safety', Icons.family_restroom),
+          _buildSettingsTile(
+            icon: Icons.group,
+            title: 'Manage Family',
+            subtitle: 'Add, remove, and manage family members',
+            onTap: () => Navigator.of(context).pushNamed('/manage-family'),
           ),
-          Consumer<ThemeController>(
-            builder: (context, theme, _) {
-              final selected = theme.mode;
-              return Column(
-                children: [
-                  ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                    title: const Text('Theme'),
-                    trailing: DropdownButton<ThemeMode>(
-                      value: selected,
-                      items: const [
-                        DropdownMenuItem(
-                          value: ThemeMode.system,
-                          child: Text('System'),
-                        ),
-                        DropdownMenuItem(
-                          value: ThemeMode.light,
-                          child: Text('Light'),
-                        ),
-                        DropdownMenuItem(
-                          value: ThemeMode.dark,
-                          child: Text('Dark'),
-                        ),
-                      ],
-                      onChanged: (mode) {
-                        if (mode != null) theme.setMode(mode);
-                      },
-                    ),
-                  ),
-                  SwitchListTile(
-                    title: const Text('Use Pro Accent (Preview)'),
-                    subtitle:
-                        const Text('Shows premium accent color when active'),
-                    value: theme.isPro,
-                    onChanged: (v) => theme.setPro(v),
-                  ),
-                ],
-              );
-            },
+          _buildSettingsTile(
+            icon: Icons.emergency,
+            iconColor: Colors.red,
+            title: 'Emergency Contacts',
+            subtitle: 'Crisis coordination & SOS settings',
+            onTap: () => Navigator.of(context).pushNamed('/emergency-contacts'),
           ),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Text('Privacy & Security',
-                style: Theme.of(context).textTheme.titleSmall),
+          _buildSettingsTile(
+            icon: Icons.analytics_outlined,
+            title: 'Wellbeing Dashboard',
+            subtitle: 'Family health insights and AI recommendations',
+            onTap: () => Navigator.of(context).pushNamed('/analytics/wellbeing'),
           ),
+          
+          const SizedBox(height: 8),
+          
+          // SECTION: Privacy & Security
+          _buildSectionHeader('Privacy & Security', Icons.shield_outlined),
           Consumer<PrivacyControlsService>(
             builder: (context, privacy, _) {
-              final bool hasScore = _privacyLoaded && privacy.isLoaded;
-              final int score = hasScore ? privacy.calculatePrivacyScore() : 0;
-              final Color chipColor = score >= 80
-                  ? Colors.green
-                  : score >= 60
-                      ? Colors.orange
-                      : Colors.red;
+              final int score = _privacyLoaded && privacy.isLoaded 
+                  ? privacy.calculatePrivacyScore() 
+                  : 0;
+              return _buildSettingsTile(
+                icon: Icons.privacy_tip_outlined,
+                title: 'Privacy Controls',
+                subtitle: 'Encryption, consent, and data management',
+                trailing: _privacyLoaded 
+                    ? _buildScoreBadge(score)
+                    : const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
+                onTap: () => Navigator.of(context).pushNamed('/privacy/dashboard'),
+              );
+            },
+          ),
+          
+          const SizedBox(height: 8),
+          
+          // SECTION: Appearance
+          _buildSectionHeader('Appearance', Icons.palette_outlined),
+          Consumer<ThemeController>(
+            builder: (context, theme, _) {
               return Column(
                 children: [
-                  ListTile(
-                    leading: const Icon(Icons.privacy_tip_outlined),
-                    title: const Text('Privacy & Data'),
-                    subtitle: const Text(
-                        'Control encryption, consent, and GDPR exports'),
-                    trailing: hasScore
-                        ? Chip(
-                            label: Text('$score'),
-                            avatar: const Icon(Icons.shield,
-                                size: 16, color: Colors.white),
-                            backgroundColor: chipColor,
-                            labelStyle: const TextStyle(color: Colors.white),
-                          )
-                        : const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context)
-                        .pushNamed('/privacy/dashboard'),
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextButton.icon(
-                            icon: _exportingData
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(Icons.download),
-                            label: Text(
-                                _exportingData ? 'Exporting…' : 'Quick Export'),
-                            onPressed:
-                                _exportingData ? null : () => _quickExportData(),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        OutlinedButton(
-                          onPressed: () => Navigator.of(context)
-                              .pushNamed('/privacy/dashboard'),
-                          child: const Text('Manage'),
-                        ),
-                      ],
-                    ),
+                  _buildSettingsTile(
+                    icon: Icons.dark_mode_outlined,
+                    title: 'Theme',
+                    subtitle: theme.mode == ThemeMode.system 
+                        ? 'System default' 
+                        : theme.mode == ThemeMode.dark ? 'Dark' : 'Light',
+                    onTap: () => _showThemePicker(theme),
                   ),
                 ],
               );
             },
           ),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Text('Tips & Hints',
-                style: Theme.of(context).textTheme.titleSmall),
+          
+          const SizedBox(height: 8),
+          
+          // SECTION: Accessibility
+          _buildSectionHeader('Accessibility', Icons.accessibility_new),
+          _buildSettingsTile(
+            icon: Icons.spa_outlined,
+            title: 'Sensory & Comfort',
+            subtitle: 'Neurodivergent-friendly settings',
+            onTap: () => Navigator.of(context).pushNamed('/settings/sensory-controls'),
           ),
-          SwitchListTile(
-            title: const Text('Show “Actions” Tip'),
-            subtitle: const Text(
-                'Show the small hint label near the action button when collapsed'),
-            value: !_fabTipDisabled,
-            onChanged: (val) async {
-              setState(() => _fabTipDisabled = !val);
-              await _setFabTipDisabled(!val);
-            },
+          _buildSettingsTile(
+            icon: Icons.support_agent,
+            title: 'Remote Tech Support',
+            subtitle: 'Get help from family members',
+            onTap: () => Navigator.of(context).pushNamed('/support/remote'),
           ),
-          ListTile(
-            leading: const Icon(Icons.refresh),
-            title: const Text('Reset Tip Seen State'),
-            subtitle: const Text('Reshow the tip even if it was faded before'),
-            onTap: () async {
-              final messenger = ScaffoldMessenger.of(context);
-              await _resetFabTipSeen();
-              if (!mounted) return;
-              messenger.showSnackBar(
-                const SnackBar(
-                    content: Text(
-                        'Tip will be shown next time the sheet is collapsed.')),
+          Consumer<CompanionService>(
+            builder: (context, companion, _) {
+              return _buildSettingsTile(
+                icon: Icons.favorite_outline,
+                title: 'AI Companion',
+                subtitle: companion.relationshipScore > 0 
+                    ? '${companion.profile.name} • Bond: ${companion.relationshipScore}/100'
+                    : 'Choose your supportive companion',
+                onTap: () => Navigator.of(context).pushNamed('/companion/select'),
               );
             },
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text('Smart Alerts',
-                style: Theme.of(context).textTheme.titleSmall),
-          ),
+          
+          const SizedBox(height: 8),
+          
+          // SECTION: Smart Features
+          _buildSectionHeader('Smart Features', Icons.auto_awesome),
           SwitchListTile(
-            title: const Text('Enable Smart Alerts'),
+            secondary: const Icon(Icons.notifications_active_outlined),
+            title: const Text('Smart Alerts'),
+            subtitle: const Text('AI-powered family notifications'),
             value: _smartAlertsEnabled ?? false,
             onChanged: (val) async {
               setState(() => _smartAlertsEnabled = val);
@@ -271,10 +178,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           SwitchListTile(
-            title: const Text('Enable ML-Based Alerts'),
-            subtitle: (_consentGiven ?? false)
-                ? null
-                : const Text('Requires consent. Complete consent to enable.'),
+            secondary: const Icon(Icons.psychology_outlined),
+            title: const Text('ML-Based Alerts'),
+            subtitle: Text((_consentGiven ?? false) 
+                ? 'Advanced pattern detection' 
+                : 'Requires consent'),
             value: _mlAlerts ?? false,
             onChanged: (_consentGiven ?? false)
                 ? (val) async {
@@ -284,291 +192,287 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 : null,
           ),
           if (!(_consentGiven ?? false))
-            ListTile(
-              leading: const Icon(Icons.privacy_tip_outlined),
-              title: const Text('Complete Smart Alerts Consent'),
-              subtitle: const Text('Learn how Smart Alerts work and opt in.'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () async {
-                final nav = Navigator.of(context);
-                final agreed = await nav.push<bool>(
-                  MaterialPageRoute(builder: (_) => const AiConsentScreen()),
-                );
-                if (agreed == true && mounted) {
-                  setState(() => _consentGiven = true);
-                }
-              },
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final agreed = await Navigator.of(context).push<bool>(
+                    MaterialPageRoute(builder: (_) => const AiConsentScreen()),
+                  );
+                  if (agreed == true && mounted) {
+                    setState(() => _consentGiven = true);
+                  }
+                },
+                icon: const Icon(Icons.verified_user),
+                label: const Text('Complete AI Consent'),
+              ),
             ),
-          const Divider(),
-          ListTile(
-            title: const Text('Diagnostics'),
-            subtitle: const Text('Check crashes and send a report'),
-            trailing: const Icon(Icons.chevron_right),
+          _buildSettingsTile(
+            icon: Icons.tune,
+            title: 'AI Settings',
+            subtitle: 'Fine-tune smart feature behavior',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AiSettingsScreen()),
+            ),
+          ),
+          
+          const SizedBox(height: 8),
+          
+          // SECTION: Account
+          _buildSectionHeader('Account', Icons.person_outline),
+          _buildSettingsTile(
+            icon: Icons.manage_accounts,
+            title: 'Profile Settings',
+            subtitle: user?.email ?? 'Manage your account',
+            onTap: () => Navigator.of(context).pushNamed('/account'),
+          ),
+          _buildSettingsTile(
+            icon: Icons.workspace_premium,
+            title: 'Subscription',
+            subtitle: 'Plans, billing, and benefits',
+            onTap: () => Navigator.of(context).pushNamed('/subscription'),
+          ),
+          _buildSettingsTile(
+            icon: Icons.logout,
+            iconColor: Colors.red,
+            title: 'Sign Out',
+            onTap: () async {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Sign Out?'),
+                  content: const Text('Are you sure you want to sign out?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancel'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Sign Out'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirmed == true && mounted) {
+                await AuthService().signOut();
+                if (mounted) {
+                  Navigator.of(context).pushNamedAndRemoveUntil('/welcome', (route) => false);
+                }
+              }
+            },
+          ),
+          
+          const SizedBox(height: 8),
+          
+          // SECTION: Support
+          _buildSectionHeader('Support', Icons.help_outline),
+          _buildSettingsTile(
+            icon: Icons.bug_report_outlined,
+            title: 'Diagnostics',
+            subtitle: 'Debug info and crash reports',
             onTap: () => Navigator.of(context).pushNamed('/diagnostics'),
           ),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Text('Accessibility',
-                style: Theme.of(context).textTheme.titleSmall),
+          _buildSettingsTile(
+            icon: Icons.help,
+            title: 'Help Center',
+            onTap: () => Navigator.of(context).pushNamed('/help'),
           ),
-          Consumer<AgeDetectionService>(
-            builder: (context, ageDetection, _) {
-              return Column(
-                children: [
-                  // Elderly UI Mode is now automatically handled by age input in Sensory Controls
-                  ListTile(
-                    leading: const Icon(Icons.support_agent),
-                    title: const Text('Remote Tech Support'),
-                    subtitle: const Text('Get help from family members'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      Navigator.of(context).pushNamed('/support/remote');
-                    },
-                  ),
-                  Consumer<FeatureUnlockService>(
-                    builder: (context, featureUnlock, _) {
-                      final progress = featureUnlock.progressPercentage;
-                      final totalScore = featureUnlock.totalScore;
-                      final maxScore = featureUnlock.maxScore;
+          
+          const SizedBox(height: 24),
+          
+          // App version
+          Center(
+            child: Text(
+              'KinCircle v1.0.0',
+              style: TextStyle(
+                color: Colors.grey.shade500,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
 
-                      return ListTile(
-                        leading: const Icon(Icons.emoji_events),
-                        title: const Text('Feature Progress'),
-                        subtitle: Text(
-                          '$totalScore / $maxScore points - ${(progress * 100).toInt()}% unlocked',
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {
-                          _showFeatureProgressDialog(context, featureUnlock);
-                        },
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.spa),
-                    title: const Text('Sensory & Comfort'),
-                    subtitle: const Text('Accessibility for neurodivergent users'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      Navigator.of(context).pushNamed('/settings/sensory-controls');
-                    },
-                  ),
-                  Consumer<CompanionService>(
-                    builder: (context, companion, _) {
-                      final hasActiveCompanion =
-                          companion.relationshipScore > 0 ||
-                              companion.recentMessages.isNotEmpty;
-                      return ListTile(
-                        leading: const Icon(Icons.favorite),
-                        title: const Text('Your Companion'),
-                        subtitle: Text(
-                          hasActiveCompanion
-                              ? '${companion.profile.name} - Bond: ${companion.relationshipScore}/100'
-                              : 'Choose your AI companion',
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {
-                          Navigator.of(context).pushNamed('/companion/select');
-                        },
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.auto_awesome),
-                    title: const Text('Community Moments'),
-                    subtitle: const Text('Share and celebrate with others'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      Navigator.of(context).pushNamed('/community/feed');
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.analytics),
-                    title: const Text('Wellbeing & Analytics'),
-                    subtitle: const Text('Family health insights and trends'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      Navigator.of(context).pushNamed('/analytics/wellbeing');
-                    },
-                  ),
-                ],
-              );
-            },
+  Widget _buildProfileCard(User? user) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: InkWell(
+        onTap: () => Navigator.of(context).pushNamed('/account'),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundImage: user?.photoURL != null 
+                    ? NetworkImage(user!.photoURL!) 
+                    : null,
+                child: user?.photoURL == null 
+                    ? Text(
+                        (user?.displayName ?? user?.email ?? 'U')[0].toUpperCase(),
+                        style: const TextStyle(fontSize: 24),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user?.displayName ?? 'Set up your profile',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user?.email ?? '',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
           ),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child:
-                Text('Account', style: Theme.of(context).textTheme.titleSmall),
-          ),
-          ListTile(
-            leading: const Icon(Icons.manage_accounts_outlined),
-            title: const Text('Account & Profile'),
-            subtitle: Text(AuthService().user?.email ??
-                'View and edit your account details'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.of(context).pushNamed('/account');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.family_restroom),
-            title: const Text('Manage Family'),
-            subtitle: const Text('Add or remove family members'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.of(context).pushNamed('/manage-family');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Sign Out'),
-            onTap: () async {
-              final nav = Navigator.of(context);
-              await AuthService().signOut();
-              if (!mounted) return;
-              nav.pushNamedAndRemoveUntil('/welcome', (route) => false);
-            },
-          ),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Text('Subscription',
-                style: Theme.of(context).textTheme.titleSmall),
-          ),
-          ListTile(
-            leading: const Icon(Icons.workspace_premium_outlined),
-            title: const Text('Manage Subscription'),
-            subtitle: const Text('Plans, billing, and benefits'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.of(context).pushNamed('/subscription');
-            },
-          ),
-          const Divider(),
-          ListTile(
-            title: const Text('AI & Smart Features'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AiSettingsScreen()),
-              );
-            },
-          ),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Text('Safety & Emergency',
-                style: Theme.of(context).textTheme.titleSmall),
-          ),
-          ListTile(
-            leading: Icon(Icons.emergency, color: Colors.red.shade700),
-            title: const Text('🚨 Emergency Contacts'),
-            subtitle: const Text('Crisis coordination & response'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.of(context).pushNamed('/emergency-contacts');
-            },
-          ),
-          const Divider(),
-          ListTile(
-            title: const Text('Manage Invites (Debug)'),
-            leading: const Icon(Icons.bug_report_outlined),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ManageInvitesScreen()),
-              );
-            },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final headerColor = isDark 
+        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.9)
+        : Theme.of(context).primaryColor;
+    
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: headerColor),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: headerColor,
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showFeatureProgressDialog(
-      BuildContext context, FeatureUnlockService featureUnlock) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Feature Unlock Progress'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Total Score: ${featureUnlock.totalScore} / ${featureUnlock.maxScore}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                LinearProgressIndicator(
-                  value: featureUnlock.progressPercentage,
-                  backgroundColor: Colors.grey.shade300,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Theme.of(context).primaryColor,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Unlocked Features:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...featureUnlock.getUnlockedFeatures().map((featureId) {
-                  final config = featureUnlock.getFeatureConfig(featureId);
-                  return ListTile(
-                    leading: Text(
-                      config?.icon ?? '✅',
-                      style: const TextStyle(fontSize: 24),
-                    ),
-                    title: Text(config?.name ?? featureId.name),
-                    subtitle: Text(config?.description ?? ''),
-                    dense: true,
-                  );
-                }),
-                const SizedBox(height: 16),
-                const Text(
-                  'Locked Features:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...featureUnlock.getLockedFeatures().map((featureId) {
-                  final config = featureUnlock.getFeatureConfig(featureId);
-                  final state = featureUnlock.getFeatureState(featureId);
-                  return ListTile(
-                    leading: const Text(
-                      '🔒',
-                      style: TextStyle(fontSize: 24),
-                    ),
-                    title: Text(config?.name ?? featureId.name),
-                    subtitle: Text(
-                      '${state?.progressCount ?? 0} / ${config?.threshold ?? 0} - ${config?.description ?? ''}',
-                    ),
-                    dense: true,
-                  );
-                }),
-              ],
+  Widget _buildSettingsTile({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    Color? iconColor,
+    Widget? trailing,
+    VoidCallback? onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: iconColor),
+      title: Text(title),
+      subtitle: subtitle != null ? Text(subtitle) : null,
+      trailing: trailing ?? const Icon(Icons.chevron_right, color: Colors.grey),
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildScoreBadge(int score) {
+    final Color color = score >= 80 
+        ? Colors.green 
+        : score >= 60 
+            ? Colors.orange 
+            : Colors.red;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.shield, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            '$score',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
+        ],
+      ),
+    );
+  }
+
+  void _showThemePicker(ThemeController theme) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            const Text(
+              'Choose Theme',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.brightness_auto),
+              title: const Text('System Default'),
+              trailing: theme.mode == ThemeMode.system 
+                  ? const Icon(Icons.check, color: Colors.green) 
+                  : null,
+              onTap: () {
+                theme.setMode(ThemeMode.system);
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.light_mode),
+              title: const Text('Light'),
+              trailing: theme.mode == ThemeMode.light 
+                  ? const Icon(Icons.check, color: Colors.green) 
+                  : null,
+              onTap: () {
+                theme.setMode(ThemeMode.light);
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.dark_mode),
+              title: const Text('Dark'),
+              trailing: theme.mode == ThemeMode.dark 
+                  ? const Icon(Icons.check, color: Colors.green) 
+                  : null,
+              onTap: () {
+                theme.setMode(ThemeMode.dark);
+                Navigator.pop(ctx);
+              },
+            ),
+            const SizedBox(height: 16),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }

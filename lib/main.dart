@@ -541,32 +541,14 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Minimal splash - just a subtle loading indicator, no logo delay
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9), // Cloud Gray
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Kin Arc logo
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: SizedBox(
-                width: 96,
-                height: 96,
-                child: SvgPicture.asset(
-                  AppConstants.brandLogoAsset,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            // Optional subtle loading indicator
-            const SizedBox(height: 16),
-            const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: const Center(
+        child: SizedBox(
+          width: 32,
+          height: 32,
+          child: CircularProgressIndicator(strokeWidth: 2),
         ),
       ),
     );

@@ -167,37 +167,121 @@ class _ManageFamilyScreenState extends State<ManageFamilyScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manage Family'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          if (_familyDetails != null)
+            IconButton(
+              icon: const Icon(Icons.person_add),
+              tooltip: 'Invite Member',
+              onPressed: () => Navigator.of(context).pushNamed('/invite'),
+            ),
+        ],
       ),
+      floatingActionButton: _familyDetails != null
+          ? FloatingActionButton.extended(
+              onPressed: () => Navigator.of(context).pushNamed('/invite'),
+              icon: const Icon(Icons.person_add),
+              label: const Text('Invite'),
+            )
+          : null,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _error!,
-                        style: Theme.of(context).textTheme.titleMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadFamilyDetails,
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                )
+              ? _buildErrorState()
               : _familyDetails == null
-                  ? const Center(child: Text('No family data found'))
+                  ? _buildNoFamilyState()
                   : _buildFamilyContent(),
+    );
+  }
+
+  Widget _buildErrorState() {
+    final isNoFamily = _error == 'No family found';
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isNoFamily ? Icons.family_restroom : Icons.error_outline,
+              size: 80,
+              color: isNoFamily ? Colors.blue : Colors.grey[400],
+            ),
+            const SizedBox(height: 24),
+            Text(
+              isNoFamily ? 'No Family Yet' : 'Something went wrong',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isNoFamily 
+                  ? 'Create a family to start tracking and protecting your loved ones.'
+                  : _error!,
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            if (isNoFamily) ...[
+              FilledButton.icon(
+                onPressed: () => Navigator.of(context).pushNamed('/create-family'),
+                icon: const Icon(Icons.add),
+                label: const Text('Create Family'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(200, 56),
+                ),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).pushNamed('/manage-invites'),
+                icon: const Icon(Icons.mail),
+                label: const Text('Check Pending Invites'),
+              ),
+            ] else
+              ElevatedButton.icon(
+                onPressed: _loadFamilyDetails,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoFamilyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.family_restroom, size: 80, color: Colors.blue),
+            const SizedBox(height: 24),
+            Text(
+              'Start Your Family Circle',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Create a family to keep your loved ones safe and connected.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 32),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context).pushNamed('/create-family'),
+              icon: const Icon(Icons.add),
+              label: const Text('Create Family'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(200, 56),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

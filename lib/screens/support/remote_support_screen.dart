@@ -293,18 +293,61 @@ class _RemoteSupportScreenState extends State<RemoteSupportScreen> {
             style: TextStyle(fontSize: 16, height: 1.5),
           ),
           const SizedBox(height: 32),
+          
+          // Test Call Button - Always available
+          Card(
+            color: Colors.green.shade50,
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: Colors.green,
+                child: const Icon(Icons.phone, color: Colors.white),
+              ),
+              title: const Text(
+                'Test Call',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              subtitle: const Text('Try a demo support call'),
+              trailing: ElevatedButton(
+                onPressed: () => _startTestCall(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Start Test'),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          
           Text(
             'Select a family member to help:',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 16),
           if (_familyContacts.isEmpty)
-            const Card(
+            Card(
               child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'No family members found. Add family members first to request support.',
-                  style: TextStyle(fontSize: 14),
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    const Icon(Icons.group_add, size: 48, color: Colors.grey),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'No family members found',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Add family members first, then request support.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: () => Navigator.of(context).pushNamed('/invite'),
+                      icon: const Icon(Icons.person_add),
+                      label: const Text('Invite Family'),
+                    ),
+                  ],
                 ),
               ),
             )
@@ -332,7 +375,7 @@ class _RemoteSupportScreenState extends State<RemoteSupportScreen> {
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(100, 48),
                       ),
-                      child: const Text('Request Help'),
+                      child: const Text('Call'),
                     ),
                   ),
                 )),
@@ -354,6 +397,92 @@ class _RemoteSupportScreenState extends State<RemoteSupportScreen> {
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Start a test/demo call experience
+  Future<void> _startTestCall() async {
+    // Show ringing dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.phone_in_talk, color: Colors.green),
+            SizedBox(width: 12),
+            Text('Test Call'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 24),
+            const Text(
+              'Connecting to demo support...',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'This is a test call to demonstrate the feature',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // Simulate connection delay
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+    Navigator.of(context).pop(); // Close ringing dialog
+
+    // Show connected state
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 12),
+            Text('Connected!'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.support_agent, size: 64, color: Colors.green.shade700),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              '🎉 Test call successful!',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Your device supports remote support calls. When you request help from a family member, they will be able to:\n\n'
+              '• See your screen\n'
+              '• Guide you through issues\n'
+              '• Help troubleshoot problems',
+              textAlign: TextAlign.left,
+            ),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Great!'),
           ),
         ],
       ),
