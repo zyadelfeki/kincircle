@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../widgets/primary_button.dart';
 import '../../utils/theme.dart';
-import '../../widgets/floaty_background.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -16,107 +14,144 @@ class WelcomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: 'Help',
-            icon: const Icon(Icons.help_outline),
+            icon: const Icon(Icons.help_outline, color: Colors.white70),
             onPressed: () => Navigator.of(context).pushNamed('/help'),
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          const FloatyBackground(),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF1A237E), // Deep indigo
+              Color(0xFF3949AB), // Indigo
+              Color(0xFF5C6BC0), // Light indigo
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Hero card (image only, no overlayed texts)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: AspectRatio(
-                      aspectRatio: 1024 / 500,
-                      child: Image.asset(
-                        'assets/marketing/feature_graphic_1024x500_v2.png',
-                        fit: BoxFit.cover,
+                  // Centered Logo with subtle glow
+                  Container(
+                    width: 160,
+                    height: 160,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.15),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          blurRadius: 40,
+                          spreadRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.family_restroom,
+                        size: 80,
+                        color: Colors.white.withValues(alpha: 0.9),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  // Logo + name
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Hero(
-                        tag: 'kc-logo',
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppTheme.primaryBlue.withValues(alpha: 0.10),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(6.0),
-                            child: Image.asset('assets/icon/kincircle_icon_1024.png', fit: BoxFit.contain),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text('KinCircle', style: Theme.of(context).textTheme.headlineSmall),
-                    ],
+                  const SizedBox(height: 40),
+                  // App Name
+                  const Text(
+                    'KinCircle',
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                   const SizedBox(height: 12),
+                  // Tagline
                   Text(
                     'Peace of mind, powered by AI.',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.w300,
+                    ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
                     'Stay connected and keep your loved ones safe.',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withValues(alpha: 0.7),
+                    ),
                   ),
-                  const Spacer(),
-                  // Action Buttons
-                  PrimaryButton(
-                    text: 'Get Started',
-                    onPressed: () {
-                      Navigator.of(context).pushNamed('/auth');
-                    },
+                  const SizedBox(height: 60),
+                  // Get Started Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () =>
+                          Navigator.of(context).pushNamed('/auth'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppTheme.primaryBlue,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Get Started',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
+                  // Log In Button
                   TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pushNamed('/auth', arguments: {'mode': 'login'});
-                    },
+                    onPressed: () => Navigator.of(context).pushNamed(
+                      '/auth',
+                      arguments: {'mode': 'login'},
+                    ),
                     style: TextButton.styleFrom(
-                      foregroundColor: AppTheme.primaryBlue,
+                      foregroundColor: Colors.white,
                       minimumSize: const Size(44, 44),
                     ),
-                    child: const Text('Log In'),
+                    child: const Text(
+                      'Already have an account? Log In',
+                      style: TextStyle(
+                        decoration: TextDecoration.underline,
+                        decorationColor: Colors.white70,
+                      ),
+                    ),
                   ),
-                  TextButton.icon(
-                    onPressed: () => Navigator.of(context).pushNamed('/permissions'),
-                    icon: const Icon(Icons.tune),
-                    label: const Text('Review Permissions'),
-                  ),
-                  const SizedBox(height: 24),
-                  // Legal Text
+                  const SizedBox(height: 32),
+                  // Legal text
                   Text(
                     'By continuing, you agree to our Terms of Service and Privacy Policy.',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: Colors.grey[700]),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withValues(alpha: 0.5),
+                    ),
                   ),
                 ],
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
-} 
+}

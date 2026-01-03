@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 
 class KeepAlivePage extends StatefulWidget {
-  final Widget child;
   const KeepAlivePage({super.key, required this.child});
+  final Widget child;
 
   @override
   State<KeepAlivePage> createState() => _KeepAlivePageState();

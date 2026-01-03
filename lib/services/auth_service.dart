@@ -5,13 +5,11 @@ import 'package:flutter/foundation.dart';
 import '../utils/constants.dart';
 
 class AuthService extends ChangeNotifier {
-  final FirebaseAuth _auth;
-  final FirebaseFirestore _firestore;
-  bool _isLoading = false;
-  final Future<void> Function()? _authSignOutOverride;
-  User? _user;
-
-  AuthService({FirebaseAuth? auth, FirebaseFirestore? firestore, Future<void> Function()? authSignOutOverride, bool subscribeAuthChanges = true})
+  AuthService(
+      {FirebaseAuth? auth,
+      FirebaseFirestore? firestore,
+      Future<void> Function()? authSignOutOverride,
+      bool subscribeAuthChanges = true})
       : _auth = auth ?? FirebaseAuth.instance,
         _firestore = firestore ?? FirebaseFirestore.instance,
         _authSignOutOverride = authSignOutOverride {
@@ -24,15 +22,22 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+  bool _isLoading = false;
+  final Future<void> Function()? _authSignOutOverride;
+  User? _user;
+
   // Current user and stream (for legacy listeners)
   User? get user => _user;
   Stream<User?> get authStateChanges => _auth.authStateChanges();
-  
+
   // Expose loading state
   bool get isLoading => _isLoading;
 
   // Map FirebaseAuthException to user-friendly messages with guidance
-  String _friendlyAuthMessage(FirebaseAuthException e, {required bool isSignUp}) {
+  String _friendlyAuthMessage(FirebaseAuthException e,
+      {required bool isSignUp}) {
     final code = e.code.toLowerCase();
     final msg = (e.message ?? '').toLowerCase();
     switch (code) {
@@ -56,13 +61,13 @@ class AuthService extends ChangeNotifier {
         return AppConstants.networkError;
       case 'invalid-credential':
         // Common on Android when Play Integrity/Recaptcha token is missing or SHA keys are not configured
-        if (msg.contains('recaptcha') || msg.contains('integrity') || msg.contains('token')) {
-          return (
-            'Sign ${isSignUp ? 'up' : 'in'} blocked: Android device verification failed.\n'
-            '- Add your Android SHA-1 and SHA-256 to Firebase Console > Project settings > Your app (com.zyad.kincircle).\n'
-            '- Download a fresh google-services.json into android/app.\n'
-            '- Uninstall the app, then rebuild and try again.'
-          );
+        if (msg.contains('recaptcha') ||
+            msg.contains('integrity') ||
+            msg.contains('token')) {
+          return ('Sign ${isSignUp ? 'up' : 'in'} blocked: Android device verification failed.\n'
+              '- Add your Android SHA-1 and SHA-256 to Firebase Console > Project settings > Your app (com.zyad.kincircle).\n'
+              '- Download a fresh google-services.json into android/app.\n'
+              '- Uninstall the app, then rebuild and try again.');
         }
         return 'Authentication failed. Please verify your credentials and try again.';
       default:
@@ -72,7 +77,8 @@ class AuthService extends ChangeNotifier {
 
   // --- Ensure user document exists in Firestore ---
   Future<void> ensureUserDocument(User user) async {
-    final userDoc = _firestore.collection(AppConstants.usersCollection).doc(user.uid);
+    final userDoc =
+        _firestore.collection(AppConstants.usersCollection).doc(user.uid);
     final docSnapshot = await userDoc.get();
     if (!docSnapshot.exists) {
       await userDoc.set({
@@ -90,15 +96,16 @@ class AuthService extends ChangeNotifier {
   Future<User?> signInWithGoogle() async {
     try {
       _isLoading = true;
-  // Use FirebaseAuth's provider-based sign-in (works across platforms)
-  final googleProvider = GoogleAuthProvider();
-  final UserCredential userCredential = await _auth.signInWithProvider(googleProvider);
-  await ensureUserDocument(userCredential.user!);
-  _user = userCredential.user;
-  notifyListeners();
-  return userCredential.user;
+      // Use FirebaseAuth's provider-based sign-in (works across platforms)
+      final googleProvider = GoogleAuthProvider();
+      final UserCredential userCredential =
+          await _auth.signInWithProvider(googleProvider);
+      await ensureUserDocument(userCredential.user!);
+      _user = userCredential.user;
+      notifyListeners();
+      return userCredential.user;
     } on FirebaseAuthException catch (e) {
-  throw Exception(_friendlyAuthMessage(e, isSignUp: false));
+      throw Exception(_friendlyAuthMessage(e, isSignUp: false));
     } catch (e) {
       throw Exception('${AppConstants.genericError}: $e');
     } finally {
@@ -110,22 +117,24 @@ class AuthService extends ChangeNotifier {
   Future<User?> signInWithApple() async {
     try {
       _isLoading = true;
-      final AuthorizationCredentialAppleID appleCredential = await SignInWithApple.getAppleIDCredential(
+      final AuthorizationCredentialAppleID appleCredential =
+          await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
           AppleIDAuthorizationScopes.fullName,
         ],
       );
-      final OAuthProvider oAuthProvider = OAuthProvider("apple.com");
+  final OAuthProvider oAuthProvider = OAuthProvider('apple.com');
       final OAuthCredential credential = oAuthProvider.credential(
         idToken: appleCredential.identityToken,
         accessToken: appleCredential.authorizationCode,
       );
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
       await ensureUserDocument(userCredential.user!);
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
-  throw Exception(_friendlyAuthMessage(e, isSignUp: false));
+      throw Exception(_friendlyAuthMessage(e, isSignUp: false));
     } catch (e) {
       throw Exception('${AppConstants.genericError}: $e');
     } finally {
@@ -137,24 +146,25 @@ class AuthService extends ChangeNotifier {
   Future<User?> signUpWithEmail(String email, String password) async {
     try {
       _isLoading = true;
-      final UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      final UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       await ensureUserDocument(userCredential.user!);
-  _user = userCredential.user;
-  notifyListeners();
-  return userCredential.user;
+      _user = userCredential.user;
+      notifyListeners();
+      return userCredential.user;
     } on FirebaseAuthException catch (e) {
-  final msg = e.message ?? '';
-  if (msg.contains('CONFIGURATION_NOT_FOUND')) {
+      final msg = e.message ?? '';
+      if (msg.contains('CONFIGURATION_NOT_FOUND')) {
         throw Exception(
-          'Sign up blocked: Play Integrity/Recaptcha configuration not found for this app.\n'
-          '- Add your Android SHA-1 and SHA-256 to Firebase Console > Project settings > Android app (com.zyad.kincircle).\n'
-          '- Download the updated google-services.json and replace android/app/google-services.json.\n'
-          '- Uninstall the app from the emulator/device, then rebuild and run.');
+            'Sign up blocked: Play Integrity/Recaptcha configuration not found for this app.\n'
+            '- Add your Android SHA-1 and SHA-256 to Firebase Console > Project settings > Android app (com.zyad.kincircle).\n'
+            '- Download the updated google-services.json and replace android/app/google-services.json.\n'
+            '- Uninstall the app from the emulator/device, then rebuild and run.');
       }
-  throw Exception(_friendlyAuthMessage(e, isSignUp: true));
+      throw Exception(_friendlyAuthMessage(e, isSignUp: true));
     } catch (e) {
       throw Exception('${AppConstants.genericError}: $e');
     } finally {
@@ -166,24 +176,25 @@ class AuthService extends ChangeNotifier {
   Future<User?> signInWithEmail(String email, String password) async {
     try {
       _isLoading = true;
-      final UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+      final UserCredential userCredential =
+          await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
       await ensureUserDocument(userCredential.user!);
-  _user = userCredential.user;
-  notifyListeners();
-  return userCredential.user;
+      _user = userCredential.user;
+      notifyListeners();
+      return userCredential.user;
     } on FirebaseAuthException catch (e) {
-  final msg = e.message ?? '';
+      final msg = e.message ?? '';
       if (msg.contains('CONFIGURATION_NOT_FOUND')) {
         throw Exception(
-          'Sign in blocked: Play Integrity/Recaptcha configuration not found for this app.\n'
-          '- Add your Android SHA-1 and SHA-256 to Firebase Console > Project settings > Android app (com.zyad.kincircle).\n'
-          '- Download the updated google-services.json and replace android/app/google-services.json.\n'
-          '- Uninstall the app from the emulator/device, then rebuild and run.');
+            'Sign in blocked: Play Integrity/Recaptcha configuration not found for this app.\n'
+            '- Add your Android SHA-1 and SHA-256 to Firebase Console > Project settings > Android app (com.zyad.kincircle).\n'
+            '- Download the updated google-services.json and replace android/app/google-services.json.\n'
+            '- Uninstall the app from the emulator/device, then rebuild and run.');
       }
-  throw Exception(_friendlyAuthMessage(e, isSignUp: false));
+      throw Exception(_friendlyAuthMessage(e, isSignUp: false));
     } catch (e) {
       throw Exception('${AppConstants.genericError}: $e');
     } finally {
@@ -200,12 +211,12 @@ class AuthService extends ChangeNotifier {
       } else {
         await _auth.signOut();
       }
-  _user = null;
-  notifyListeners();
+      _user = null;
+      notifyListeners();
     } catch (e) {
       throw Exception('${AppConstants.genericError}: $e');
     } finally {
       _isLoading = false;
     }
   }
-} 
+}

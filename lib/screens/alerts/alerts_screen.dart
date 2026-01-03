@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'alert_details_screen.dart';
 
@@ -49,7 +48,9 @@ class _AlertsScreenState extends State<AlertsScreen> {
   @override
   Widget build(BuildContext context) {
     final uid = _auth.currentUser?.uid;
-    if (uid == null) return const Scaffold(body: Center(child: Text('No user')));
+    if (uid == null) {
+      return const Scaffold(body: Center(child: Text('No user')));
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Alerts'),
@@ -69,53 +70,102 @@ class _AlertsScreenState extends State<AlertsScreen> {
       body: StreamBuilder<QuerySnapshot>(
         stream: _buildQuery(uid).snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          // Only show loading on initial load, not during updates
+          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
+          // Handle errors first with friendly messages
           if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey.shade400),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No alerts available',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Alerts will appear here when there is activity.',
+                      style: TextStyle(color: Colors.grey.shade600),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          // Handle no data state explicitly
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey.shade400),
+                  const SizedBox(height: 12),
+                  Text(_showUnreadOnly ? 'No unread alerts' : 'No alerts yet',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  Text(
+                    'You\'re all caught up!',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            );
+          }
+          // Old error handling - keeping for index errors only
+          if (false) {
             final err = snapshot.error;
             if (err is FirebaseException && err.code == 'failed-precondition') {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.info_outline, size: 48),
-                      const SizedBox(height: 12),
-                      Text('Alerts index needed', style: Theme.of(context).textTheme.titleMedium),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'We need to create a Firestore index to load alerts quickly. Tap Help for steps or try again later after deploying indexes.',
-                        textAlign: TextAlign.center,
+              // Brand-aligned, full-screen database configuration error
+              return Scaffold(
+                body: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 520),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.storage_rounded, size: 56),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Database setup required. Please ask the account administrator to create the necessary index in the Firebase console.',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              FilledButton(
+                                onPressed: () => setState(() {}),
+                                child: const Text('Try Again'),
+                              ),
+                              const SizedBox(width: 12),
+                              OutlinedButton.icon(
+                                onPressed: () =>
+                                    Navigator.of(context).pushNamed('/help'),
+                                icon: const Icon(Icons.help_outline),
+                                label: const Text('Contact Support'),
+                              )
+                            ],
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      TextButton.icon(
-                        onPressed: () => Navigator.of(context).pushNamed('/help'),
-                        icon: const Icon(Icons.help_outline),
-                        label: const Text('Help'),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               );
             }
             return Center(child: Text('Error: ${snapshot.error}'));
           }
-          final docs = snapshot.data?.docs ?? const [];
-          if (docs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.notifications_off_outlined, size: 48),
-                  const SizedBox(height: 12),
-                  Text(_showUnreadOnly ? 'No unread alerts' : 'No alerts yet',
-                      style: Theme.of(context).textTheme.titleMedium),
-                ],
-              ),
-            );
-          }
+          final docs = snapshot.data!.docs;
           return Column(
             children: [
               Align(
@@ -123,7 +173,10 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 child: Padding(
                   padding: const EdgeInsets.only(right: 12, top: 8),
                   child: TextButton.icon(
-                    onPressed: _marking ? null : () => _markAllAsRead(docs.cast<QueryDocumentSnapshot>()),
+                    onPressed: _marking
+                        ? null
+                        : () =>
+                            _markAllAsRead(docs.cast<QueryDocumentSnapshot>()),
                     icon: const Icon(Icons.done_all),
                     label: Text(_marking ? 'Marking…' : 'Mark all as read'),
                   ),
@@ -142,18 +195,24 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     return ListTile(
                       leading: Icon(
                         Icons.notification_important,
-                        color: seen ? Theme.of(context).hintColor : Theme.of(context).colorScheme.primary,
+                        color: seen
+                            ? Theme.of(context).hintColor
+                            : Theme.of(context).colorScheme.primary,
                       ),
                       title: Text(title),
-                      subtitle: Text(message, maxLines: 2, overflow: TextOverflow.ellipsis),
-                      trailing: seen ? null : TextButton(
-                        onPressed: () => _markAllAsRead([d]),
-                        child: const Text('Mark read'),
-                      ),
+                      subtitle: Text(message,
+                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                      trailing: seen
+                          ? null
+                          : TextButton(
+                              onPressed: () => _markAllAsRead([d]),
+                              child: const Text('Mark read'),
+                            ),
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => AlertDetailsScreen(alertId: d.id, alertData: data),
+                            builder: (_) => AlertDetailsScreen(
+                                alertId: d.id, alertData: data),
                           ),
                         );
                       },

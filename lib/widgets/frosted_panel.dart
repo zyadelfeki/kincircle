@@ -2,11 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class FrostedPanel extends StatelessWidget {
-  final Widget child;
-  final EdgeInsets padding;
-  final double borderRadius;
-  final Color tint;
-
   const FrostedPanel({
     super.key,
     required this.child,
@@ -14,6 +9,10 @@ class FrostedPanel extends StatelessWidget {
     this.borderRadius = 16,
     this.tint = const Color(0x66FFFFFF),
   });
+  final Widget child;
+  final EdgeInsets padding;
+  final double borderRadius;
+  final Color tint;
 
   @override
   Widget build(BuildContext context) {

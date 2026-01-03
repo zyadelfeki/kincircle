@@ -7,7 +7,8 @@ class CrashPrefs {
   Future<void> setLastCrash({required String message}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kLastCrashKey, message);
-    await prefs.setInt(_kLastCrashTimeKey, DateTime.now().millisecondsSinceEpoch);
+    await prefs.setInt(
+        _kLastCrashTimeKey, DateTime.now().millisecondsSinceEpoch);
   }
 
   Future<String?> getLastCrashMessage() async {

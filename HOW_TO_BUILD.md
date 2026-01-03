@@ -1,4 +1,15 @@
-# KinCircle - Build Guide
+# How to Build
+
+## App icon
+
+This project uses flutter_launcher_icons. To regenerate the launcher icons after changing `assets/icon/kin_arc_launcher_icon.png`:
+
+```powershell
+flutter pub get
+flutter pub run flutter_launcher_icons
+```
+
+On Android, the icon resource is `@mipmap/ic_launcher` and will replace the default Flutter logo.
 
 This document lists the steps to generate platform icons and build release artifacts.
 
