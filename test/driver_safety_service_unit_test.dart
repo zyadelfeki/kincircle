@@ -3,8 +3,8 @@ import 'package:kincircle/services/driver_safety/driver_safety_service.dart';
 import 'package:kincircle/services/driver_safety/interpreter.dart';
 
 class _FakeInterpreter implements DriverInterpreter {
-  final List<double> scores;
   _FakeInterpreter(this.scores);
+  final List<double> scores;
   @override
   List<double> run(List<double> features) => scores;
 }

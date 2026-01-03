@@ -2,16 +2,15 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 class FloatyBackground extends StatefulWidget {
-  final List<Color> gradientColors;
-  final double intensity; // 0..1 controls blob opacity
-  final int blobCount;
-
   const FloatyBackground({
     super.key,
     this.gradientColors = const [Color(0xFFEBF3FF), Color(0xFFE6FFF4)],
     this.intensity = 0.6,
     this.blobCount = 6,
   });
+  final List<Color> gradientColors;
+  final double intensity; // 0..1 controls blob opacity
+  final int blobCount;
 
   @override
   State<FloatyBackground> createState() => _FloatyBackgroundState();
@@ -37,7 +36,8 @@ class _FloatyBackgroundState extends State<FloatyBackground>
       final dy = (rnd.nextDouble() - 0.5) * 0.2;
       final radius = 120.0 + rnd.nextDouble() * 140.0;
       final phase = rnd.nextDouble() * 2 * math.pi;
-      return _Blob(start: start, delta: Offset(dx, dy), radius: radius, phase: phase);
+      return _Blob(
+          start: start, delta: Offset(dx, dy), radius: radius, phase: phase);
     });
   }
 
@@ -67,20 +67,29 @@ class _FloatyBackgroundState extends State<FloatyBackground>
 }
 
 class _Blob {
+  const _Blob({
+    required this.start,
+    required this.delta,
+    required this.radius,
+    required this.phase,
+  });
   final Offset start;
   final Offset delta;
   final double radius;
   final double phase;
-  const _Blob({required this.start, required this.delta, required this.radius, required this.phase});
 }
 
 class _FloatyPainter extends CustomPainter {
+  const _FloatyPainter({
+    required this.t,
+    required this.blobs,
+    required this.colors,
+    required this.intensity,
+  });
   final double t;
   final List<_Blob> blobs;
   final List<Color> colors;
   final double intensity;
-
-  _FloatyPainter({required this.t, required this.blobs, required this.colors, required this.intensity});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -110,10 +119,12 @@ class _FloatyPainter extends CustomPainter {
     final vignette = Paint()
       ..shader = RadialGradient(
         colors: [Colors.transparent, Colors.black.withValues(alpha: 0.05)],
-      ).createShader(Rect.fromCircle(center: rect.center, radius: size.longestSide));
+      ).createShader(
+          Rect.fromCircle(center: rect.center, radius: size.longestSide));
     canvas.drawRect(rect, vignette);
   }
 
   @override
-  bool shouldRepaint(covariant _FloatyPainter oldDelegate) => oldDelegate.t != t;
+  bool shouldRepaint(covariant _FloatyPainter oldDelegate) =>
+      oldDelegate.t != t;
 }

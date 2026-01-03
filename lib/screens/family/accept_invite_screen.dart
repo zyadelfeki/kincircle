@@ -5,8 +5,9 @@ import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 
 class AcceptInviteScreen extends StatefulWidget {
-  final String inviteId;
   const AcceptInviteScreen({super.key, required this.inviteId});
+
+  final String inviteId;
 
   @override
   State<AcceptInviteScreen> createState() => _AcceptInviteScreenState();
@@ -72,7 +73,8 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Error loading invite', style: Theme.of(context).textTheme.titleMedium),
+                    Text('Error loading invite',
+                        style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
                     Text('$_loadError'),
                     const SizedBox(height: 16),
@@ -98,12 +100,17 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
           final inviterName = data['inviterName'] as String? ?? 'Someone';
 
           return FutureBuilder<DocumentSnapshot>(
-            future: FirebaseFirestore.instance.collection('families').doc(familyId).get(),
+            future: FirebaseFirestore.instance
+                .collection('families')
+                .doc(familyId)
+                .get(),
             builder: (context, famSnap) {
               if (famSnap.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (famSnap.hasError || !famSnap.hasData || !famSnap.data!.exists) {
+              if (famSnap.hasError ||
+                  !famSnap.hasData ||
+                  !famSnap.data!.exists) {
                 return const Center(child: Text('Family not found'));
               }
               final famData = famSnap.data!.data() as Map<String, dynamic>;
@@ -114,31 +121,36 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('$inviterName has invited you to join the "$familyName" circle.',
+                    Text(
+                        '$inviterName has invited you to join the "$familyName" circle.',
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 32),
                     Row(
                       children: [
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: _submitting ? null : () => _handleAccept(familyId),
+                            onPressed: _submitting
+                                ? null
+                                : () => _handleAccept(familyId),
                             child: const Text('Accept'),
                           ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: _submitting ? null : () async {
-                              final nav = Navigator.of(context);
-                              try {
-                                await TelemetryService().logInviteEvent(
-                                  inviteId: widget.inviteId,
-                                  event: 'declined',
-                                );
-                              } catch (_) {}
-                              if (!mounted) return;
-                              nav.pop();
-                            },
+                            onPressed: _submitting
+                                ? null
+                                : () async {
+                                    final nav = Navigator.of(context);
+                                    try {
+                                      await TelemetryService().logInviteEvent(
+                                        inviteId: widget.inviteId,
+                                        event: 'declined',
+                                      );
+                                    } catch (_) {}
+                                    if (!mounted) return;
+                                    nav.pop();
+                                  },
                             child: const Text('Decline'),
                           ),
                         ),
@@ -153,4 +165,4 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
       ),
     );
   }
-} 
+}

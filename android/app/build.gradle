@@ -1,0 +1,61 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'dev.flutter.flutter-gradle-plugin'
+}
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+} else {
+    logger.warn("key.properties not found. Release builds will fall back to the debug signing config.")
+}
+
+android {
+    namespace 'com.example.kincircle'
+    compileSdk 36
+    ndkVersion flutter.ndkVersion
+
+    defaultConfig {
+        applicationId 'com.zyad.kincircle'
+    // Bump minSdk to satisfy transitive plugin requirements (e.g., activity_recognition_flutter requires >=26)
+    minSdkVersion 26
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode flutter.versionCode
+        versionName flutter.versionName
+        multiDexEnabled true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+
+    signingConfigs {
+        release {
+            if (keystoreProperties['storeFile']) {
+                storeFile file(keystoreProperties['storeFile'])
+            }
+            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig keystoreProperties.isEmpty() ? signingConfigs.debug : signingConfigs.release
+        }
+    }
+}
+
+// ...existing code...
+
+dependencies {
+    implementation 'androidx.multidex:multidex:2.0.1'
+}

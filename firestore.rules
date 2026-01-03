@@ -7,8 +7,12 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
+    function isOwnerUser(userId) {
       return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isOwner(familyData) {
+      return request.auth.uid == familyData.ownerId;
     }
 
     function isFamilyMember(familyId) {
@@ -17,29 +21,44 @@ service cloud.firestore {
              request.auth.uid in get(/databases/$(database)/documents/families/$(familyId)).data.members;
     }
 
+    function isFamilyOwner(familyId) {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/families/$(familyId)) &&
+             get(/databases/$(database)/documents/families/$(familyId)).data.members.size() > 0 &&
+             request.auth.uid == get(/databases/$(database)/documents/families/$(familyId)).data.members[0];
+    }
+
+    function isRemovingSelfFromMembers(familyId) {
+      return isSignedIn() &&
+             resource.data.members != null &&
+             request.resource.data.members != null &&
+             resource.data.members.hasAll([request.auth.uid]) &&
+             !request.resource.data.members.hasAll([request.auth.uid]) &&
+             resource.data.members.removeAll([request.auth.uid]) == request.resource.data.members;
+    }
+
     // Users collection
     match /users/{userId} {
       allow read: if isSignedIn(); // Any signed-in user can read user profiles
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+      allow create: if isOwnerUser(userId);
+      allow update: if isOwnerUser(userId);
       allow delete: if false; // Users cannot be deleted via client
     }
 
     // Families collection
     match /families/{familyId} {
-      allow read: if isSignedIn() && (isFamilyMember(familyId));
+      allow read, update: if isOwner(resource.data);
       allow create: if isSignedIn();
-      allow update: if isFamilyMember(familyId);
       allow delete: if false; // Families cannot be deleted via client
     }
 
     // Invites collection
     match /invites/{inviteId} {
-      allow read: if isSignedIn() && (isOwner(resource.data.inviterId) || isOwner(resource.data.inviteeId));
-      allow create: if isSignedIn() && isOwner(request.resource.data.inviterId);
-      allow update: if isSignedIn() && isOwner(resource.data.inviteeId) &&
+      allow read: if isSignedIn() && (isOwnerUser(resource.data.inviterId) || isOwnerUser(resource.data.inviteeId));
+      allow create: if isSignedIn() && isOwnerUser(request.resource.data.inviterId);
+      allow update: if isSignedIn() && isOwnerUser(resource.data.inviteeId) &&
                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
-      allow delete: if isSignedIn() && (isOwner(resource.data.inviterId) || isOwner(resource.data.inviteeId));
+      allow delete: if isSignedIn() && (isOwnerUser(resource.data.inviterId) || isOwnerUser(resource.data.inviteeId));
     }
 
     // Alerts collection
@@ -55,15 +74,125 @@ service cloud.firestore {
     match /alert_feedback/{feedbackId} {
       allow read: if isSignedIn() && isFamilyMember(resource.data.familyId);
       allow create: if isSignedIn() && isFamilyMember(request.resource.data.familyId);
-      allow update: if isSignedIn() && isOwner(resource.data.userId);
+      allow update: if isSignedIn() && isOwnerUser(resource.data.userId);
       allow delete: if false; // Feedback cannot be deleted via client
     }
 
     // Location events (subcollection under users)
     match /users/{userId}/location_events/{eventId} {
-      allow read: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
+      allow read: if isSignedIn() && isOwnerUser(userId);
+      allow create: if isSignedIn() && isOwnerUser(userId);
       allow update, delete: if false; // Events cannot be modified or deleted via client
+    }
+
+    // Trips collection
+    match /trips/{tripId} {
+      allow read: if isSignedIn() && 
+                     (request.auth.uid == resource.data.userId ||
+                      isFamilyMember(resource.data.familyId));
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+      allow update, delete: if false; // Trips cannot be modified or deleted via client
+    }
+
+    // Emergency responses collection
+    match /emergency_responses/{responseId} {
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+      allow update: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow delete: if false;
+    }
+
+    // Emergency location shares (for contacts to access)
+    match /emergency_location_shares/{shareId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // Emergency beacons (public for responders)
+    match /emergency_beacons/{beaconId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow delete: if false;
+    }
+
+    // Emergency chats
+    match /emergency_chats/{chatId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if false;
+      
+      match /messages/{messageId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update, delete: if false;
+      }
+    }
+
+    // Medical broadcasts
+    match /medical_broadcasts/{broadcastId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // 911 info packets (readable by emergency services)
+    match /911_info_packets/{packetId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // Community stats (for social contagion features)
+    match /community/{docId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if false;
+      
+      match /{subcollection}/{subDocId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update, delete: if false;
+      }
+    }
+
+    // In-app notifications (user's own notifications)
+    match /users/{userId}/in_app_notifications/{notificationId} {
+      allow read: if isOwnerUser(userId);
+      allow create: if isSignedIn();
+      allow update: if isOwnerUser(userId);
+      allow delete: if isOwnerUser(userId);
+    }
+
+    // Support tickets
+    match /support_tickets/{ticketId} {
+      allow read: if isSignedIn() && request.auth.uid == resource.data.uid;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && request.auth.uid == resource.data.uid;
+      allow delete: if false;
+    }
+
+    // Check-ins collection (for wellbeing)
+    match /check_ins/{checkInId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // Wellbeing analytics (subcollection under users)
+    match /users/{userId}/wellbeing_analytics/{analyticsId} {
+      allow read: if isOwnerUser(userId);
+      allow create: if isOwnerUser(userId);
+      allow update, delete: if false;
+    }
+
+    // Driver safety summaries
+    match /users/{userId}/driver_safety_summaries/{summaryId} {
+      allow read: if isOwnerUser(userId);
+      allow create: if isOwnerUser(userId);
+      allow update, delete: if false;
     }
 
     // Deny access to all other documents

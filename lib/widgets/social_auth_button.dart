@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 
 class SocialAuthButton extends StatefulWidget {
-  final String text;
-  final IconData icon;
-  final VoidCallback? onPressed; // Allow null to disable the button
-
   const SocialAuthButton({
     super.key,
     required this.text,
-    required this.icon,
+    this.icon,
+    this.leading,
     required this.onPressed,
   });
+  final String text;
+  final IconData? icon;
+  final Widget? leading; // optional custom leading (e.g., Google G)
+  final VoidCallback? onPressed; // Allow null to disable the button
 
   @override
   State<SocialAuthButton> createState() => _SocialAuthButtonState();
@@ -46,18 +47,31 @@ class _SocialAuthButtonState extends State<SocialAuthButton>
 
   @override
   Widget build(BuildContext context) {
-    final button = OutlinedButton.icon(
-      icon: Icon(widget.icon, size: 24.0),
-      label: Text(widget.text),
+    final child = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (widget.leading != null)
+          Padding(
+              padding: const EdgeInsets.only(right: 8), child: widget.leading)
+        else if (widget.icon != null)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Icon(widget.icon, size: 24.0),
+          ),
+        Flexible(child: Text(widget.text)),
+      ],
+    );
+
+    final button = OutlinedButton(
       onPressed: widget.onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: Colors.black87,
-        minimumSize: const Size(double.infinity, 50), // Full width
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        minimumSize: const Size(double.infinity, 50),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         side: BorderSide(color: Colors.grey.shade300),
+        backgroundColor: Colors.white,
       ),
+      child: child,
     );
 
     return GestureDetector(

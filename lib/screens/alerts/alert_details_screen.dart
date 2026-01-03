@@ -5,10 +5,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/feedback_service.dart';
 
 class AlertDetailsScreen extends StatelessWidget {
+  const AlertDetailsScreen({super.key, required this.alertId, this.alertData});
+
   final String alertId;
   final Map<String, dynamic>? alertData;
-
-  const AlertDetailsScreen({super.key, required this.alertId, this.alertData});
 
   @override
   Widget build(BuildContext context) {
@@ -113,4 +113,3 @@ class AlertDetailsScreen extends StatelessWidget {
     }
   }
 }
- 

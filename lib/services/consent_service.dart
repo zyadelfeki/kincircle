@@ -1,10 +1,10 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ConsentService {
-  static const _key = 'ml_consent_given';
-  static final ConsentService _instance = ConsentService._internal();
-  factory ConsentService() => _instance;
   ConsentService._internal();
+  factory ConsentService() => _instance;
+  static final ConsentService _instance = ConsentService._internal();
+  static const _key = 'ml_consent_given';
 
   Future<bool> isConsentGiven() async {
     final prefs = await SharedPreferences.getInstance();

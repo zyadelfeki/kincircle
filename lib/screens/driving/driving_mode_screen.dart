@@ -32,7 +32,9 @@ class _DrivingModeScreenState extends State<DrivingModeScreen> {
       if (!mounted) return;
       setState(() => _status = 'Model not found');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Driver Safety model missing. See assets/models/README.txt')),
+        const SnackBar(
+            content: Text(
+                'Driver Safety model missing. See assets/models/README.txt')),
       );
       return;
     }
@@ -78,7 +80,9 @@ class _DrivingModeScreenState extends State<DrivingModeScreen> {
   Widget build(BuildContext context) {
     final color = _running ? Colors.redAccent : Colors.greenAccent;
     final label = _running ? 'End Drive' : 'Start Drive';
-    final icon = _running ? Icons.stop_circle_rounded : Icons.directions_car_filled_rounded;
+    final icon = _running
+        ? Icons.stop_circle_rounded
+        : Icons.directions_car_filled_rounded;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -100,9 +104,12 @@ class _DrivingModeScreenState extends State<DrivingModeScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: color,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-                textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                textStyle:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
               ),
               onPressed: _running ? _stop : _start,
               icon: Icon(icon, size: 28),
