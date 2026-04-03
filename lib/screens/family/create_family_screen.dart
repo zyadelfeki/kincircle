@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../../design/kincircle_screen_tokens.dart';
 import '../../services/firestore_service.dart';
+import '../../widgets/nav_shell.dart';
 
 class CreateFamilyScreen extends StatefulWidget {
   const CreateFamilyScreen({super.key});
@@ -9,64 +12,132 @@ class CreateFamilyScreen extends StatefulWidget {
 }
 
 class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
-  final _nameController = TextEditingController();
-  final _svc = FirestoreService();
-  bool _busy = false;
+  final FirestoreService _firestoreService = FirestoreService();
+  bool _loading = false;
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _create() async {
-    final name = _nameController.text.trim();
-    setState(() => _busy = true);
+  Future<void> _createCircle() async {
+    setState(() => _loading = true);
     try {
-      await _svc.createFamily(name: name.isEmpty ? 'Family' : name);
+      await _firestoreService.createFamily(name: 'My Circle');
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/invite');
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Family created. You can now invite members.')),
-      );
-      Navigator.of(context).pop();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Couldn’t create family: $e')),
+        const SnackBar(content: Text('Could not create circle')),
       );
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
+  }
+
+  Future<void> _joinWithCode() async {
+    if (!mounted) return;
+    final TextEditingController codeController = TextEditingController();
+    final String? code = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: KinCirclePalette.surface,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            16 + MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Join with invite code',
+                style: KinCircleTypography.cardTitle16(),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                decoration: KinCircleDecorations.input(),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: TextField(
+                  controller: codeController,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'Enter invite code',
+                  ),
+                  textCapitalization: TextCapitalization.characters,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                style: KinCircleButtons.primary(),
+                onPressed: () => Navigator.of(context).pop(codeController.text.trim()),
+                child: const Text('Continue'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    codeController.dispose();
+    if (code == null || code.isEmpty) return;
+    if (!mounted) return;
+    Navigator.of(context).pushNamed('/accept-invite', arguments: {'inviteId': code});
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Create Family')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Family name',
-                hintText: 'e.g., The Arc Family',
+    return NavShell(
+      currentIndex: 1,
+      title: 'Create Circle',
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  color: KinCirclePalette.surface,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: KinCirclePalette.border, width: 1),
+                ),
+                child: const Icon(Icons.shield_moon_rounded, color: KinCirclePalette.accent, size: 34),
               ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _busy ? null : _create,
-              child: _busy
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Create'),
-            ),
-          ],
+              const SizedBox(height: 20),
+              Text(
+                "You're not in a Circle yet",
+                style: KinCircleTypography.heading22(),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Create a new family circle or join one with an invite code.',
+                style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 22),
+              ElevatedButton(
+                style: KinCircleButtons.primary(),
+                onPressed: _loading ? null : _createCircle,
+                child: _loading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Create a Circle'),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton(
+                style: KinCircleButtons.secondary(),
+                onPressed: _joinWithCode,
+                child: const Text('Join with Code'),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import '../../services/support_ticket_service.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../design/kincircle_screen_tokens.dart';
+import '../../widgets/nav_shell.dart';
 
 class HelpScreen extends StatefulWidget {
   const HelpScreen({super.key});
@@ -12,410 +12,284 @@ class HelpScreen extends StatefulWidget {
 }
 
 class _HelpScreenState extends State<HelpScreen> {
-  String _content = '';
+  final TextEditingController _searchController = TextEditingController();
   String _query = '';
 
+  static const List<_FaqGroup> _faqGroups = <_FaqGroup>[
+    _FaqGroup(
+      category: 'Safety & Alerts',
+      entries: [
+        _FaqEntry(
+          question: 'How do SOS alerts work in KinCircle?',
+          answer:
+              'SOS sends an urgent alert to your circle and opens emergency quick actions so members can react immediately.',
+        ),
+        _FaqEntry(
+          question: 'Why am I not receiving alerts?',
+          answer:
+              'Check app notification permissions and ensure Push Notifications is enabled in Settings > Notifications.',
+        ),
+      ],
+    ),
+    _FaqGroup(
+      category: 'Location',
+      entries: [
+        _FaqEntry(
+          question: 'How often is location updated?',
+          answer:
+              'Location updates are sent automatically when movement is detected and permissions are granted.',
+        ),
+        _FaqEntry(
+          question: 'Can I pause location sharing?',
+          answer:
+              'Yes. Go to Settings > Privacy and turn off Location sharing. You can re-enable anytime.',
+        ),
+      ],
+    ),
+    _FaqGroup(
+      category: 'Circle & Invites',
+      entries: [
+        _FaqEntry(
+          question: 'How do I invite family members?',
+          answer:
+              'Open Invite screen and share your invite link, code, or send via SMS/WhatsApp.',
+        ),
+        _FaqEntry(
+          question: 'Can I join using only an invite code?',
+          answer:
+              'Yes. Use the Join with Code flow from create-family empty state or from invite tools.',
+        ),
+      ],
+    ),
+  ];
+
   @override
-  void initState() {
-    super.initState();
-    _load();
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
-  Future<void> _load() async {
-    try {
-      final md = await rootBundle.loadString('docs/FAQ.md');
-      if (mounted) setState(() => _content = md);
-    } catch (e) {
-      setState(() => _content = '# Help\nUnable to load help at the moment.');
+  List<_FaqGroup> _filteredGroups() {
+    if (_query.trim().isEmpty) return _faqGroups;
+    final String q = _query.toLowerCase();
+    return _faqGroups
+        .map((_FaqGroup group) {
+          final List<_FaqEntry> entries = group.entries.where((_FaqEntry entry) {
+            return entry.question.toLowerCase().contains(q) ||
+                entry.answer.toLowerCase().contains(q) ||
+                group.category.toLowerCase().contains(q);
+          }).toList();
+          return _FaqGroup(category: group.category, entries: entries);
+        })
+        .where((_FaqGroup group) => group.entries.isNotEmpty)
+        .toList();
+  }
+
+  Future<void> _launchEmail() async {
+    final Uri uri = Uri(
+      scheme: 'mailto',
+      path: 'support@kincircle.app',
+      query: 'subject=KinCircle Support Request',
+    );
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+      return;
     }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Email client unavailable')),
+    );
   }
 
-  List<_FaqSection> _parseSections(String md) {
-    final lines = md.split('\n');
-    final sections = <_FaqSection>[];
-  _FaqSection? current;
-    for (final line in lines) {
-      if (line.startsWith('## ')) {
-        if (current != null) sections.add(current);
-        current = _FaqSection(title: line.substring(3).trim(), items: []);
-      } else if (line.startsWith('### ')) {
-        final title = line.substring(4).trim();
-    current ??= _FaqSection(title: 'General', items: []);
-        current.items.add(_FaqItem(question: title, answer: ''));
-      } else if (line.trim().isNotEmpty) {
-    current ??= _FaqSection(title: 'General', items: []);
-        if (current.items.isEmpty) {
-          current.items.add(_FaqItem(question: 'Info', answer: line.trim()));
-        } else {
-          final last = current.items.last;
-          current.items[current.items.length - 1] =
-              last.copyWith(answer: ('${last.answer}\n$line').trim());
-        }
-      }
+  Future<void> _launchChat() async {
+    final Uri uri = Uri.parse('https://wa.me/201000000000');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
     }
-    if (current != null) sections.add(current);
-    return sections;
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Chat support unavailable')),
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final sections = _parseSections(_content).where((s) {
-      if (_query.isEmpty) return true;
-      final q = _query.toLowerCase();
-      return s.title.toLowerCase().contains(q) ||
-          s.items.any((i) =>
-              i.question.toLowerCase().contains(q) ||
-              i.answer.toLowerCase().contains(q));
-    }).toList();
+  Future<void> _launchStore() async {
+    // TODO: replace with real App Store / Play Store URL.
+    final Uri uri = Uri.parse('https://play.google.com/store/apps/details?id=com.example.kincircle');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Store link unavailable')),
+    );
+  }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Help & FAQ')),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: 24),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: TextField(
-              decoration: const InputDecoration(
-                hintText: 'Search help…',
-                prefixIcon: Icon(Icons.search),
+  Widget _searchBar() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: KinCircleDecorations.input(),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (String value) {
+          setState(() => _query = value);
+        },
+        style: KinCircleTypography.body14(),
+        decoration: InputDecoration(
+          icon: const Icon(Icons.search, color: KinCirclePalette.textMuted),
+          hintText: 'Search help articles',
+          hintStyle: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+          border: InputBorder.none,
+        ),
+      ),
+    );
+  }
+
+  Widget _faqList() {
+    final List<_FaqGroup> groups = _filteredGroups();
+    if (groups.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 36),
+          child: Column(
+            children: [
+              const Icon(Icons.search_off, color: KinCirclePalette.textMuted, size: 40),
+              const SizedBox(height: 8),
+              Text(
+                'No FAQ matches your search',
+                style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
               ),
-              onChanged: (v) => setState(() => _query = v.trim()),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: groups.map((_FaqGroup group) {
+        return Container(
+          margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+          decoration: KinCircleDecorations.card(),
+          child: Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              title: Text(
+                group.category,
+                style: KinCircleTypography.body14(weight: FontWeight.w600),
+              ),
+              iconColor: KinCirclePalette.accent,
+              collapsedIconColor: KinCirclePalette.textMuted,
+              childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              children: group.entries.map((_FaqEntry entry) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: KinCirclePalette.surfaceAlt,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: KinCirclePalette.border, width: 1),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          entry.question,
+                          style: KinCircleTypography.body14(weight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          entry.answer,
+                          style: KinCircleTypography.caption12(
+                            color: KinCirclePalette.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
           ),
-          for (final section in sections)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: _SectionWidget(section: section),
-            ),
-          const SizedBox(height: 8),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text('Contact Support',
-                style: Theme.of(context).textTheme.titleSmall),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _ContactSupportForm(),
-          ),
-        ],
-      ),
+        );
+      }).toList(),
     );
   }
-}
 
-class _SectionWidget extends StatelessWidget {
-  const _SectionWidget({required this.section});
-  final _FaqSection section;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ExpansionTile(
-        title: Text(section.title),
-        children: [
-          for (final item in section.items) _FaqItemTile(item: item),
-        ],
-      ),
-    );
-  }
-}
-
-class _FaqItemTile extends StatefulWidget {
-  const _FaqItemTile({required this.item});
-  final _FaqItem item;
-  @override
-  State<_FaqItemTile> createState() => _FaqItemTileState();
-}
-
-class _FaqItemTileState extends State<_FaqItemTile> {
-  bool? _helpful; // null = not answered, true/false after selection
-  bool _showForm = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  Widget _contactSection() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      padding: const EdgeInsets.all(14),
+      decoration: KinCircleDecorations.card(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text('Contact Support', style: KinCircleTypography.cardTitle16()),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: _launchEmail,
+            style: KinCircleButtons.primary(),
+            child: const Text('Email Support'),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: _launchChat,
+            style: KinCircleButtons.secondary(),
+            child: const Text('Chat Support'),
+          ),
+          const SizedBox(height: 8),
           ListTile(
-            title: Text(widget.item.question,
-                style: Theme.of(context).textTheme.titleSmall),
-            subtitle: Text(widget.item.answer),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-            child: Row(
-              children: [
-                const Text('Was this helpful?'),
-                const SizedBox(width: 12),
-                ChoiceChip(
-                  label: const Text('Yes'),
-                  selected: _helpful == true,
-                  onSelected: (_) => setState(() {
-                    _helpful = true;
-                    _showForm = false;
-                  }),
-                ),
-                const SizedBox(width: 8),
-                ChoiceChip(
-                  label: const Text('No'),
-                  selected: _helpful == false,
-                  onSelected: (_) => setState(() {
-                    _helpful = false;
-                    _showForm = true;
-                  }),
-                ),
-              ],
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            onTap: _launchStore,
+            leading: const Icon(Icons.star_rate_rounded, color: KinCirclePalette.accent),
+            title: Text(
+              'Rate the app',
+              style: KinCircleTypography.body14(weight: FontWeight.w600),
             ),
+            trailing: const Icon(Icons.chevron_right_rounded, color: KinCirclePalette.textMuted),
           ),
-          if (_showForm)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: _InlineContactForm(defaultSubject: widget.item.question),
-            ),
-          const Divider(),
         ],
       ),
     );
-  }
-}
-
-class _InlineContactForm extends StatefulWidget {
-  const _InlineContactForm({required this.defaultSubject});
-  final String defaultSubject;
-  @override
-  State<_InlineContactForm> createState() => _InlineContactFormState();
-}
-
-class _InlineContactFormState extends State<_InlineContactForm> {
-  final _formKey = GlobalKey<FormState>();
-  final _email = TextEditingController();
-  final _message = TextEditingController();
-  bool _sending = false;
-  File? _screenshot;
-
-  @override
-  void dispose() {
-    _email.dispose();
-    _message.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickScreenshot() async {
-    final picker = ImagePicker();
-    final xfile = await picker.pickImage(source: ImageSource.gallery);
-    if (xfile != null) setState(() => _screenshot = File(xfile.path));
-  }
-
-  Future<void> _send() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _sending = true);
-    try {
-      final id = await SupportTicketService().createTicket(
-        name: 'In-app user',
-        email: _email.text.trim(),
-        subject: widget.defaultSubject,
-        description: _message.text.trim(),
-        screenshot: _screenshot,
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Thanks! Ticket $id created.')),
-      );
-      _formKey.currentState!.reset();
-      setState(() => _screenshot = null);
-    } finally {
-      if (mounted) setState(() => _sending = false);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return NavShell(
+      currentIndex: 4,
+      title: 'Help & Support',
+      body: ListView(
+        padding: const EdgeInsets.only(bottom: 24),
         children: [
-          TextFormField(
-            controller: _email,
-            decoration: const InputDecoration(labelText: 'Your email'),
-            keyboardType: TextInputType.emailAddress,
-            validator: (v) => (v == null || !v.contains('@'))
-                ? 'Enter a valid email'
-                : null,
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _message,
-            decoration: const InputDecoration(labelText: 'What didn\'t help?'),
-            minLines: 2,
-            maxLines: 4,
-            validator: (v) => (v == null || v.trim().isEmpty)
-                ? 'Please add a brief note'
-                : null,
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              OutlinedButton.icon(
-                onPressed: _pickScreenshot,
-                icon: const Icon(Icons.attachment),
-                label: const Text('Attach screenshot'),
-              ),
-              const SizedBox(width: 8),
-              if (_screenshot != null)
-                const Icon(Icons.check_circle, color: Colors.green),
-              const Spacer(),
-              FilledButton(
-                onPressed: _sending ? null : _send,
-                child: _sending
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Send'),
-              )
-            ],
-          )
+          _searchBar(),
+          _faqList(),
+          _contactSection(),
         ],
       ),
     );
   }
 }
 
-class _ContactSupportForm extends StatefulWidget {
-  @override
-  State<_ContactSupportForm> createState() => _ContactSupportFormState();
+class _FaqGroup {
+  const _FaqGroup({
+    required this.category,
+    required this.entries,
+  });
+
+  final String category;
+  final List<_FaqEntry> entries;
 }
 
-class _ContactSupportFormState extends State<_ContactSupportForm> {
-  final _formKey = GlobalKey<FormState>();
-  final _name = TextEditingController();
-  final _email = TextEditingController();
-  final _subject = TextEditingController();
-  final _message = TextEditingController();
-  bool _sending = false;
-  File? _screenshot;
+class _FaqEntry {
+  const _FaqEntry({
+    required this.question,
+    required this.answer,
+  });
 
-  @override
-  void dispose() {
-    _name.dispose();
-    _email.dispose();
-    _subject.dispose();
-    _message.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickScreenshot() async {
-    final picker = ImagePicker();
-    final xfile = await picker.pickImage(source: ImageSource.gallery);
-    if (xfile != null) setState(() => _screenshot = File(xfile.path));
-  }
-
-  Future<void> _send() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _sending = true);
-    try {
-      final id = await SupportTicketService().createTicket(
-        name: _name.text,
-        email: _email.text,
-        subject: _subject.text.isNotEmpty ? _subject.text : 'Support Request',
-        description: _message.text,
-        screenshot: _screenshot,
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ticket $id created. We’ll reply within 24 hours.')),
-      );
-      _formKey.currentState!.reset();
-      setState(() {
-        _screenshot = null;
-      });
-    } finally {
-      if (mounted) setState(() => _sending = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TextFormField(
-            controller: _name,
-            decoration: const InputDecoration(labelText: 'Your name'),
-            validator: (v) => (v == null || v.trim().isEmpty)
-                ? 'Please enter your name'
-                : null,
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _email,
-            decoration: const InputDecoration(labelText: 'Your email'),
-            keyboardType: TextInputType.emailAddress,
-            validator: (v) =>
-                (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _subject,
-            decoration: const InputDecoration(labelText: 'Subject'),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _message,
-            decoration: const InputDecoration(labelText: 'How can we help?'),
-            minLines: 3,
-            maxLines: 5,
-            validator: (v) => (v == null || v.trim().isEmpty)
-                ? 'Please enter a message'
-                : null,
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              OutlinedButton.icon(
-                onPressed: _pickScreenshot,
-                icon: const Icon(Icons.attachment),
-                label: const Text('Attach screenshot'),
-              ),
-              const SizedBox(width: 8),
-              if (_screenshot != null)
-                const Icon(Icons.check_circle, color: Colors.green),
-            ],
-          ),
-          const SizedBox(height: 12),
-          FilledButton(
-            onPressed: _sending ? null : _send,
-            child: _sending
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2))
-                : const Text('Send'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FaqSection {
-  _FaqSection({required this.title, required this.items});
-  final String title;
-  final List<_FaqItem> items;
-}
-
-class _FaqItem {
-  _FaqItem({required this.question, required this.answer});
   final String question;
   final String answer;
-  _FaqItem copyWith({String? question, String? answer}) => _FaqItem(
-      question: question ?? this.question, answer: answer ?? this.answer);
 }

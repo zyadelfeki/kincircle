@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
+
+import '../../design/kincircle_screen_tokens.dart';
+import '../../widgets/nav_shell.dart';
 import 'alert_details_screen.dart';
 
 class AlertsScreen extends StatefulWidget {
@@ -11,172 +15,244 @@ class AlertsScreen extends StatefulWidget {
 }
 
 class _AlertsScreenState extends State<AlertsScreen> {
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
-  bool _showUnreadOnly = false;
-  bool _marking = false;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Query _buildQuery(String uid) {
-    Query q = _firestore
-        .collection('alerts')
-        .where('userId', isEqualTo: uid)
-        .orderBy('timestamp', descending: true)
-        .limit(100);
-    if (_showUnreadOnly) {
-      q = q.where('seen', isEqualTo: false);
-    }
-    return q;
+  bool _loading = true;
+  String? _error;
+  bool _showUnreadOnly = false;
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _docs =
+      <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
   }
 
-  Future<void> _markAllAsRead(List<QueryDocumentSnapshot> docs) async {
-    if (_marking) return;
-    setState(() => _marking = true);
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
     try {
-      final batch = _firestore.batch();
-      for (final d in docs) {
-        final data = d.data() as Map<String, dynamic>?;
-        if (data == null) continue;
-        if ((data['seen'] as bool?) == true) continue;
-        batch.set(d.reference, {'seen': true}, SetOptions(merge: true));
+      final String? uid = _auth.currentUser?.uid;
+      if (uid == null) {
+        if (!mounted) return;
+        setState(() {
+          _loading = false;
+          _error = 'Please sign in.';
+        });
+        return;
       }
-      await batch.commit();
-    } finally {
-      if (mounted) setState(() => _marking = false);
+
+      Query<Map<String, dynamic>> query = _firestore
+          .collection('alerts')
+          .where('userId', isEqualTo: uid)
+          .orderBy('timestamp', descending: true)
+          .limit(100);
+      if (_showUnreadOnly) {
+        query = query.where('seen', isEqualTo: false);
+      }
+
+      final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _docs = snapshot.docs;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'Unable to load alerts';
+      });
     }
+  }
+
+  Future<void> _markRead(QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
+    await doc.reference.set({'seen': true}, SetOptions(merge: true));
+    _load();
+  }
+
+  Future<void> _markAllRead() async {
+    final WriteBatch batch = _firestore.batch();
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in _docs) {
+      final bool seen = doc.data()['seen'] as bool? ?? false;
+      if (!seen) {
+        batch.set(doc.reference, {'seen': true}, SetOptions(merge: true));
+      }
+    }
+    await batch.commit();
+    _load();
+  }
+
+  Widget _loadingView() {
+    return ListView.builder(
+      itemCount: 5,
+      itemBuilder: (_, int index) {
+        return Shimmer.fromColors(
+          baseColor: KinCirclePalette.surfaceAlt,
+          highlightColor: KinCirclePalette.border,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            height: 70,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _errorView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: KinCirclePalette.error, size: 50),
+            const SizedBox(height: 10),
+            Text(
+              _error ?? 'Failed to load alerts',
+              style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              style: KinCircleButtons.primary(),
+              onPressed: _load,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.notifications_off_outlined, color: KinCirclePalette.textMuted, size: 48),
+            const SizedBox(height: 10),
+            Text(
+              _showUnreadOnly ? 'No unread alerts' : 'No alerts yet',
+              style: KinCircleTypography.cardTitle16(),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'You are all caught up.',
+              style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _listView() {
+    if (_docs.isEmpty) return _emptyView();
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+          child: Row(
+            children: [
+              FilterChip(
+                selected: _showUnreadOnly,
+                selectedColor: KinCirclePalette.accent.withValues(alpha: 0.25),
+                label: Text(
+                  'Unread only',
+                  style: KinCircleTypography.caption12(
+                    color: _showUnreadOnly ? KinCirclePalette.accent : KinCirclePalette.textMuted,
+                  ),
+                ),
+                onSelected: (bool value) {
+                  setState(() => _showUnreadOnly = value);
+                  _load();
+                },
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: _markAllRead,
+                child: const Text('Mark all read'),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: _docs.length,
+            itemBuilder: (_, int index) {
+              final QueryDocumentSnapshot<Map<String, dynamic>> doc = _docs[index];
+              final Map<String, dynamic> data = doc.data();
+              final String title = data['title'] as String? ?? 'Alert';
+              final String message = data['message'] as String? ?? '';
+              final bool seen = data['seen'] as bool? ?? false;
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: KinCirclePalette.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: KinCirclePalette.border, width: 1),
+                ),
+                child: ListTile(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => AlertDetailsScreen(alertId: doc.id, alertData: data),
+                      ),
+                    );
+                  },
+                  leading: Icon(
+                    Icons.notification_important_outlined,
+                    color: seen ? KinCirclePalette.textMuted : KinCirclePalette.accent,
+                  ),
+                  title: Text(title, style: KinCircleTypography.body14(weight: FontWeight.w600)),
+                  subtitle: Text(
+                    message,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+                  ),
+                  trailing: seen
+                      ? null
+                      : TextButton(
+                          onPressed: () => _markRead(doc),
+                          child: const Text('Read'),
+                        ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) {
-      return const Scaffold(body: Center(child: Text('No user')));
+    Widget body;
+    if (_loading) {
+      body = _loadingView();
+    } else if (_error != null) {
+      body = _errorView();
+    } else {
+      body = _listView();
     }
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Alerts'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Center(
-              child: FilterChip(
-                label: const Text('Unread'),
-                selected: _showUnreadOnly,
-                onSelected: (v) => setState(() => _showUnreadOnly = v),
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _buildQuery(uid).snapshots(),
-        builder: (context, snapshot) {
-          // Only show loading on initial load, not during updates
-          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          // Handle errors first with friendly messages
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey.shade400),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No alerts available',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Alerts will appear here when there is activity.',
-                      style: TextStyle(color: Colors.grey.shade600),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-          // Handle no data state explicitly
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey.shade400),
-                  const SizedBox(height: 12),
-                  Text(_showUnreadOnly ? 'No unread alerts' : 'No alerts yet',
-                      style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Text(
-                    'You\'re all caught up!',
-                    style: TextStyle(color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-            );
-          }
-          final docs = snapshot.data!.docs;
-          return Column(
-            children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 12, top: 8),
-                  child: TextButton.icon(
-                    onPressed: _marking
-                        ? null
-                        : () =>
-                            _markAllAsRead(docs.cast<QueryDocumentSnapshot>()),
-                    icon: const Icon(Icons.done_all),
-                    label: Text(_marking ? 'Marking…' : 'Mark all as read'),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: ListView.separated(
-                  itemCount: docs.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final d = docs[index];
-                    final data = d.data() as Map<String, dynamic>? ?? {};
-                    final title = data['title'] as String? ?? 'Alert';
-                    final message = data['message'] as String? ?? '';
-                    final seen = (data['seen'] as bool?) ?? false;
-                    return ListTile(
-                      leading: Icon(
-                        Icons.notification_important,
-                        color: seen
-                            ? Theme.of(context).hintColor
-                            : Theme.of(context).colorScheme.primary,
-                      ),
-                      title: Text(title),
-                      subtitle: Text(message,
-                          maxLines: 2, overflow: TextOverflow.ellipsis),
-                      trailing: seen
-                          ? null
-                          : TextButton(
-                              onPressed: () => _markAllAsRead([d]),
-                              child: const Text('Mark read'),
-                            ),
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => AlertDetailsScreen(
-                                alertId: d.id, alertData: data),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+
+    return NavShell(
+      currentIndex: 3,
+      title: 'Alerts',
+      body: body,
     );
   }
 }
