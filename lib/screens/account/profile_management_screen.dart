@@ -249,7 +249,7 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: _selectedRole,
+                      initialValue: _selectedRole,
                       decoration: const InputDecoration(
                         labelText: 'My Role in Family',
                         prefixIcon: Icon(Icons.badge),
@@ -444,25 +444,25 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
           ),
           FilledButton(
             onPressed: () async {
+              final nav = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
               try {
                 await FirebaseAuth.instance.sendPasswordResetEmail(
                   email: emailController.text,
                 );
-                if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Password reset email sent!'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
+                if (!mounted) return;
+                nav.pop();
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Password reset email sent!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
               } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
-                  );
-                }
+                if (!mounted) return;
+                messenger.showSnackBar(
+                  SnackBar(content: Text('Error: $e')),
+                );
               }
             },
             child: const Text('Send Reset Link'),
@@ -549,6 +549,8 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
+              final nav = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
               try {
                 final user = FirebaseAuth.instance.currentUser;
                 if (user != null && user.email != null) {
@@ -567,18 +569,16 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
                   
                   // Delete auth account
                   await user.delete();
-                  
-                  if (mounted) {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  }
+
+                  if (!mounted) return;
+                  nav.popUntil((route) => route.isFirst);
                 }
               } catch (e) {
-                if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
-                  );
-                }
+                if (!mounted) return;
+                nav.pop();
+                messenger.showSnackBar(
+                  SnackBar(content: Text('Error: $e')),
+                );
               }
             },
             child: const Text('Confirm Delete'),

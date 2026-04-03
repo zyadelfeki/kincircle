@@ -1,19 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../services/remote_config_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth_service.dart';
 import '../settings/ai_consent_screen.dart';
 import '../../services/consent_service.dart';
 import 'ai_settings_screen.dart';
-import '../family/manage_invites_screen.dart';
 import '../../services/theme_controller.dart';
 import 'package:provider/provider.dart';
-import '../../services/age_detection_service.dart';
-import '../../services/feature_unlock_service.dart';
 import '../../services/companion_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/privacy_controls_service.dart';
-import '../../services/data_export_service.dart';
 
 /// Redesigned Settings Screen - Clean, organized, intuitive
 class SettingsScreen extends StatefulWidget {
@@ -237,6 +232,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             iconColor: Colors.red,
             title: 'Sign Out',
             onTap: () async {
+              final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
               final confirmed = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
@@ -254,11 +251,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
               );
-              if (confirmed == true && mounted) {
+              if (confirmed != true) return;
+
+              try {
                 await AuthService().signOut();
-                if (mounted) {
-                  Navigator.of(context).pushNamedAndRemoveUntil('/welcome', (route) => false);
-                }
+                if (!mounted) return;
+                navigator.pushNamedAndRemoveUntil('/welcome', (route) => false);
+              } catch (e) {
+                if (!mounted) return;
+                messenger.showSnackBar(
+                  SnackBar(content: Text('Sign out failed: $e')),
+                );
               }
             },
           ),

@@ -230,14 +230,14 @@ class _PrivacyDashboardScreenState extends State<PrivacyDashboardScreen> {
   Widget _buildLocationSharingControls() {
     final PrivacySettings? settings = _privacyService.settings;
     if (settings == null) {
-      return Card(
+      return const Card(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           child: Row(
             children: [
-              const Icon(Icons.info_outline, color: Colors.grey),
-              const SizedBox(width: 12),
-              const Expanded(
+              Icon(Icons.info_outline, color: Colors.grey),
+              SizedBox(width: 12),
+              Expanded(
                 child: Text('Location settings are loading...'),
               ),
             ],
@@ -283,14 +283,14 @@ class _PrivacyDashboardScreenState extends State<PrivacyDashboardScreen> {
   Widget _buildDataRetentionControls() {
     final PrivacySettings? settings = _privacyService.settings;
     if (settings == null) {
-      return Card(
+      return const Card(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           child: Row(
             children: [
-              const Icon(Icons.info_outline, color: Colors.grey),
-              const SizedBox(width: 12),
-              const Expanded(
+              Icon(Icons.info_outline, color: Colors.grey),
+              SizedBox(width: 12),
+              Expanded(
                 child: Text('Retention settings are loading...'),
               ),
             ],

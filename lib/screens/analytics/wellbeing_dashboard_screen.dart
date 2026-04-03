@@ -660,10 +660,10 @@ class _WellbeingDashboardScreenState extends State<WellbeingDashboardScreen> {
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.6,
           ),
-          child: Scrollbar(
+          child: const Scrollbar(
             thumbVisibility: true,
             child: SingleChildScrollView(
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [

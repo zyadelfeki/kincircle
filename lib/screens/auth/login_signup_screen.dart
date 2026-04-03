@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 // Note: Firebase is initialized in main.dart; this import provides FirebaseException type.
 import '../../services/auth_service.dart';
-import '../../widgets/social_auth_button.dart';
 import '../../widgets/primary_button.dart';
 import '../../utils/theme.dart';
 import '../../widgets/floaty_background.dart';
