@@ -565,24 +565,4 @@ class _SensoryControlsScreenState extends State<SensoryControlsScreen> {
     );
   }
 
-  String _getStimulationLabel(double level) {
-    if (level < 0.2) return 'Very Calm';
-    if (level < 0.4) return 'Calm';
-    if (level < 0.6) return 'Balanced';
-    if (level < 0.8) return 'Energetic';
-    return 'Very Energetic';
-  }
-
-  String _getStimulationDescription(double level) {
-    if (level < 0.2) {
-      return 'Nature colors, slow animations, maximum calm';
-    } else if (level < 0.4) {
-      return 'Gentle interface with biophilic design';
-    } else if (level < 0.6) {
-      return 'Standard interface with moderate stimulation';
-    } else if (level < 0.8) {
-      return 'More animations and visual feedback';
-    }
-    return 'Maximum energy with full effects';
-  }
 }

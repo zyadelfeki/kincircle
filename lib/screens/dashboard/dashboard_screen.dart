@@ -933,7 +933,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
         if (snapshot.hasError) {
           // Gracefully handle any Firestore errors
-          return EmptyStateWidget(
+          return const EmptyStateWidget(
             icon: Icons.notifications_none,
             headline: 'No alerts yet',
             description: 'Alerts from your family will appear here.',

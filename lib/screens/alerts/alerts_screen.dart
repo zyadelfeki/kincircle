@@ -118,53 +118,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
               ),
             );
           }
-          // Old error handling - keeping for index errors only
-          if (false) {
-            final err = snapshot.error;
-            if (err is FirebaseException && err.code == 'failed-precondition') {
-              // Brand-aligned, full-screen database configuration error
-              return Scaffold(
-                body: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 520),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.storage_rounded, size: 56),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Database setup required. Please ask the account administrator to create the necessary index in the Firebase console.',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              FilledButton(
-                                onPressed: () => setState(() {}),
-                                child: const Text('Try Again'),
-                              ),
-                              const SizedBox(width: 12),
-                              OutlinedButton.icon(
-                                onPressed: () =>
-                                    Navigator.of(context).pushNamed('/help'),
-                                icon: const Icon(Icons.help_outline),
-                                label: const Text('Contact Support'),
-                              )
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
           final docs = snapshot.data!.docs;
           return Column(
             children: [

@@ -5,8 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
-import 'dart:ui';
-import 'package:flutter_svg/flutter_svg.dart';
 // Dynamic links are accessed via a small abstraction to ease testing.
 import 'services/dynamic_link_service.dart';
 import 'services/app_links_dynamic_link_service.dart';
@@ -41,7 +39,6 @@ import 'services/onboarding_prefs.dart';
 import 'screens/alerts/alerts_screen.dart';
 import 'services/crash_prefs.dart';
 import 'screens/support/diagnostics_screen.dart';
-import 'utils/constants.dart';
 import 'screens/account/profile_management_screen.dart';
 import 'screens/account/subscription_management_screen.dart';
 import 'screens/account/pro_paywall_screen.dart';

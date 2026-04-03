@@ -298,9 +298,9 @@ class _RemoteSupportScreenState extends State<RemoteSupportScreen> {
           Card(
             color: Colors.green.shade50,
             child: ListTile(
-              leading: CircleAvatar(
+              leading: const CircleAvatar(
                 backgroundColor: Colors.green,
-                child: const Icon(Icons.phone, color: Colors.white),
+                child: Icon(Icons.phone, color: Colors.white),
               ),
               title: const Text(
                 'Test Call',
