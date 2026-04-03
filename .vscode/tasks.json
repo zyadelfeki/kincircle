@@ -26,6 +26,28 @@
 				"$dart"
 			],
 			"group": "build"
+		},
+		{
+			"label": "flutter-build-apk-debug",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"build",
+				"apk",
+				"--debug"
+			],
+			"group": "build"
+		},
+		{
+			"label": "flutter-build-apk-debug-verify",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"build",
+				"apk",
+				"--debug"
+			],
+			"group": "build"
 		}
 	]
 }

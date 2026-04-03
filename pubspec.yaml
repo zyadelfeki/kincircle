@@ -22,19 +22,19 @@ dependencies:
   firebase_storage: ^13.0.4
   flutter:
     sdk: flutter
-  flutter_secure_storage: ^9.2.4
+  flutter_secure_storage: ^10.0.0
   flutter_svg: ^2.2.3
   flutter_tts: ^4.0.2
   geocoding: ^4.0.0
   geolocator: ^14.0.2
-  google_fonts: ^6.3.2
+  google_fonts: ^8.0.2
   google_maps_flutter: ^2.14.0
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   http: ^1.6.0
   image_picker: ^1.2.1
   in_app_purchase: ^3.1.11
-  package_info_plus: ^8.3.1
+  package_info_plus: ^9.0.1
   path_provider: ^2.1.4
   permission_handler: ^12.0.1
   provider: ^6.1.5+1
