@@ -16,6 +16,9 @@ import 'screens/auth/onboarding_screen.dart';
 import 'screens/auth/permission_screen.dart';
 import 'screens/support/help_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
+import 'screens/map_screen.dart';
+import 'screens/circles_screen.dart';
+import 'screens/places_screen.dart';
 import 'screens/family/invite_screen.dart';
 import 'screens/family/create_family_screen.dart';
 import 'screens/family/manage_family_screen.dart';
@@ -54,7 +57,7 @@ import 'services/wellbeing_analytics_service.dart';
 import 'screens/privacy/privacy_dashboard_screen.dart';
 import 'design/dark_academia_theme.dart';
 import 'screens/emotion_feed_screen.dart';
-import 'screens/analytics/wellbeing_dashboard_screen.dart';
+import 'screens/wellbeing_screen.dart';
 import 'widgets/companion_widgets.dart';
 
 Future<void> main() async {
@@ -385,6 +388,9 @@ class _KinCircleAppState extends State<KinCircleApp> {
               '/welcome': (context) => const WelcomeScreen(),
               '/auth': (context) => const LoginSignupScreen(),
               '/dashboard': (context) => const DashboardScreen(),
+              '/map': (context) => const MapScreen(),
+              '/circles': (context) => const CirclesScreen(),
+              '/places': (context) => const PlacesScreen(),
               '/permissions': (context) => const PermissionScreen(),
               '/help': (context) => const HelpScreen(),
               '/onboarding': (context) {
@@ -413,7 +419,8 @@ class _KinCircleAppState extends State<KinCircleApp> {
               '/settings/sensory-controls': (context) => const SensoryControlsScreen(),
               '/community/feed': (context) => const EmotionFeedScreen(),
               '/companion/select': (context) => const CompanionSelectionScreen(),
-              '/analytics/wellbeing': (context) => const WellbeingDashboardScreen(),
+              '/analytics/wellbeing': (context) => const WellbeingScreen(),
+              '/wellbeing': (context) => const WellbeingScreen(),
               '/privacy/dashboard': (context) => const PrivacyDashboardScreen(),
             },
             builder: (context, widget) {
@@ -522,7 +529,7 @@ class AuthWrapper extends StatelessWidget {
               });
             });
           });
-          return const DashboardScreen();
+          return const MapScreen();
         },
       );
     }
