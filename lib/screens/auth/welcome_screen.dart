@@ -4,25 +4,25 @@ import 'package:google_fonts/google_fonts.dart';
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
-  static const Color _background = Color(0xFF0B0F1A);
-  static const Color _accent = Color(0xFF00C9A7);
-  static const Color _muted = Color(0xFF8A8FA8);
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: _background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
           child: Column(
             children: [
               const Spacer(flex: 2),
-              const SizedBox(
+              SizedBox(
                 width: 180,
                 height: 120,
                 child: CustomPaint(
-                  painter: _InterlockingRingsPainter(color: _accent),
+                  painter:
+                      _InterlockingRingsPainter(color: colorScheme.primary),
                 ),
               ),
               const SizedBox(height: 28),
@@ -31,14 +31,14 @@ class WelcomeScreen extends StatelessWidget {
                 style: GoogleFonts.spaceGrotesk(
                   fontSize: 36,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 10),
               Text(
                 'Know your family is safe.',
                 style: GoogleFonts.inter(
-                  color: _muted,
+                  color: colorScheme.onSurfaceVariant,
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                 ),
@@ -50,8 +50,8 @@ class WelcomeScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(context).pushNamed('/auth'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _accent,
-                    foregroundColor: Colors.black,
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -62,7 +62,7 @@ class WelcomeScreen extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: Colors.black,
+                      color: colorScheme.onPrimary,
                     ),
                   ),
                 ),
@@ -74,7 +74,7 @@ class WelcomeScreen extends StatelessWidget {
                   arguments: {'mode': 'login'},
                 ),
                 style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
+                  foregroundColor: colorScheme.onSurface,
                   minimumSize: const Size(44, 44),
                 ),
                 child: Text(
@@ -82,7 +82,7 @@ class WelcomeScreen extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white,
+                    color: colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -92,7 +92,7 @@ class WelcomeScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: _muted,
+                  color: colorScheme.onSurfaceVariant,
                   height: 1.25,
                 ),
               ),

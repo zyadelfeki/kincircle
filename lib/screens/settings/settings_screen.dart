@@ -61,7 +61,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadPrivacyFromService() async {
     final String? userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
-    final PrivacyControlsService privacy = context.read<PrivacyControlsService>();
+    final PrivacyControlsService privacy =
+        context.read<PrivacyControlsService>();
     await privacy.loadPrivacySettings(userId);
     final PrivacySettings? settings = privacy.settings;
     if (settings == null) return;
@@ -87,7 +88,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final String? userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId != null) {
-        final PrivacyControlsService privacy = context.read<PrivacyControlsService>();
+        final PrivacyControlsService privacy =
+            context.read<PrivacyControlsService>();
         await privacy.updateLocationSharing(
           userId: userId,
           enabled: value,
@@ -100,7 +102,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to update location sharing right now')),
+        const SnackBar(
+            content: Text('Unable to update location sharing right now')),
       );
     } finally {
       if (mounted) {
@@ -129,7 +132,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           title: Text(title, style: KinCircleTypography.cardTitle16()),
           content: Text(
             body,
-            style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+            style:
+                KinCircleTypography.body14(color: KinCirclePalette.textMuted),
           ),
           actions: [
             TextButton(
@@ -191,7 +195,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ? null
             : Text(
                 subtitle,
-                style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+                style: KinCircleTypography.caption12(
+                    color: KinCirclePalette.textMuted),
               ),
         trailing: trailing ??
             const Icon(
@@ -300,7 +305,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: 'Theme (Dark)',
                   value: themeController.mode != ThemeMode.light,
                   onChanged: (bool value) {
-                    themeController.setMode(value ? ThemeMode.dark : ThemeMode.light);
+                    themeController
+                        .setMode(value ? ThemeMode.dark : ThemeMode.light);
                   },
                 ),
                 _row(
@@ -318,11 +324,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             children: [
                               ListTile(
                                 title: const Text('English'),
-                                onTap: () => Navigator.of(context).pop('English'),
+                                onTap: () =>
+                                    Navigator.of(context).pop('English'),
                               ),
                               ListTile(
                                 title: const Text('Arabic'),
-                                onTap: () => Navigator.of(context).pop('Arabic'),
+                                onTap: () =>
+                                    Navigator.of(context).pop('Arabic'),
                               ),
                             ],
                           ),
@@ -339,8 +347,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   icon: Icons.cleaning_services_outlined,
                   title: 'Clear cache',
                   onTap: () async {
-                    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
-                    final SharedPreferences prefs = await SharedPreferences.getInstance();
+                    final ScaffoldMessengerState messenger =
+                        ScaffoldMessenger.of(context);
+                    final SharedPreferences prefs =
+                        await SharedPreferences.getInstance();
                     await prefs.clear();
                     if (!mounted) return;
                     messenger.showSnackBar(
@@ -348,6 +358,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     );
                     await _loadPrefs();
                   },
+                ),
+                _sectionLabel('AI & Wellbeing'),
+                _row(
+                  icon: Icons.smart_toy_outlined,
+                  title: 'Companion Settings',
+                  onTap: () =>
+                      Navigator.of(context).pushNamed('/companion/select'),
+                ),
+                _row(
+                  icon: Icons.analytics_outlined,
+                  title: 'Wellbeing Analytics',
+                  onTap: () =>
+                      Navigator.of(context).pushNamed('/analytics/wellbeing'),
+                ),
+                _row(
+                  icon: Icons.privacy_tip_outlined,
+                  title: 'Privacy Dashboard',
+                  onTap: () =>
+                      Navigator.of(context).pushNamed('/privacy/dashboard'),
                 ),
                 _sectionLabel('Danger zone'),
                 _row(

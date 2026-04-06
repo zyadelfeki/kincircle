@@ -22,8 +22,8 @@ const Color kinOutline = Color(0xFFE2E8F0); // Neutral Border
 
 // Pro accent (used when subscription is active)
 const Color kinProAccent = Color(0xFFFFB300); // Premium Gold
-const Color kinProTeal = Color(0xFF0FB5A9);   // Premium Teal
-const Color kinProNavy = Color(0xFF0A1224);   // Deep Navy for Pro light bg
+const Color kinProTeal = Color(0xFF0FB5A9); // Premium Teal
+const Color kinProNavy = Color(0xFF0A1224); // Deep Navy for Pro light bg
 
 // Dark palette bases
 const Color kinDarkBackground = Color(0xFF0B1220);
@@ -47,8 +47,8 @@ ColorScheme _buildColorScheme({
     onSecondary: kinOnSecondary,
     error: kinError,
     onError: kinOnError,
-  surface: isDark ? kinDarkSurface : (pro ? kinProNavy : kinSurface),
-  onSurface: isDark ? kinDarkOnSurface : (pro ? Colors.white70 : kinOnSurface),
+    surface: isDark ? kinDarkSurface : kinSurface,
+    onSurface: isDark ? kinDarkOnSurface : kinOnSurface,
     onSurfaceVariant: isDark ? kinDarkOnSurfaceVariant : kinOnSurfaceVariant,
     outline: isDark ? const Color(0xFF1F2937) : kinOutline,
   );
@@ -212,7 +212,7 @@ ThemeData kinTheme(
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
-    scaffoldBackgroundColor: isDark ? kinDarkBackground : (pro ? kinProNavy : kinBackground),
+    scaffoldBackgroundColor: isDark ? kinDarkBackground : kinBackground,
     textTheme: appliedTextTheme,
     pageTransitionsTheme: const PageTransitionsTheme(builders: {
       TargetPlatform.android: ZoomPageTransitionsBuilder(),
@@ -228,13 +228,12 @@ ThemeData kinTheme(
     cardTheme: _kinCardTheme(scheme),
     bottomNavigationBarTheme: _kinBottomNavTheme(scheme),
     appBarTheme: AppBarTheme(
-      backgroundColor: isDark ? kinDarkBackground : (pro ? kinProNavy : kinBackground),
-      foregroundColor: isDark ? Colors.white : (pro ? Colors.white : kinOnBackground),
+      backgroundColor: isDark ? kinDarkBackground : kinBackground,
+      foregroundColor: isDark ? Colors.white : kinOnBackground,
       elevation: 0,
       centerTitle: false,
       titleTextStyle: appliedTextTheme.titleMedium,
-      iconTheme:
-          IconThemeData(color: isDark ? Colors.white : kinOnBackground),
+      iconTheme: IconThemeData(color: isDark ? Colors.white : kinOnBackground),
     ),
     dividerColor: scheme.outline,
     dividerTheme: DividerThemeData(color: scheme.outline),
