@@ -87,6 +87,7 @@ class AuthService extends ChangeNotifier {
         AppConstants.userDisplayName: user.displayName ?? '',
         AppConstants.userPhotoUrl: user.photoURL ?? '',
         AppConstants.userCreatedAt: FieldValue.serverTimestamp(),
+        'onboardingComplete': false,
         AppConstants.userSetupComplete: false,
       });
     }
@@ -124,7 +125,7 @@ class AuthService extends ChangeNotifier {
           AppleIDAuthorizationScopes.fullName,
         ],
       );
-  final OAuthProvider oAuthProvider = OAuthProvider('apple.com');
+      final OAuthProvider oAuthProvider = OAuthProvider('apple.com');
       final OAuthCredential credential = oAuthProvider.credential(
         idToken: appleCredential.identityToken,
         accessToken: appleCredential.authorizationCode,

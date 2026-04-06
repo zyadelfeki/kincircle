@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../services/onboarding_prefs.dart';
 
 class _OnboardingPage {
   final IconData icon;
   final Color color;
   final String title;
   final String body;
-  
+
   const _OnboardingPage({
     required this.icon,
     required this.color,
@@ -34,7 +33,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       icon: Icons.family_restroom,
       color: Color(0xFF4CAF50),
       title: 'Together is safer',
-      body: 'Create a private circle for your family so everyone can be in the loop.',
+      body:
+          'Create a private circle for your family so everyone can be in the loop.',
     ),
     _OnboardingPage(
       icon: Icons.map_outlined,
@@ -54,11 +54,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (_saving) return;
     setState(() => _saving = true);
     try {
+      final userId = widget.userId;
       await FirebaseFirestore.instance
           .collection('users')
-          .doc(widget.userId)
-          .set({'userSetupComplete': true}, SetOptions(merge: true));
-      await OnboardingPrefs().setSeenWelcomeTour(true);
+          .doc(userId)
+          .set({'onboardingComplete': true}, SetOptions(merge: true));
     } catch (_) {}
     if (!mounted) return;
     // After onboarding, guide users to enable core permissions.
@@ -92,83 +92,82 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             style: theme.textTheme.headlineSmall,
                             textAlign: TextAlign.center),
                         const SizedBox(height: 8),
-                            Text(
-                              p.body,
-                              style: theme.textTheme.bodyLarge
-                                  ?.copyWith(color: theme.hintColor),
-                              textAlign: TextAlign.center,
-                            ),
-                            const Spacer(),
-                            Container(
-                              width: 160,
-                              height: 160,
+                        Text(
+                          p.body,
+                          style: theme.textTheme.bodyLarge
+                              ?.copyWith(color: theme.hintColor),
+                          textAlign: TextAlign.center,
+                        ),
+                        const Spacer(),
+                        Container(
+                          width: 160,
+                          height: 160,
+                          decoration: BoxDecoration(
+                            color: p.color.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            p.icon,
+                            size: 80,
+                            color: p.color,
+                          ),
+                        ),
+                        const Spacer(),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(_pages.length, (dot) {
+                            final active = dot == _index;
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              height: 8,
+                              width: active ? 20 : 8,
                               decoration: BoxDecoration(
-                                color: p.color.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
+                                color: active
+                                    ? theme.colorScheme.primary
+                                    : theme.dividerColor,
+                                borderRadius: BorderRadius.circular(99),
                               ),
-                              child: Icon(
-                                p.icon,
-                                size: 80,
-                                color: p.color,
-                              ),
-                            ),
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            if (_index < _pages.length - 1)
+                              TextButton(
+                                onPressed: _saving ? null : _complete,
+                                child: const Text('Skip'),
+                              )
+                            else
+                              const SizedBox(width: 88),
                             const Spacer(),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(_pages.length, (dot) {
-                                final active = dot == _index;
-                                return AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  margin:
-                                      const EdgeInsets.symmetric(horizontal: 4),
-                                  height: 8,
-                                  width: active ? 20 : 8,
-                                  decoration: BoxDecoration(
-                                    color: active
-                                        ? theme.colorScheme.primary
-                                        : theme.dividerColor,
-                                    borderRadius: BorderRadius.circular(99),
-                                  ),
-                                );
-                              }),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                if (_index < _pages.length - 1)
-                                  TextButton(
-                                    onPressed: _saving ? null : _complete,
-                                    child: const Text('Skip'),
-                                  )
-                                else
-                                  const SizedBox(width: 88),
-                                const Spacer(),
-                                FilledButton.icon(
-                                  onPressed: _saving
-                                      ? null
-                                      : () {
-                                          if (_index == _pages.length - 1) {
-                                            _complete();
-                                          } else {
-                                            _controller.nextPage(
-                                              duration: const Duration(
-                                                  milliseconds: 250),
-                                              curve: Curves.easeOut,
-                                            );
-                                          }
-                                        },
-                                  icon: Icon(_index == _pages.length - 1
-                                      ? Icons.check
-                                      : Icons.arrow_forward),
-                                  label: Text(_index == _pages.length - 1
-                                      ? 'Get Started'
-                                      : 'Next'),
-                                ),
-                              ],
+                            FilledButton.icon(
+                              onPressed: _saving
+                                  ? null
+                                  : () {
+                                      if (_index == _pages.length - 1) {
+                                        _complete();
+                                      } else {
+                                        _controller.nextPage(
+                                          duration:
+                                              const Duration(milliseconds: 250),
+                                          curve: Curves.easeOut,
+                                        );
+                                      }
+                                    },
+                              icon: Icon(_index == _pages.length - 1
+                                  ? Icons.check
+                                  : Icons.arrow_forward),
+                              label: Text(_index == _pages.length - 1
+                                  ? 'Get Started'
+                                  : 'Next'),
                             ),
                           ],
                         ),
-                      );
+                      ],
+                    ),
+                  );
                 },
               ),
             ),
