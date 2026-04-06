@@ -115,7 +115,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           activitySnap.docs.map(_toActivityItem).toList();
 
       final List<_BatteryTuple> batteryTuples = members
-          .map((AppUser member) => _BatteryTuple(member, _estimatedBattery(member.uid)))
+          .map((AppUser member) =>
+              _BatteryTuple(member, _estimatedBattery(member.uid)))
           .toList();
       batteryTuples.sort((a, b) => a.battery.compareTo(b.battery));
 
@@ -124,8 +125,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _members = members;
         _safePlacesCount = geofenceSnap.size;
         _recentActivity = activity;
-        _lowestBatteryMember = batteryTuples.isNotEmpty ? batteryTuples.first.member : null;
-        _lowestBattery = batteryTuples.isNotEmpty ? batteryTuples.first.battery : null;
+        _lowestBatteryMember =
+            batteryTuples.isNotEmpty ? batteryTuples.first.member : null;
+        _lowestBattery =
+            batteryTuples.isNotEmpty ? batteryTuples.first.battery : null;
         _loading = false;
       });
 
@@ -150,7 +153,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .listen((QuerySnapshot<Map<String, dynamic>> snapshot) {
       int unseen = 0;
       String? preview;
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in snapshot.docs) {
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in snapshot.docs) {
         final Map<String, dynamic> data = doc.data();
         final bool seen = data['seen'] as bool? ?? false;
         if (!seen) unseen++;
@@ -172,7 +176,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return seeded.clamp(1, 100);
   }
 
-  RecentActivityItem _toActivityItem(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+  RecentActivityItem _toActivityItem(
+      QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final Map<String, dynamic> data = doc.data();
     final String title = data['title'] as String? ?? 'Family event';
     final String message = data['message'] as String? ?? 'Update received';
@@ -258,7 +263,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.family_restroom, size: 54, color: KinCirclePalette.textMuted),
+            const Icon(Icons.family_restroom,
+                size: 54, color: KinCirclePalette.textMuted),
             const SizedBox(height: 12),
             Text(
               'No circle yet',
@@ -268,11 +274,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Text(
               'Create a circle to start viewing family activity.',
               textAlign: TextAlign.center,
-              style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+              style:
+                  KinCircleTypography.body14(color: KinCirclePalette.textMuted),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => Navigator.of(context).pushNamed('/create-family'),
+              onPressed: () =>
+                  Navigator.of(context).pushNamed('/create-family'),
               style: KinCircleButtons.primary(),
               child: const Text('Create a Circle'),
             ),
@@ -289,12 +297,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 52, color: KinCirclePalette.error),
+            const Icon(Icons.error_outline,
+                size: 52, color: KinCirclePalette.error),
             const SizedBox(height: 12),
             Text(
               _error ?? 'Failed to load dashboard.',
               textAlign: TextAlign.center,
-              style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+              style:
+                  KinCircleTypography.body14(color: KinCirclePalette.textMuted),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
@@ -350,7 +360,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 QuickActionsCard(
                   onSosTap: () => Navigator.of(context).pushNamed('/alerts'),
                   onShareTap: () => Navigator.of(context).pushNamed('/map'),
-                  onAddPlaceTap: () => Navigator.of(context).pushNamed('/add-geofence'),
+                  onAddPlaceTap: () =>
+                      Navigator.of(context).pushNamed('/add-geofence'),
                 ),
               ]),
             ),
@@ -362,19 +373,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            sliver: SliverToBoxAdapter(
+              child: _buildAiWellbeingCard(),
+            ),
+          ),
+          SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             sliver: SliverToBoxAdapter(
               child: DashboardCardContainer(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Status Summary', style: KinCircleTypography.cardTitle16()),
+                    Text('Status Summary',
+                        style: KinCircleTypography.cardTitle16()),
                     const SizedBox(height: 8),
                     Text(
                       'Circle members: ${_members.length}\n'
                       'Online now: ${online.length}\n'
                       'Safe places: $_safePlacesCount',
-                      style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+                      style: KinCircleTypography.body14(
+                          color: KinCirclePalette.textMuted),
                     ),
                   ],
                 ),
@@ -382,6 +401,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAiWellbeingCard() {
+    return DashboardCardContainer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('AI & Wellbeing', style: KinCircleTypography.cardTitle16()),
+          const SizedBox(height: 8),
+          _buildNavRow(
+            icon: Icons.smart_toy_outlined,
+            title: 'AI Companion',
+            route: '/companion/select',
+          ),
+          const Divider(height: 1),
+          _buildNavRow(
+            icon: Icons.analytics_outlined,
+            title: 'Family Wellbeing',
+            route: '/analytics/wellbeing',
+          ),
+          const Divider(height: 1),
+          _buildNavRow(
+            icon: Icons.forum_outlined,
+            title: 'Emotion Feed',
+            route: '/community/feed',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavRow({
+    required IconData icon,
+    required String title,
+    required String route,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () => Navigator.of(context).pushNamed(route),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: KinCirclePalette.textMuted),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title,
+                style: KinCircleTypography.body14(weight: FontWeight.w600),
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: KinCirclePalette.textMuted,
+            ),
+          ],
+        ),
       ),
     );
   }
