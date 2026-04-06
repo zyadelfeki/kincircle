@@ -158,6 +158,12 @@ service cloud.firestore {
       }
     }
 
+    // Community stats aggregate collection
+    match /communitystats/{docId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
     // In-app notifications (user's own notifications)
     match /users/{userId}/in_app_notifications/{notificationId} {
       allow read: if isOwnerUser(userId);
