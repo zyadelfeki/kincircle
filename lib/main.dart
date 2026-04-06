@@ -38,7 +38,6 @@ import 'services/privacy_controls_service.dart';
 import 'utils/theme.dart';
 import 'widgets/error_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'services/onboarding_prefs.dart';
 import 'screens/alerts/alerts_screen.dart';
 import 'services/crash_prefs.dart';
 import 'screens/support/diagnostics_screen.dart';
@@ -369,7 +368,7 @@ class _KinCircleAppState extends State<KinCircleApp> {
           final pro = context.watch<ThemeController>().isPro;
           final sensoryService = context.watch<SensoryRegulationService>();
           final useDarkAcademia = sensoryService.profile.darkAcademiaMode;
-          
+
           // Recreate themes to reflect Pro accent dynamically or Dark Academia
           final ThemeData light = useDarkAcademia
               ? DarkAcademiaTheme.moodyCalmTheme
@@ -377,7 +376,7 @@ class _KinCircleAppState extends State<KinCircleApp> {
           final ThemeData dark = useDarkAcademia
               ? DarkAcademiaTheme.moodyCalmTheme
               : kinTheme(brightness: Brightness.dark, pro: pro);
-          
+
           return MaterialApp(
             title: 'Kin Arc',
             theme: light,
@@ -414,11 +413,14 @@ class _KinCircleAppState extends State<KinCircleApp> {
               '/subscription': (context) =>
                   const SubscriptionManagementScreen(),
               '/paywall': (context) => const ProPaywallScreen(),
-              '/emergency-contacts': (context) => const EmergencyContactsScreen(),
+              '/emergency-contacts': (context) =>
+                  const EmergencyContactsScreen(),
               '/support/remote': (context) => const RemoteSupportScreen(),
-              '/settings/sensory-controls': (context) => const SensoryControlsScreen(),
+              '/settings/sensory-controls': (context) =>
+                  const SensoryControlsScreen(),
               '/community/feed': (context) => const EmotionFeedScreen(),
-              '/companion/select': (context) => const CompanionSelectionScreen(),
+              '/companion/select': (context) =>
+                  const CompanionSelectionScreen(),
               '/analytics/wellbeing': (context) => const WellbeingScreen(),
               '/wellbeing': (context) => const WellbeingScreen(),
               '/privacy/dashboard': (context) => const PrivacyDashboardScreen(),
@@ -455,107 +457,164 @@ class _KinCircleAppState extends State<KinCircleApp> {
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
+  Future<_AuthDestination> _resolve(String uid) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get()
+          .timeout(const Duration(seconds: 5));
+      final data = doc.data();
+      if (data == null || data['onboardingComplete'] != true) {
+        return _AuthDestination.onboarding;
+      }
+      return _AuthDestination.dashboard;
+    } catch (_) {
+      return _AuthDestination.login;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (kDebugMode) {
-      debugPrint('--- AuthWrapper building ---');
-    }
     final firebaseUser = context.watch<AuthService>().user;
-    if (kDebugMode) {
-      debugPrint('--- Current user state: ${firebaseUser?.uid ?? 'Logged Out'} ---');
+    if (firebaseUser == null) {
+      return const LoginScreen();
     }
-    if (firebaseUser != null) {
-      if (kDebugMode) {
-        debugPrint('--- User is logged in, showing DashboardScreen ---');
-      }
-      // Check if onboarding/welcome tour is needed
-      return FutureBuilder<Map<String, dynamic>?>(
-        future: Future.wait([
-          FirebaseFirestore.instance
-              .collection('users')
-              .doc(firebaseUser.uid)
-              .get()
-              .then((d) => d.data()),
-          OnboardingPrefs().hasSeenWelcomeTour(),
-        ]).then((values) => {
-              'doc': values[0],
-              'seen': values[1],
-            }),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const SplashScreen();
-          }
-          final data = snapshot.data ?? {};
-          final doc = data['doc'] as Map<String, dynamic>?;
-          final hasSeenLocal = (data['seen'] as bool?) ?? false;
-          final needsOnboarding =
-              !(doc?['userSetupComplete'] == true) || !hasSeenLocal;
-          if (needsOnboarding) {
+    return FutureBuilder<_AuthDestination>(
+      future: _resolve(firebaseUser.uid),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const SplashScreen();
+        }
+
+        switch (snapshot.data) {
+          case _AuthDestination.onboarding:
             return OnboardingScreen(userId: firebaseUser.uid);
-          }
-          // Opportunistically trigger weekly driver summary upload
-          // (privacy-preserving: counts only; raw data stays local)
-          DriverSafetyService(
-            // No interpreter needed here; we’re only aggregating incidents
-            interpreterFactory: (_) async => throw UnimplementedError(),
-          ).uploadWeeklySummaryIfNeeded();
-          // If a pending invite exists, route to accept flow, then show dashboard.
-          final pending = context.read<PendingInviteStore>();
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            // Defer work; avoid using BuildContext across async gaps by re-fetching navigator state.
-            pending.consume().then((id) {
-              if (id == null) return;
-              final nav = globalNavigatorKey.currentState;
-              if (nav == null || !nav.mounted) return;
-              // Informational banner before navigation
-              ScaffoldMessenger.of(nav.context).showSnackBar(
-                const SnackBar(
-                  content: Text('Joining family…'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-              final future = nav.push(
-                MaterialPageRoute(
-                  builder: (_) => AcceptInviteScreen(inviteId: id),
-                ),
-              );
-              future.then((_) {
-                final nav2 = globalNavigatorKey.currentState;
-                if (nav2 == null || !nav2.mounted) return;
-                ScaffoldMessenger.of(nav2.context).showSnackBar(
-                  const SnackBar(content: Text('Invite opened')),
-                );
-              });
-            });
-          });
-          return const MapScreen();
-        },
-      );
-    }
-    if (kDebugMode) {
-      debugPrint('--- User is logged out, showing WelcomeScreen ---');
-    }
-    return const WelcomeScreen();
+          case _AuthDestination.login:
+            return const LoginScreen();
+          case _AuthDestination.dashboard:
+          default:
+            return const DashboardScreen();
+        }
+      },
+    );
   }
 }
 
-class SplashScreen extends StatelessWidget {
-  const SplashScreen({super.key});
+enum _AuthDestination { login, onboarding, dashboard }
+
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Minimal splash - just a subtle loading indicator, no logo delay
+    return const LoginSignupScreen(startInLoginMode: true);
+  }
+}
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
+  late final AnimationController _pulseController;
+  late final AnimationController _shimmerController;
+  late final Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat();
+
+    _pulse = Tween<double>(begin: 0.96, end: 1.04).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    _shimmerController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: const Center(
-        child: SizedBox(
-          width: 32,
-          height: 32,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
+      backgroundColor: const Color(0xFF0B0F1A),
+      body: AnimatedBuilder(
+        animation: Listenable.merge([_pulseController, _shimmerController]),
+        builder: (context, _) {
+          final slide = -1 + (2 * _shimmerController.value);
+          return Center(
+            child: Transform.scale(
+              scale: _pulse.value,
+              child: ShaderMask(
+                shaderCallback: (bounds) {
+                  return LinearGradient(
+                    begin: Alignment(slide, 0),
+                    end: Alignment(slide + 2, 0),
+                    colors: const [
+                      Color(0xFF009D84),
+                      Color(0xFF48F8D9),
+                      Color(0xFF009D84),
+                    ],
+                    stops: const [0.32, 0.5, 0.68],
+                  ).createShader(bounds);
+                },
+                blendMode: BlendMode.srcATop,
+                child: const SizedBox(
+                  width: 160,
+                  height: 104,
+                  child: CustomPaint(
+                    painter: _SplashInterlockingRingsPainter(),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
+  }
+}
+
+class _SplashInterlockingRingsPainter extends CustomPainter {
+  const _SplashInterlockingRingsPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const paint = Color(0xFF00C9A7);
+    final ringPaint = Paint()
+      ..color = paint
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 9
+      ..isAntiAlias = true;
+
+    const radius = 38.0;
+    final centerY = size.height / 2;
+    final leftCenter = Offset(size.width * 0.42, centerY);
+    final rightCenter = Offset(size.width * 0.58, centerY);
+
+    canvas.drawCircle(leftCenter, radius, ringPaint);
+    canvas.drawCircle(rightCenter, radius, ringPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SplashInterlockingRingsPainter oldDelegate) {
+    return false;
   }
 }
 

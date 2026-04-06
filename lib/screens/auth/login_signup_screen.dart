@@ -8,7 +8,9 @@ import '../../services/password_reset_service.dart';
 
 // ignore_for_file: library_private_types_in_public_api
 class LoginSignupScreen extends StatefulWidget {
-  const LoginSignupScreen({super.key});
+  const LoginSignupScreen({super.key, this.startInLoginMode = false});
+
+  final bool startInLoginMode;
 
   @override
   _LoginSignupScreenState createState() => _LoginSignupScreenState();
@@ -95,6 +97,12 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _isLoginView = widget.startInLoginMode;
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_argsHandled) return;
@@ -103,6 +111,8 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
       final mode = (args['mode'] ?? args['login'])?.toString().toLowerCase();
       if (mode == 'login' || mode == 'true') {
         _isLoginView = true;
+      } else if (mode == 'signup' || mode == 'false') {
+        _isLoginView = false;
       }
     }
     _argsHandled = true;
