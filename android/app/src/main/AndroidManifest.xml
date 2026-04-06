@@ -10,6 +10,9 @@
         android:label="KinCircle"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <meta-data
+            android:name="android.window.PROPERTY_ACTIVITY_TRANSITION_FLAG_ALLOW_ON_BACK_INVOKED"
+            android:value="true" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
