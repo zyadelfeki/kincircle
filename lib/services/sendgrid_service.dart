@@ -1,15 +1,17 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class SendGridService {
-  SendGridService({required this.apiKey, required this.fromEmail, this.fromName = 'KinCircle'})
-      : assert(apiKey.isNotEmpty),
-        assert(fromEmail.isNotEmpty);
+  SendGridService(
+      {required this.apiKey,
+      required this.fromEmail,
+      this.fromName = 'KinCircle'});
   final String apiKey;
   final String fromEmail;
   final String fromName;
-  
-    bool get isConfigured => apiKey.isNotEmpty && fromEmail.isNotEmpty;
+
+  bool get isConfigured => apiKey.isNotEmpty && fromEmail.isNotEmpty;
 
   Future<void> sendEmail({
     required String toEmail,
@@ -17,6 +19,17 @@ class SendGridService {
     required String html,
     String? plain,
   }) async {
+    if (apiKey.isEmpty) {
+      debugPrint(
+          'WARNING: SendGrid API key not configured. Email features disabled.');
+      return;
+    }
+    if (fromEmail.isEmpty) {
+      debugPrint(
+          'WARNING: SendGrid sender email not configured. Email features disabled.');
+      return;
+    }
+
     final uri = Uri.parse('https://api.sendgrid.com/v3/mail/send');
     final body = {
       'personalizations': [
