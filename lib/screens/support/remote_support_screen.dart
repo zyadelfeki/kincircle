@@ -142,7 +142,7 @@ class _RemoteSupportScreenState extends State<RemoteSupportScreen> {
               children: [
                 Icon(Icons.videocam_off, color: Colors.orange),
                 SizedBox(width: 8),
-                Text('Video Unavailable'),
+                Expanded(child: Text('Video Unavailable')),
               ],
             ),
             content: const Text(
@@ -414,7 +414,7 @@ class _RemoteSupportScreenState extends State<RemoteSupportScreen> {
           children: [
             Icon(Icons.phone_in_talk, color: Colors.green),
             SizedBox(width: 12),
-            Text('Test Call'),
+            Expanded(child: Text('Test Call')),
           ],
         ),
         content: Column(
@@ -450,7 +450,7 @@ class _RemoteSupportScreenState extends State<RemoteSupportScreen> {
           children: [
             Icon(Icons.check_circle, color: Colors.green),
             SizedBox(width: 12),
-            Text('Connected!'),
+            Expanded(child: Text('Connected!')),
           ],
         ),
         content: Column(

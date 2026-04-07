@@ -199,9 +199,11 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
                         style: KinCircleTypography.body14(weight: FontWeight.w600),
                       ),
                     ),
-                    Text(
-                      rec.estimatedTime,
-                      style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+                    Expanded(
+                      child: Text(
+                        rec.estimatedTime,
+                        style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+                      ),
                     ),
                   ],
                 ),

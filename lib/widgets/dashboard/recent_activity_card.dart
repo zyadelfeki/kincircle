@@ -89,10 +89,12 @@ class RecentActivityCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      item.timeLabel,
-                      style: KinCircleTypography.caption12(
-                        color: KinCirclePalette.textMuted,
+                    Expanded(
+                      child: Text(
+                        item.timeLabel,
+                        style: KinCircleTypography.caption12(
+                          color: KinCirclePalette.textMuted,
+                        ),
                       ),
                     ),
                   ],

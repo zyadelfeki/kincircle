@@ -169,7 +169,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
               children: [
                 const Icon(Icons.phone, size: 16, color: Colors.grey),
                 const SizedBox(width: 8),
-                Text(contact.phoneNumber),
+                Expanded(child: Text(contact.phoneNumber)),
               ],
             ),
             if (contact.email != null) ...[
@@ -178,7 +178,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                 children: [
                   const Icon(Icons.email, size: 16, color: Colors.grey),
                   const SizedBox(width: 8),
-                  Text(contact.email!),
+                  Expanded(child: Text(contact.email!)),
                 ],
               ),
             ],

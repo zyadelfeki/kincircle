@@ -280,11 +280,13 @@ class _EmotionFeedScreenState extends State<EmotionFeedScreen> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Text(
-                  _formatTimestamp(timestamp),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
+                Expanded(
+                  child: Text(
+                    _formatTimestamp(timestamp),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                 ),
                 const Spacer(),
@@ -497,7 +499,7 @@ class _EmotionFeedScreenState extends State<EmotionFeedScreen> {
           children: [
             Icon(Icons.psychology, color: Colors.purple),
             SizedBox(width: 8),
-            Text('Research-Backed'),
+            Expanded(child: Text('Research-Backed')),
           ],
         ),
         content: const SingleChildScrollView(

@@ -480,7 +480,7 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
           children: [
             Icon(Icons.warning, color: Colors.red.shade400),
             const SizedBox(width: 8),
-            const Text('Delete Account'),
+            const Expanded(child: Text('Delete Account')),
           ],
         ),
         content: const Column(

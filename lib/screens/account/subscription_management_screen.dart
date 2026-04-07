@@ -72,10 +72,12 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
                         size: 28,
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        'Current Plan',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: Colors.white70,
+                      Expanded(
+                        child: Text(
+                          'Current Plan',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: Colors.white70,
+                          ),
                         ),
                       ),
                     ],
@@ -110,11 +112,13 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Monthly',
-                    style: TextStyle(
-                      fontWeight: !_annual ? FontWeight.bold : FontWeight.normal,
-                      color: !_annual ? scheme.primary : null,
+                  Expanded(
+                    child: Text(
+                      'Monthly',
+                      style: TextStyle(
+                        fontWeight: !_annual ? FontWeight.bold : FontWeight.normal,
+                        color: !_annual ? scheme.primary : null,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -123,11 +127,13 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
                     onChanged: (v) => setState(() => _annual = v),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    'Annual',
-                    style: TextStyle(
-                      fontWeight: _annual ? FontWeight.bold : FontWeight.normal,
-                      color: _annual ? scheme.primary : null,
+                  Expanded(
+                    child: Text(
+                      'Annual',
+                      style: TextStyle(
+                        fontWeight: _annual ? FontWeight.bold : FontWeight.normal,
+                        color: _annual ? scheme.primary : null,
+                      ),
                     ),
                   ),
                   if (_annual) ...[
@@ -227,9 +233,11 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
                         children: [
                           Icon(_currentPlan == 'Pro' ? Icons.arrow_downward : Icons.rocket_launch),
                           const SizedBox(width: 8),
-                          Text(
-                            _currentPlan == 'Pro' ? 'Downgrade to Free' : 'Upgrade to Pro',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          Expanded(
+                            child: Text(
+                              _currentPlan == 'Pro' ? 'Downgrade to Free' : 'Upgrade to Pro',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ],
                       ),
@@ -320,11 +328,13 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
                   Icon(Icons.star, color: Colors.amber.shade700, size: 20),
                   const SizedBox(width: 6),
                 ],
-                Text(
-                  title,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isPro ? Colors.amber.shade700 : null,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: isPro ? Colors.amber.shade700 : null,
+                    ),
                   ),
                 ),
                 const Spacer(),
@@ -347,11 +357,13 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  price,
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isPro ? Colors.amber.shade700 : scheme.primary,
+                Expanded(
+                  child: Text(
+                    price,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: isPro ? Colors.amber.shade700 : scheme.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -374,11 +386,13 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
                     color: f.$2 ? Colors.green : Colors.grey.shade400,
                   ),
                   const SizedBox(width: 10),
-                  Text(
-                    f.$1,
-                    style: TextStyle(
-                      color: f.$2 ? null : Colors.grey.shade400,
-                      decoration: f.$2 ? null : TextDecoration.lineThrough,
+                  Expanded(
+                    child: Text(
+                      f.$1,
+                      style: TextStyle(
+                        color: f.$2 ? null : Colors.grey.shade400,
+                        decoration: f.$2 ? null : TextDecoration.lineThrough,
+                      ),
                     ),
                   ),
                 ],

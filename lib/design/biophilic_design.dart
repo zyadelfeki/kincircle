@@ -178,12 +178,14 @@ class NatureButton extends StatelessWidget {
                 Icon(icon, color: Colors.white, size: 20),
                 const SizedBox(width: 8),
               ],
-              Text(
-                text,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  text,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],

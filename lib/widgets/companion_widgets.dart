@@ -311,9 +311,11 @@ class CompanionDashboardWidget extends StatelessWidget {
           children: [
             const Icon(Icons.favorite, size: 12, color: Colors.pink),
             const SizedBox(width: 4),
-            Text(
-              'Bond: $score/100',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            Expanded(
+              child: Text(
+                'Bond: $score/100',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
             ),
           ],
         ),

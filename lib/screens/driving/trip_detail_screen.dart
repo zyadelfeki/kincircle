@@ -278,13 +278,17 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'Started: ${_formatDateTime(widget.trip.startTime)}',
-            style: const TextStyle(fontSize: 12),
+          Expanded(
+            child: Text(
+              'Started: ${_formatDateTime(widget.trip.startTime)}',
+              style: const TextStyle(fontSize: 12),
+            ),
           ),
-          Text(
-            'Ended: ${_formatDateTime(widget.trip.endTime)}',
-            style: const TextStyle(fontSize: 12),
+          Expanded(
+            child: Text(
+              'Ended: ${_formatDateTime(widget.trip.endTime)}',
+              style: const TextStyle(fontSize: 12),
+            ),
           ),
         ],
       ),
@@ -349,18 +353,22 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
             ),
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
