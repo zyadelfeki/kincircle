@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:battery_plus/battery_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -45,6 +46,7 @@ class _MapScreenState extends State<MapScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final LocationService _locationService = LocationService();
+  final Battery _battery = Battery();
 
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _familySub;
   StreamSubscription<Position>? _positionSub;
@@ -59,6 +61,8 @@ class _MapScreenState extends State<MapScreen> {
   LatLng _cameraTarget = const LatLng(30.0444, 31.2357);
   Set<Marker> _markers = <Marker>{};
   List<_MemberRowData> _members = <_MemberRowData>[];
+  int _currentBatteryLevel = 0;
+  double _currentUserSpeedKmh = 0.0;
 
   static const String _darkMapStyle = '''
 [
@@ -78,6 +82,7 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
+    _refreshCurrentBatteryLevel();
     _initialize();
   }
 
@@ -106,6 +111,16 @@ class _MapScreenState extends State<MapScreen> {
       _positionSub?.cancel();
       _positionSub = _locationService.startLocationUpdates().listen(
         (Position position) {
+          double speedMetersPerSecond = position.speed;
+          if (speedMetersPerSecond < 1.0) {
+            speedMetersPerSecond = 0.0;
+          }
+          final double speedKmh = speedMetersPerSecond * 3.6;
+          if (mounted) {
+            setState(() {
+              _currentUserSpeedKmh = speedKmh;
+            });
+          }
           _locationService.updateUserLocation(position);
         },
       );
@@ -193,11 +208,16 @@ class _MapScreenState extends State<MapScreen> {
         .snapshots()
         .listen(
       (QuerySnapshot<Map<String, dynamic>> snapshot) async {
-        final List<AppUser> users =
-            snapshot.docs.map(AppUser.fromFirestore).toList();
-        final List<_MemberRowData> rows = users
-            .where((AppUser user) => user.lastKnownLocation != null)
-            .map(_toRowData)
+        final List<_MemberRowData> rows = snapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+            final AppUser user = AppUser.fromFirestore(doc);
+            if (user.lastKnownLocation == null) return null;
+            final dynamic rawBattery = doc.data()['batteryLevel'];
+            final int? firestoreBattery =
+              rawBattery is num ? rawBattery.toInt() : null;
+            return _toRowData(user, firestoreBattery: firestoreBattery);
+          })
+          .whereType<_MemberRowData>()
             .toList();
 
         final Set<Marker> markers = <Marker>{};
@@ -240,9 +260,14 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  _MemberRowData _toRowData(AppUser user) {
-    final int battery = _batteryForUser(user.uid);
-    final double speedKmh = _speedForUser(user.lastUpdated);
+  _MemberRowData _toRowData(AppUser user, {int? firestoreBattery}) {
+    final bool isCurrentUser = _auth.currentUser?.uid == user.uid;
+    final int battery = _batteryForUser(
+      isCurrentUser: isCurrentUser,
+      firestoreBattery: firestoreBattery,
+    );
+    final double speedKmh =
+        isCurrentUser ? _currentUserSpeedKmh : _speedForUser(user.lastUpdated);
     return _MemberRowData(
       user: user,
       batteryPercent: battery,
@@ -250,10 +275,26 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  int _batteryForUser(String uid) {
-    // TODO: wire to a real battery telemetry field once backend writes it.
-    final int seeded = 35 + (uid.hashCode.abs() % 60);
-    return seeded.clamp(1, 100);
+  int _batteryForUser({required bool isCurrentUser, int? firestoreBattery}) {
+    if (isCurrentUser) {
+      return _currentBatteryLevel.clamp(0, 100);
+    }
+    if (firestoreBattery != null) {
+      return firestoreBattery.clamp(0, 100);
+    }
+    return 0;
+  }
+
+  Future<void> _refreshCurrentBatteryLevel() async {
+    try {
+      final int level = await _battery.batteryLevel;
+      if (!mounted) return;
+      setState(() {
+        _currentBatteryLevel = level;
+      });
+    } catch (_) {
+      // Keep default battery level on platforms where battery info is unavailable.
+    }
   }
 
   double _speedForUser(DateTime? lastUpdated) {
@@ -570,7 +611,7 @@ class _MapScreenState extends State<MapScreen> {
                             itemBuilder: (BuildContext context, int index) {
                               final _MemberRowData row = _members[index];
                               final int battery = row.batteryPercent;
-                              final bool stationary = row.speedKmh < 2;
+                              final bool stationary = row.speedKmh <= 0;
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 10),
                                 padding: const EdgeInsets.all(12),
@@ -635,7 +676,7 @@ class _MapScreenState extends State<MapScreen> {
                                         const SizedBox(height: 4),
                                         Text(
                                           stationary
-                                              ? 'Stationary'
+                                              ? '0 km/h'
                                               : '${row.speedKmh.toStringAsFixed(0)} km/h',
                                           style: KinCircleTypography.caption12(
                                             color: KinCirclePalette.textMuted,

@@ -26,14 +26,6 @@ class NavShell extends StatefulWidget {
   final Widget? floatingActionButton;
   final bool automaticallyImplyLeading;
 
-  static const List<String> _routes = <String>[
-    '/map',
-    '/circles',
-    '/places',
-    '/alerts',
-    '/settings',
-  ];
-
   @override
   State<NavShell> createState() => _NavShellState();
 }
@@ -65,12 +57,9 @@ class _NavShellState extends State<NavShell> {
   }
 
   void _onPageChanged(int index) {
-    if (!mounted) return;
     setState(() {
       _selectedIndex = index;
     });
-    if (index == widget.currentIndex) return;
-    Navigator.of(context).pushReplacementNamed(NavShell._routes[index]);
   }
 
   void _onNavTap(int index) {
