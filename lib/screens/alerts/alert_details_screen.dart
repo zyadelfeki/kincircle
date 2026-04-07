@@ -104,7 +104,19 @@ class AlertDetailsScreen extends StatelessWidget {
           const SnackBar(content: Text('Thank you for your feedback!')),
         );
       }
-    } catch (_) {
+    } on FirebaseException catch (e) {
+      String msg = 'Could not submit feedback.';
+      if (e.code == 'permission-denied') {
+        msg = 'Permission denied. Check Firestore rules.';
+      }
+      debugPrint('AlertDetailsScreen feedback error: ${e.code} — ${e.message}');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg)),
+        );
+      }
+    } catch (e) {
+      debugPrint('AlertDetailsScreen unexpected feedback error: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Could not submit feedback.')),
