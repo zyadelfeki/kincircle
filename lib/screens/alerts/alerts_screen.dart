@@ -62,11 +62,22 @@ class _AlertsScreenState extends State<AlertsScreen> {
         _loading = false;
         _docs = snapshot.docs;
       });
-    } catch (_) {
+    } on FirebaseException catch (e) {
       if (!mounted) return;
+      String msg = 'Unable to load alerts';
+      if (e.code == 'permission-denied') msg = 'Permission denied. Check Firestore rules.';
+      if (e.code == 'failed-precondition') msg = 'Missing Firestore index. See logs for index creation link.';
+      debugPrint('AlertsScreen error: ${e.code} — ${e.message}');
       setState(() {
         _loading = false;
-        _error = 'Check your connection or permissions.';
+        _error = msg;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('AlertsScreen unexpected error: $e');
+      setState(() {
+        _loading = false;
+        _error = 'Unable to load alerts';
       });
     }
   }

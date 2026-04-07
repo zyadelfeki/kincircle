@@ -114,7 +114,13 @@ class _BenefitCarouselState extends State<_BenefitCarousel> {
                         Row(children: [
                           Icon(_iconFor(title), color: Theme.of(context).colorScheme.primary),
                           const SizedBox(width: 8),
-                          Text(title, style: Theme.of(context).textTheme.titleMedium),
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: Theme.of(context).textTheme.titleMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ]),
                         const SizedBox(height: 8),
             Text(desc),
@@ -182,7 +188,12 @@ class _PricingBlock extends StatelessWidget {
             children: [
               const Icon(Icons.workspace_premium, color: Colors.amber),
               const SizedBox(width: 8),
-              Text('Simple, transparent pricing', style: Theme.of(context).textTheme.headlineMedium),
+              Expanded(
+                child: Text(
+                  'Simple, transparent pricing',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -214,7 +225,19 @@ class _PricingBlock extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [Text(title, style: Theme.of(context).textTheme.titleMedium), if (isAnnual) ...[const SizedBox(width: 8), const Chip(label: Text('Best Value'))]]),
+            Row(children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (isAnnual) ...[
+                const SizedBox(width: 8),
+                const Chip(label: Text('Best Value')),
+              ],
+            ]),
             const SizedBox(height: 8),
             Text(price, style: Theme.of(context).textTheme.displaySmall?.copyWith(color: scheme.primary)),
             const SizedBox(height: 4),

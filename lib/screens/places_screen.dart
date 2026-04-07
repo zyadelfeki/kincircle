@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -28,18 +29,13 @@ class _PlacesScreenState extends State<PlacesScreen> {
   }
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    if (!mounted) return;
+    setState(() { _loading = true; _error = null; });
     try {
       final String? uid = _auth.currentUser?.uid;
       if (uid == null) {
         if (!mounted) return;
-        setState(() {
-          _loading = false;
-          _error = 'Please sign in.';
-        });
+        setState(() { _loading = false; _error = 'Please sign in.'; });
         return;
       }
       final DocumentSnapshot<Map<String, dynamic>> userDoc =
@@ -47,28 +43,29 @@ class _PlacesScreenState extends State<PlacesScreen> {
       final String? familyId = userDoc.data()?['currentFamilyId'] as String?;
       if (familyId == null || familyId.isEmpty) {
         if (!mounted) return;
-        setState(() {
-          _loading = false;
-          _places = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-        });
+        setState(() { _loading = false; _places = []; });
         return;
       }
+      // NOTE: orderBy('createdAt') requires a composite index in Firestore.
+      // If the index is missing this will throw. Deploy firestore.indexes.json first.
       final QuerySnapshot<Map<String, dynamic>> geofences = await _firestore
           .collection('geofences')
           .where('familyId', isEqualTo: familyId)
           .orderBy('createdAt', descending: true)
           .get();
       if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _places = geofences.docs;
-      });
-    } catch (_) {
+      setState(() { _loading = false; _places = geofences.docs; });
+    } on FirebaseException catch (e) {
       if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = 'Check your connection or permissions.';
-      });
+      String msg = 'Unable to load places';
+      if (e.code == 'permission-denied') msg = 'Permission denied. Check Firestore rules.';
+      if (e.code == 'failed-precondition') msg = 'Missing Firestore index. See logs for index creation link.';
+      debugPrint('PlacesScreen error: ${e.code} — ${e.message}');
+      setState(() { _loading = false; _error = msg; });
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('PlacesScreen unexpected error: $e');
+      setState(() { _loading = false; _error = 'Unable to load places'; });
     }
   }
 
@@ -196,6 +193,7 @@ class _PlacesScreenState extends State<PlacesScreen> {
     } else {
       body = _listView();
     }
+
     return NavShell(
       currentIndex: 2,
       title: 'Places',
