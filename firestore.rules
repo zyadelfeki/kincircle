@@ -63,11 +63,8 @@ service cloud.firestore {
 
     // Alerts collection
     match /alerts/{alertId} {
-      allow read: if isSignedIn() && isFamilyMember(resource.data.familyId);
-      allow create: if isSignedIn() && isFamilyMember(request.resource.data.familyId);
-      allow update: if isSignedIn() && isFamilyMember(resource.data.familyId) && 
-                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'acknowledgedBy']);
-      allow delete: if false; // Alerts cannot be deleted via client
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
 
     // Alert feedback collection
@@ -160,8 +157,7 @@ service cloud.firestore {
 
     // Community stats aggregate collection
     match /communitystats/{docId} {
-      allow read: if isSignedIn();
-      allow write: if false;
+      allow read: if request.auth != null;
     }
 
     // In-app notifications (user's own notifications)

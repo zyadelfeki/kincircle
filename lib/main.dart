@@ -91,11 +91,15 @@ Future<void> main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     ).timeout(const Duration(seconds: 10));
     // ADD DEBUG TOKEN 96737294-437b-427d-a090-01c9c744b8c2 TO FIREBASE CONSOLE APP CHECK ALLOWLIST
-    await FirebaseAppCheck.instance.activate(
-      providerAndroid: kDebugMode
-          ? const AndroidDebugProvider()
-          : const AndroidPlayIntegrityProvider(),
-    );
+    if (kDebugMode) {
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: AndroidProvider.debug,
+      );
+    } else {
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: AndroidProvider.playIntegrity,
+      );
+    }
     if (kDebugMode) {
       debugPrint('--- Firebase initialized (code options) ---');
     }
