@@ -10,6 +10,7 @@ dependencies:
   activity_recognition_flutter: ^6.0.0
   animations: ^2.1.1
   app_links: ^7.0.0
+  battery_plus: ^6.0.3
   cloud_firestore: ^6.1.0
   cloud_functions: ^6.0.4
   crypto: ^3.0.7
