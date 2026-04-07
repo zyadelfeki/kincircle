@@ -44,6 +44,10 @@ service cloud.firestore {
       allow update: if isOwnerUser(userId);
       allow delete: if false; // Users cannot be deleted via client
 
+      match /achievements/{achievementId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
       match /companion/{document=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
@@ -213,9 +217,7 @@ service cloud.firestore {
 
     // Wellbeing analytics (subcollection under users)
     match /users/{userId}/wellbeing_analytics/{analyticsId} {
-      allow read: if isOwnerUser(userId);
-      allow create: if isOwnerUser(userId);
-      allow update, delete: if false;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
     // Driver safety summaries
