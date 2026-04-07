@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'bottom_nav.dart';
 import '../design/kincircle_screen_tokens.dart';
 
-class NavShell extends StatelessWidget {
+class NavShell extends StatefulWidget {
   const NavShell({
     super.key,
     required this.currentIndex,
@@ -29,35 +29,91 @@ class NavShell extends StatelessWidget {
     '/settings',
   ];
 
-  void _onNavTap(BuildContext context, int index) {
-    if (index == currentIndex) return;
-    Navigator.of(context).pushReplacementNamed(_routes[index]);
+  @override
+  State<NavShell> createState() => _NavShellState();
+}
+
+class _NavShellState extends State<NavShell> {
+  late final PageController _pageController;
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.currentIndex;
+    _pageController = PageController(initialPage: widget.currentIndex);
+  }
+
+  @override
+  void didUpdateWidget(covariant NavShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentIndex != widget.currentIndex) {
+      _selectedIndex = widget.currentIndex;
+      _pageController.jumpToPage(widget.currentIndex);
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged(int index) {
+    if (!mounted) return;
+    setState(() {
+      _selectedIndex = index;
+    });
+    if (index == widget.currentIndex) return;
+    Navigator.of(context).pushReplacementNamed(NavShell._routes[index]);
+  }
+
+  void _onNavTap(int index) {
+    if (index == _selectedIndex) return;
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  List<Widget> _tabPages() {
+    return List<Widget>.generate(NavShell._routes.length, (int index) {
+      if (index == widget.currentIndex) {
+        return widget.body;
+      }
+      return const SizedBox.shrink();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: KinCirclePalette.background,
-      appBar: title == null
+      appBar: widget.title == null
           ? null
           : AppBar(
-              automaticallyImplyLeading: automaticallyImplyLeading,
+              automaticallyImplyLeading: widget.automaticallyImplyLeading,
               title: Text(
-                title!,
+                widget.title!,
                 style: KinCircleTypography.cardTitle16(
                   color: KinCirclePalette.textPrimary,
                 ),
               ),
               backgroundColor: KinCirclePalette.background,
               elevation: 0,
-              actions: actions,
+              actions: widget.actions,
             ),
-      body: body,
-      floatingActionButton: floatingActionButton,
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
+        children: _tabPages(),
+      ),
+      floatingActionButton: widget.floatingActionButton,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomNav(
-        currentIndex: currentIndex,
-        onTap: (int index) => _onNavTap(context, index),
+        currentIndex: _selectedIndex,
+        onTap: _onNavTap,
       ),
     );
   }
