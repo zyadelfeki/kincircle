@@ -513,29 +513,31 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildEmptySheet() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Icon(
-          Icons.groups_2_outlined,
-          color: KinCirclePalette.textMuted,
-          size: 36,
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'No member locations yet',
-          style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
-        ),
-        const SizedBox(height: 16),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: ElevatedButton(
-            style: KinCircleButtons.primary(),
-            onPressed: () => Navigator.of(context).pushNamed('/invite'),
-            child: const Text('Invite member'),
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.groups_2_outlined,
+            color: KinCirclePalette.textMuted,
+            size: 36,
           ),
-        ),
-      ],
+          const SizedBox(height: 12),
+          Text(
+            'No member locations yet',
+            style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: ElevatedButton(
+              style: KinCircleButtons.primary(),
+              onPressed: () => Navigator.of(context).pushNamed('/invite'),
+              child: const Text('Invite member'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
