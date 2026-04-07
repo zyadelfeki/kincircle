@@ -74,6 +74,9 @@ class TripServiceManager {
         return;
       }
 
+      final status = await Permission.activityRecognition.request();
+      if (!status.isGranted) return;
+
       // Create and initialize the service
       _tripDetectionService = TripDetectionService();
       await _tripDetectionService!.initialize();
