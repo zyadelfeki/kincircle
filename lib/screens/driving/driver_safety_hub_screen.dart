@@ -80,9 +80,11 @@ class _DriverSafetyHubScreenState extends State<DriverSafetyHubScreen> {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      const Text(
-                        'Recording',
-                        style: TextStyle(color: Colors.white, fontSize: 12),
+                      const Expanded(
+                        child: Text(
+                          'Recording',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
                       ),
                     ],
                   ),

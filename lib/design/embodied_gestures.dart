@@ -209,12 +209,14 @@ class _TactileButtonState extends State<TactileButton>
                   Icon(widget.icon, color: Colors.white, size: 20),
                   const SizedBox(width: 8),
                 ],
-                Text(
-                  widget.text,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    widget.text,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],

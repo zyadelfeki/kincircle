@@ -549,9 +549,13 @@ class _MapScreenState extends State<MapScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        Text('Family Members', style: KinCircleTypography.cardTitle16()),
+                        Expanded(
+                          child: Text('Family Members', style: KinCircleTypography.cardTitle16()),
+                        ),
                         const Spacer(),
-                        Text('${_members.length}', style: KinCircleTypography.caption12()),
+                        Expanded(
+                          child: Text('${_members.length}', style: KinCircleTypography.caption12()),
+                        ),
                       ],
                     ),
                   ),

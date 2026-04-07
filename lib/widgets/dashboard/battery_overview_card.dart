@@ -43,11 +43,13 @@ class BatteryOverviewCard extends StatelessWidget {
                     style: KinCircleTypography.body14(weight: FontWeight.w600),
                   ),
                 ),
-                Text(
-                  '$percent%',
-                  style: KinCircleTypography.body14(
-                    color: _colorFor(percent!),
-                    weight: FontWeight.w700,
+                Expanded(
+                  child: Text(
+                    '$percent%',
+                    style: KinCircleTypography.body14(
+                      color: _colorFor(percent!),
+                      weight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],

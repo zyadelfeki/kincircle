@@ -100,9 +100,11 @@ class _SensoryControlsScreenState extends State<SensoryControlsScreen> {
           children: [
             const Icon(Icons.cake, size: 28),
             const SizedBox(width: 12),
-            Text(
-              'Family Member Age',
-              style: Theme.of(context).textTheme.headlineMedium,
+            Expanded(
+              child: Text(
+                'Family Member Age',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
             ),
           ],
         ),
@@ -278,68 +280,72 @@ class _SensoryControlsScreenState extends State<SensoryControlsScreen> {
       service,
       isDarkAcademia,
       title: 'QUICK COMFORT MODES',
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-          _buildQuickModeButton(
-            context,
-            service,
-            isDarkAcademia,
-            icon: '🧘',
-            label: 'Calm',
-            onPressed: () async {
-              if (service.shouldUseHaptics) {
-                await TactileFeedback.satisfyingClick();
-              }
-              await service.applyCalmMode();
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Calm mode activated')),
-                );
-              }
-            },
+      child: SizedBox(
+        height: 52,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              _buildQuickModeButton(
+                context,
+                service,
+                isDarkAcademia,
+                icon: '🧘',
+                label: 'Calm',
+                onPressed: () async {
+                  if (service.shouldUseHaptics) {
+                    await TactileFeedback.satisfyingClick();
+                  }
+                  await service.applyCalmMode();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Calm mode activated')),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(width: 8),
+              _buildQuickModeButton(
+                context,
+                service,
+                isDarkAcademia,
+                icon: '🎯',
+                label: 'Focus',
+                onPressed: () async {
+                  if (service.shouldUseHaptics) {
+                    await TactileFeedback.satisfyingClick();
+                  }
+                  await service.applyFocusMode();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Focus mode activated')),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(width: 8),
+              _buildQuickModeButton(
+                context,
+                service,
+                isDarkAcademia,
+                icon: '⚡',
+                label: 'Energy',
+                onPressed: () async {
+                  if (service.shouldUseHaptics) {
+                    await TactileFeedback.satisfyingClick();
+                  }
+                  await service.applyEnergyMode();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Energy mode activated')),
+                    );
+                  }
+                },
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          _buildQuickModeButton(
-            context,
-            service,
-            isDarkAcademia,
-            icon: '🎯',
-            label: 'Focus',
-            onPressed: () async {
-              if (service.shouldUseHaptics) {
-                await TactileFeedback.satisfyingClick();
-              }
-              await service.applyFocusMode();
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Focus mode activated')),
-                );
-              }
-            },
-          ),
-          const SizedBox(width: 8),
-          _buildQuickModeButton(
-            context,
-            service,
-            isDarkAcademia,
-            icon: '⚡',
-            label: 'Energy',
-            onPressed: () async {
-              if (service.shouldUseHaptics) {
-                await TactileFeedback.satisfyingClick();
-              }
-              await service.applyEnergyMode();
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Energy mode activated')),
-                );
-              }
-            },
-          ),
-        ],
         ),
       ),
     );
@@ -399,7 +405,7 @@ class _SensoryControlsScreenState extends State<SensoryControlsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  const Text('Interval: '),
+                  const Expanded(child: Text('Interval: ')),
                   Expanded(
                     child: Slider(
                       value: profile.breakInterval.toDouble(),

@@ -266,13 +266,15 @@ class BrassButton extends StatelessWidget {
               Icon(icon, size: 20),
               const SizedBox(width: 8),
             ],
-            Text(
-              text,
-              style: const TextStyle(
-                fontFamily: 'Lora',
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.8,
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontFamily: 'Lora',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.8,
+                ),
               ),
             ),
           ],

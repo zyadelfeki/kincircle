@@ -74,7 +74,12 @@ class ManageInvitesScreen extends StatelessWidget {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(tsText, style: Theme.of(context).textTheme.bodySmall),
+                    Expanded(
+                      child: Text(
+                        tsText,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
                     PopupMenuButton<String>(
                       onSelected: (value) {
                         if (value == 'open') {
