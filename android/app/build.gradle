@@ -1,3 +1,5 @@
+// IMPORTANT: After cloning on new machine, run keytool command above and update SHA in Firebase Console
+// keytool -list -v -keystore "$env:USERPROFILE\.android\debug.keystore" -alias androiddebugkey -storepass android -keypass android
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
@@ -48,6 +50,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
         release {
             signingConfig keystoreProperties.isEmpty() ? signingConfigs.debug : signingConfigs.release
         }
