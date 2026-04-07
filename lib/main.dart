@@ -93,11 +93,11 @@ Future<void> main() async {
     // ADD DEBUG TOKEN 96737294-437b-427d-a090-01c9c744b8c2 TO FIREBASE CONSOLE APP CHECK ALLOWLIST
     if (kDebugMode) {
       await FirebaseAppCheck.instance.activate(
-        androidProvider: AndroidProvider.debug,
+        providerAndroid: const AndroidDebugProvider(),
       );
     } else {
       await FirebaseAppCheck.instance.activate(
-        androidProvider: AndroidProvider.playIntegrity,
+        providerAndroid: const AndroidPlayIntegrityProvider(),
       );
     }
     if (kDebugMode) {
