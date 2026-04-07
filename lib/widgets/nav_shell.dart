@@ -11,6 +11,7 @@ class NavShell extends StatelessWidget {
     this.title,
     this.actions,
     this.floatingActionButton,
+    this.automaticallyImplyLeading = true,
   });
 
   final int currentIndex;
@@ -18,6 +19,7 @@ class NavShell extends StatelessWidget {
   final String? title;
   final List<Widget>? actions;
   final Widget? floatingActionButton;
+  final bool automaticallyImplyLeading;
 
   static const List<String> _routes = <String>[
     '/map',
@@ -39,6 +41,7 @@ class NavShell extends StatelessWidget {
       appBar: title == null
           ? null
           : AppBar(
+              automaticallyImplyLeading: automaticallyImplyLeading,
               title: Text(
                 title!,
                 style: KinCircleTypography.cardTitle16(

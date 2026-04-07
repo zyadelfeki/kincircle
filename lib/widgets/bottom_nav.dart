@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../design/kincircle_screen_tokens.dart';
@@ -19,6 +21,73 @@ class BottomNav extends StatelessWidget {
     _NavItem(label: 'Alerts', icon: Icons.notifications_outlined),
     _NavItem(label: 'Profile', icon: Icons.person_outline),
   ];
+
+  Stream<int> _unreadAlertsCountStream() {
+    final String? uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      return Stream<int>.value(0);
+    }
+    return FirebaseFirestore.instance
+        .collection('alerts')
+        .where('userId', isEqualTo: uid)
+        .where('seen', isEqualTo: false)
+        .snapshots()
+        .map((QuerySnapshot<Map<String, dynamic>> snapshot) => snapshot.size)
+        .handleError((_) {});
+  }
+
+  Widget _buildIcon(_NavItem item, bool active) {
+    final Icon baseIcon = Icon(
+      item.icon,
+      color: active ? Colors.white : KinCirclePalette.textMuted,
+      size: 22,
+    );
+
+    if (item.label != 'Alerts') {
+      return baseIcon;
+    }
+
+    return StreamBuilder<int>(
+      stream: _unreadAlertsCountStream(),
+      initialData: 0,
+      builder: (BuildContext context, AsyncSnapshot<int> snapshot) {
+        final int count = snapshot.data ?? 0;
+        if (count <= 0) {
+          return baseIcon;
+        }
+
+        final String badgeText = count > 99 ? '99+' : '$count';
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            baseIcon,
+            Positioned(
+              right: -9,
+              top: -7,
+              child: Container(
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF4757),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  badgeText,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    height: 1.1,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,13 +132,7 @@ class BottomNav extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Icon(
-                        item.icon,
-                        color: active
-                            ? Colors.white
-                            : KinCirclePalette.textMuted,
-                        size: 22,
-                      ),
+                      _buildIcon(item, active),
                       const SizedBox(height: 4),
                       Text(
                         item.label,
