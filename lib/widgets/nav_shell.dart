@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../screens/alerts/alerts_screen.dart';
+import '../screens/circles_screen.dart';
+import '../screens/map_screen.dart';
+import '../screens/places_screen.dart';
+import '../screens/settings/settings_screen.dart';
 import 'bottom_nav.dart';
 import '../design/kincircle_screen_tokens.dart';
 
@@ -78,16 +83,31 @@ class _NavShellState extends State<NavShell> {
   }
 
   List<Widget> _tabPages() {
-    return List<Widget>.generate(NavShell._routes.length, (int index) {
-      if (index == widget.currentIndex) {
-        return widget.body;
-      }
-      return const SizedBox.shrink();
-    });
+    return <Widget>[
+      widget.currentIndex == 0
+          ? widget.body
+          : const _NavShellEmbeddedScope(child: MapScreen()),
+      widget.currentIndex == 1
+          ? widget.body
+          : const _NavShellEmbeddedScope(child: CirclesScreen()),
+      widget.currentIndex == 2
+          ? widget.body
+          : const _NavShellEmbeddedScope(child: PlacesScreen()),
+      widget.currentIndex == 3
+          ? widget.body
+          : const _NavShellEmbeddedScope(child: AlertsScreen()),
+      widget.currentIndex == 4
+          ? widget.body
+          : const _NavShellEmbeddedScope(child: SettingsScreen()),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_NavShellEmbeddedScope.isInScope(context)) {
+      return widget.body;
+    }
+
     return Scaffold(
       backgroundColor: KinCirclePalette.background,
       appBar: widget.title == null
@@ -106,6 +126,7 @@ class _NavShellState extends State<NavShell> {
             ),
       body: PageView(
         controller: _pageController,
+        physics: const PageScrollPhysics(),
         onPageChanged: _onPageChanged,
         children: _tabPages(),
       ),
@@ -117,4 +138,19 @@ class _NavShellState extends State<NavShell> {
       ),
     );
   }
+}
+
+class _NavShellEmbeddedScope extends InheritedWidget {
+  const _NavShellEmbeddedScope({
+    required super.child,
+  });
+
+  static bool isInScope(BuildContext context) {
+    return context
+            .dependOnInheritedWidgetOfExactType<_NavShellEmbeddedScope>() !=
+        null;
+  }
+
+  @override
+  bool updateShouldNotify(covariant InheritedWidget oldWidget) => false;
 }
