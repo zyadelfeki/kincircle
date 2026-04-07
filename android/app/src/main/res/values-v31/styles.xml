@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="LaunchTheme" parent="@android:style/Theme.SplashScreen">
-        <item name="android:windowSplashScreenBackground">#0B0F1A</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
-        <item name="android:postSplashScreenTheme">@style/NormalTheme</item>
+    <!-- Android 12+ splash: use windowBackground only, no Theme.SplashScreen dependency needed -->
+    <style name="LaunchTheme" parent="@style/Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/splashBackground</item>
+        <item name="android:windowFullscreen">true</item>
     </style>
 </resources>
