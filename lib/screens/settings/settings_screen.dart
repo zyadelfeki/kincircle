@@ -158,12 +158,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _sectionLabel(String value) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
+      padding: const EdgeInsets.only(left: 16, top: 24, bottom: 8),
       child: Text(
         value,
-        style: KinCircleTypography.caption12(
-          color: KinCirclePalette.textMuted,
-          weight: FontWeight.w600,
+        style: const TextStyle(
+          color: Color(0xFF00C9A7),
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1.2,
         ),
       ),
     );
@@ -173,6 +175,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required IconData icon,
     required String title,
     String? subtitle,
+    TextStyle? subtitleStyle,
     Widget? trailing,
     Color iconColor = Colors.white,
     VoidCallback? onTap,
@@ -195,8 +198,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ? null
             : Text(
                 subtitle,
-                style: KinCircleTypography.caption12(
-                    color: KinCirclePalette.textMuted),
+            style: subtitleStyle ??
+              KinCircleTypography.caption12(
+                color: KinCirclePalette.textMuted),
               ),
         trailing: trailing ??
             const Icon(
@@ -230,6 +234,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return NavShell(
       currentIndex: 4,
       title: 'Settings',
+      automaticallyImplyLeading: false,
       body: _loading
           ? _buildLoadingState()
           : ListView(
@@ -303,7 +308,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _toggleRow(
                   icon: Icons.dark_mode_outlined,
                   title: 'Theme (Dark)',
-                  value: themeController.mode != ThemeMode.light,
+                  value: themeController.mode == ThemeMode.dark,
                   onChanged: (bool value) {
                     themeController
                         .setMode(value ? ThemeMode.dark : ThemeMode.light);
@@ -363,12 +368,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _row(
                   icon: Icons.smart_toy_outlined,
                   title: 'Companion Settings',
+                  subtitle: 'Your AI family companion',
+                  subtitleStyle: const TextStyle(
+                    color: Color(0xFF8A8FA8),
+                    fontSize: 12,
+                  ),
                   onTap: () =>
                       Navigator.of(context).pushNamed('/companion/select'),
                 ),
                 _row(
                   icon: Icons.analytics_outlined,
                   title: 'Wellbeing Analytics',
+                  subtitle: 'Family health insights',
+                  subtitleStyle: const TextStyle(
+                    color: Color(0xFF8A8FA8),
+                    fontSize: 12,
+                  ),
                   onTap: () =>
                       Navigator.of(context).pushNamed('/analytics/wellbeing'),
                 ),

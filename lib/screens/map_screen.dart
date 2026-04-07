@@ -55,6 +55,7 @@ class _MapScreenState extends State<MapScreen> {
 
   _MapState _state = _MapState.loading;
   String? _error;
+  bool _isPermissionPermanentlyDenied = false;
   LatLng _cameraTarget = const LatLng(30.0444, 31.2357);
   Set<Marker> _markers = <Marker>{};
   List<_MemberRowData> _members = <_MemberRowData>[];
@@ -95,7 +96,7 @@ class _MapScreenState extends State<MapScreen> {
     });
 
     try {
-      final bool permissionGranted = await _locationService.requestPermission();
+      final bool permissionGranted = await _ensureLocationPermission();
       if (!permissionGranted) {
         if (!mounted) return;
         setState(() => _state = _MapState.permissionDenied);
@@ -142,6 +143,46 @@ class _MapScreenState extends State<MapScreen> {
         _error = 'Failed to load map data.';
       });
     }
+  }
+
+  Future<bool> _ensureLocationPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      _isPermissionPermanentlyDenied = true;
+      return false;
+    }
+
+    if (permission == LocationPermission.denied) {
+      _isPermissionPermanentlyDenied = false;
+      return false;
+    }
+
+    _isPermissionPermanentlyDenied = false;
+    return true;
+  }
+
+  Future<void> _requestLocationAccess() async {
+    final LocationPermission permission = await Geolocator.requestPermission();
+    if (!mounted) return;
+    if (permission == LocationPermission.deniedForever) {
+      setState(() {
+        _isPermissionPermanentlyDenied = true;
+        _state = _MapState.permissionDenied;
+      });
+      return;
+    }
+    if (permission == LocationPermission.denied) {
+      setState(() {
+        _isPermissionPermanentlyDenied = false;
+        _state = _MapState.permissionDenied;
+      });
+      return;
+    }
+    await _initialize();
   }
 
   void _subscribeToFamilyMembers(String familyId) {
@@ -360,25 +401,43 @@ class _MapScreenState extends State<MapScreen> {
   Widget _buildPermissionDenied() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.location_off_rounded,
-                color: KinCirclePalette.textMuted, size: 52),
-            const SizedBox(height: 14),
+            const Icon(
+              Icons.location_off_rounded,
+              color: Color(0xFF00C9A7),
+              size: 52,
+            ),
+            const SizedBox(height: 16),
             Text(
-              'Location permission is denied. Open settings to enable live map.',
+              'Location access required',
+              textAlign: TextAlign.center,
+              style: KinCircleTypography.body14(
+                color: Colors.white,
+                weight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'KinCircle needs your location to show family members on the map.',
               textAlign: TextAlign.center,
               style: KinCircleTypography.body14(
                 color: KinCirclePalette.textMuted,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _openSettings,
+              onPressed: _isPermissionPermanentlyDenied
+                  ? _openSettings
+                  : _requestLocationAccess,
               style: KinCircleButtons.primary(),
-              child: const Text('Open Settings'),
+              child: Text(
+                _isPermissionPermanentlyDenied
+                    ? 'Open Settings'
+                    : 'Grant Location Access',
+              ),
             ),
           ],
         ),
