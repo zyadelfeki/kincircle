@@ -176,11 +176,12 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                              messenger.showSnackBar(const SnackBar(content: Text('Please enter a name.')));
                              return;
                            }
-                           if (_markers.isEmpty) {
-                             messenger.showSnackBar(const SnackBar(content: Text('Please select a location first.')));
-                             return;
-                           }
-                           final famId = await FirestoreService().getCurrentFamilyId();
+                            if (_markers.isEmpty) {
+                              messenger.showSnackBar(const SnackBar(content: Text('Please select a location first.')));
+                              return;
+                            }
+                            final LatLng selectedPosition = _markers.first.position;
+                            final famId = await FirestoreService().getCurrentFamilyId();
                            if (!ctx.mounted) return;
                            if (famId != null) {
                              final ok = await ProGatingService().ensureCanAddSafeZone(ctx, famId);
@@ -194,14 +195,14 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                            }
                            try {
                              await FirebaseFirestore.instance.collection('geofences').add({
-                               'name': name,
-                               'familyId': famId,
-                               'userId': uid,
-                               'lat': _mapCenter.latitude,
-                               'lng': _mapCenter.longitude,
-                               'radius': 200.0,
-                               'createdAt': FieldValue.serverTimestamp(),
-                             });
+                                'name': name,
+                                'familyId': famId,
+                                'userId': uid,
+                                'lat': selectedPosition.latitude,
+                                'lng': selectedPosition.longitude,
+                                'radius': 200.0,
+                                'createdAt': FieldValue.serverTimestamp(),
+                              });
                              if (!ctx.mounted) return;
                              Navigator.of(ctx).pop(true);
                            } catch (e) {
