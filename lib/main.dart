@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
@@ -54,6 +55,7 @@ import 'services/sensory_regulation_service.dart';
 import 'services/companion_service.dart';
 import 'services/social_contagion_service.dart';
 import 'services/wellbeing_analytics_service.dart';
+import 'services/crash_detection_service.dart';
 import 'screens/privacy/privacy_dashboard_screen.dart';
 import 'design/dark_academia_theme.dart';
 import 'screens/emotion_feed_screen.dart';
@@ -141,6 +143,17 @@ Future<void> main() async {
   } catch (e, st) {
     if (kDebugMode) {
       debugPrint('!!! EncryptionService init failed: $e\n$st');
+    }
+  }
+
+  try {
+    unawaited(CrashDetectionService.instance.start());
+    if (kDebugMode) {
+      debugPrint('--- CrashDetectionService start requested ---');
+    }
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('!!! CrashDetectionService start failed: $e\n$st');
     }
   }
 
