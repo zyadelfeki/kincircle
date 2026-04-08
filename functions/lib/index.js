@@ -727,7 +727,7 @@ exports.sageWeeklyRecap = (0, scheduler_1.onSchedule)('every monday 08:00', asyn
                 emotionCounts: {},
             };
             const mood = Number(data.mood);
-            if (Number.isFinite(mood)) {
+            if (Number.isFinite(mood) && mood >= 1 && mood <= 5) {
                 agg.moodSum += mood;
                 agg.moodCount += 1;
             }

@@ -808,7 +808,7 @@ export const sageWeeklyRecap = onSchedule('every monday 08:00', async (_event) =
       };
 
       const mood = Number(data.mood);
-      if (Number.isFinite(mood)) {
+      if (Number.isFinite(mood) && mood >= 1 && mood <= 5) {
         agg.moodSum += mood;
         agg.moodCount += 1;
       }
