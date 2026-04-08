@@ -294,6 +294,7 @@ class _MapScreenState extends State<MapScreen> {
         final List<_MemberRowData> rows = snapshot.docs
           .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
             final AppUser user = AppUser.fromFirestore(doc);
+            if (user.isInvisible) return null;
             if (user.lastKnownLocation == null) return null;
             final dynamic rawBattery = doc.data()['batteryLevel'];
             final int? firestoreBattery =
@@ -839,17 +840,22 @@ class _MapScreenState extends State<MapScreen> {
           myLocationEnabled: true,
           myLocationButtonEnabled: false,
           zoomControlsEnabled: false,
+          zoomGesturesEnabled: true,
+          scrollGesturesEnabled: true,
+          rotateGesturesEnabled: true,
+          tiltGesturesEnabled: true,
         ),
         Positioned(
           left: 16,
           right: 16,
-          bottom: 220,
+          bottom: MediaQuery.of(context).padding.bottom + 112,
           child: SafeArea(
             child: Column(
               children: [
                 Row(
                   children: [
-                    Expanded(
+                    Flexible(
+                      flex: 4,
                       child: ElevatedButton.icon(
                         onPressed: () => _broadcastCircleStatus(
                           CircleMemberStatus.safe,
@@ -873,7 +879,8 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Expanded(
+                    Flexible(
+                      flex: 6,
                       child: ElevatedButton.icon(
                         onPressed: () => _broadcastCircleStatus(
                           CircleMemberStatus.needsHelp,
@@ -936,6 +943,9 @@ class _MapScreenState extends State<MapScreen> {
           minChildSize: 0.15,
           initialChildSize: 0.30,
           maxChildSize: 0.80,
+          expand: false,
+          snap: true,
+          snapSizes: const <double>[0.15, 0.30, 0.80],
           builder: (BuildContext context, ScrollController controller) {
             return Container(
               decoration: BoxDecoration(
@@ -957,13 +967,25 @@ class _MapScreenState extends State<MapScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 8),
-                  Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: KinCirclePalette.textMuted.withValues(alpha: 0.4),
-                      borderRadius: KinCircleRadii.pill,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: KinCirclePalette.textMuted.withValues(alpha: 0.4),
+                          borderRadius: KinCircleRadii.pill,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Swipe up',
+                        style: KinCircleTypography.caption12(
+                          color: KinCirclePalette.textMuted,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Padding(
@@ -1068,7 +1090,7 @@ class _MapScreenState extends State<MapScreen> {
                                         const SizedBox(height: 4),
                                         Text(
                                           stationary
-                                              ? 'Stationary'
+                                              ? 'At current location'
                                               : '${row.speedKmh.toStringAsFixed(0)} km/h',
                                           style: KinCircleTypography.caption12(
                                             color: KinCirclePalette.textMuted,

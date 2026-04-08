@@ -119,6 +119,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  bool get _canChangePassword {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+    return user.providerData.any((UserInfo info) => info.providerId == 'password');
+  }
+
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil('/auth', (Route<dynamic> route) => false);
+  }
+
   Future<void> _confirmDestructive({
     required String title,
     required String body,
@@ -261,7 +274,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             MediaQuery.of(context).platformBrightness == Brightness.dark);
     return NavShell(
       currentIndex: 4,
-      title: 'Settings',
+      title: 'Profile & Settings',
       automaticallyImplyLeading: false,
       body: _loading
           ? _buildLoadingState()
@@ -274,16 +287,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: 'Edit Profile',
                   onTap: () => Navigator.of(context).pushNamed('/account'),
                 ),
-                _row(
-                  icon: Icons.lock_outline_rounded,
-                  title: 'Change Password',
-                  onTap: _showComingSoon,
-                ),
-                _row(
-                  icon: Icons.link_rounded,
-                  title: 'Linked Accounts',
-                  onTap: _showComingSoon,
-                ),
+                if (_canChangePassword)
+                  _row(
+                    icon: Icons.lock_outline_rounded,
+                    title: 'Change Password',
+                    onTap: _showComingSoon,
+                  ),
                 _sectionSpacer(),
                 _sectionLabel('Notifications'),
                 _toggleRow(
@@ -395,6 +404,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     );
                     await _loadPrefs();
                   },
+                ),
+                _row(
+                  icon: Icons.logout_rounded,
+                  title: 'Sign Out',
+                  titleColor: KinCirclePalette.error,
+                  iconColor: KinCirclePalette.error,
+                  onTap: () => _confirmDestructive(
+                    title: 'Sign out?',
+                    body: 'You can sign back in anytime.',
+                    onConfirmed: _signOut,
+                  ),
                 ),
                 _sectionSpacer(),
                 _sectionLabel('AI & Wellbeing'),

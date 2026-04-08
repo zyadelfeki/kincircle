@@ -6,6 +6,9 @@ import 'package:flutter/foundation.dart';
 class LocationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  bool? _canShareLocationCache;
+  DateTime? _canShareLocationCacheAt;
+  static const Duration _locationShareCacheTtl = Duration(seconds: 20);
 
   Future<bool> requestPermission() async {
     bool serviceEnabled;
@@ -46,6 +49,9 @@ class LocationService {
     if (user == null) return;
 
     try {
+      final bool canShare = await _canShareLocation(user.uid);
+      if (!canShare) return;
+
       await _firestore.collection('users').doc(user.uid).update({
         'lastKnownLocation': GeoPoint(position.latitude, position.longitude),
         'lastUpdated': FieldValue.serverTimestamp(),
@@ -68,6 +74,24 @@ class LocationService {
     } catch (e) {
       debugPrint('Error updating location: $e');
     }
+  }
+
+  Future<bool> _canShareLocation(String uid) async {
+    final DateTime now = DateTime.now();
+    final DateTime? cachedAt = _canShareLocationCacheAt;
+    if (_canShareLocationCache != null &&
+        cachedAt != null &&
+        now.difference(cachedAt) < _locationShareCacheTtl) {
+      return _canShareLocationCache!;
+    }
+
+    final DocumentSnapshot<Map<String, dynamic>> userDoc =
+        await _firestore.collection('users').doc(uid).get();
+    final bool invisibleMode = userDoc.data()?['invisibleMode'] as bool? ?? false;
+    final bool canShare = !invisibleMode;
+    _canShareLocationCache = canShare;
+    _canShareLocationCacheAt = now;
+    return canShare;
   }
 
   Future<Position?> getCurrentLocation() async {

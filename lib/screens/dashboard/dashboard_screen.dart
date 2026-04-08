@@ -41,6 +41,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int? _lowestBattery;
 
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _alertsSub;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _membersSub;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _geofencesSub;
 
   @override
   void initState() {
@@ -51,6 +53,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void dispose() {
     _alertsSub?.cancel();
+    _membersSub?.cancel();
+    _geofencesSub?.cancel();
     super.dispose();
   }
 
@@ -107,7 +111,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       final QuerySnapshot<Map<String, dynamic>> activitySnap = await _firestore
           .collection('alerts')
-          .where('familyId', isEqualTo: familyId)
+          .where('userId', isEqualTo: user.uid)
           .orderBy('timestamp', descending: true)
           .limit(5)
           .get();
@@ -133,7 +137,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _loading = false;
       });
 
-      _subscribeToActiveAlerts(familyId);
+      _subscribeToMembers(familyId);
+      _subscribeToSafePlaces(familyId);
+      _subscribeToActiveAlerts(user.uid);
     } on FirebaseException catch (e) {
       if (!mounted) return;
       String msg = 'Something went wrong. Please try again.';
@@ -157,11 +163,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  void _subscribeToActiveAlerts(String familyId) {
+  void _subscribeToMembers(String familyId) {
+    _membersSub?.cancel();
+    _membersSub = _firestore
+        .collection('users')
+        .where('currentFamilyId', isEqualTo: familyId)
+        .snapshots()
+        .listen((QuerySnapshot<Map<String, dynamic>> snapshot) {
+      final List<AppUser> members =
+          snapshot.docs.map(AppUser.fromFirestore).toList();
+      final List<_BatteryTuple> batteryTuples = members
+          .map((AppUser member) =>
+              _BatteryTuple(member, _estimatedBattery(member.uid)))
+          .toList()
+        ..sort((a, b) => a.battery.compareTo(b.battery));
+
+      if (!mounted) return;
+      setState(() {
+        _members = members;
+        _lowestBatteryMember =
+            batteryTuples.isNotEmpty ? batteryTuples.first.member : null;
+        _lowestBattery =
+            batteryTuples.isNotEmpty ? batteryTuples.first.battery : null;
+      });
+    });
+  }
+
+  void _subscribeToSafePlaces(String familyId) {
+    _geofencesSub?.cancel();
+    _geofencesSub = _firestore
+        .collection('geofences')
+        .where('familyId', isEqualTo: familyId)
+        .snapshots()
+        .listen((QuerySnapshot<Map<String, dynamic>> snapshot) {
+      if (!mounted) return;
+      setState(() {
+        _safePlacesCount = snapshot.size;
+      });
+    });
+  }
+
+  void _subscribeToActiveAlerts(String userId) {
     _alertsSub?.cancel();
     _alertsSub = _firestore
         .collection('alerts')
-        .where('familyId', isEqualTo: familyId)
+        .where('userId', isEqualTo: userId)
         .orderBy('timestamp', descending: true)
         .limit(20)
         .snapshots()
@@ -229,10 +275,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   List<AppUser> _onlineMembers() {
     final DateTime now = DateTime.now();
+    final String? currentUid = _auth.currentUser?.uid;
     return _members.where((AppUser m) {
+      if (m.uid == currentUid) return true;
       final DateTime? updated = m.lastUpdated;
       if (updated == null) return false;
-      return now.difference(updated).inMinutes <= 10;
+      return now.difference(updated).inMinutes <= 20;
     }).toList();
   }
 
@@ -476,7 +524,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return NavShell(
       currentIndex: 1,
-      title: 'Home',
+      title: 'Circles Dashboard',
       body: _buildBody(),
     );
   }

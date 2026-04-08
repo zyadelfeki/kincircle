@@ -52,7 +52,7 @@ class _CirclesScreenState extends State<CirclesScreen> {
   @override
   Widget build(BuildContext context) {
     return NavShell(
-      currentIndex: 2,
+      currentIndex: 1,
       title: 'Circles',
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: _circlesStream,

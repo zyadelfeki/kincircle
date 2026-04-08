@@ -37,7 +37,7 @@ class QuickActionsCard extends StatelessWidget {
               Expanded(
                 child: _ActionButton(
                   icon: Icons.share_location_rounded,
-                  label: 'Share',
+                  label: 'Share Location',
                   color: KinCirclePalette.accent,
                   onTap: onShareTap,
                 ),
@@ -77,7 +77,7 @@ class _ActionButton extends StatelessWidget {
     return OutlinedButton(
       onPressed: onTap,
       style: OutlinedButton.styleFrom(
-        minimumSize: const Size(0, 48),
+        minimumSize: const Size(0, 56),
         side: const BorderSide(color: KinCirclePalette.border),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -89,8 +89,9 @@ class _ActionButton extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.fade,
             style: KinCircleTypography.caption12(color: color, weight: FontWeight.w600),
           ),
         ],

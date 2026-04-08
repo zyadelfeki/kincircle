@@ -136,6 +136,16 @@ class _AlertsScreenState extends State<AlertsScreen> {
     return ids;
   }
 
+  bool _isGenericMemberPlaceholder(String value) {
+    final String lowered = value.trim().toLowerCase();
+    return lowered == 'family member' ||
+        lowered == 'member' ||
+        lowered == 'unknown' ||
+        lowered == 'unknown member' ||
+        lowered == 'a family member' ||
+        lowered == 'someone';
+  }
+
   Future<Map<String, String>> _loadMemberNamesFromAlerts(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
   ) async {
@@ -192,6 +202,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
     for (final dynamic candidate in candidates) {
       final String value = (candidate ?? '').toString().trim();
       if (value.isEmpty) continue;
+      if (_isGenericMemberPlaceholder(value)) continue;
       if (_looksLikeUid(value)) {
         final String? resolved = _memberNamesByUid[value];
         if (resolved != null && resolved.trim().isNotEmpty) {
@@ -231,14 +242,24 @@ class _AlertsScreenState extends State<AlertsScreen> {
     return trimmed;
   }
 
+  String _replaceGenericActor(String text, String name) {
+    if (name == 'Unknown member') return text;
+    return text.replaceAll(
+      RegExp(r'\ba family member\b|\bfamily member\b', caseSensitive: false),
+      name,
+    );
+  }
+
   String _resolveTitle(Map<String, dynamic> data, String name) {
     final String rawTitle = (data['title'] ?? '').toString().trim();
     final String rawMessage = (data['message'] ?? '').toString().trim();
     if (rawTitle.isNotEmpty) {
-      return _prefixNameIfMissing(rawTitle, name);
+      final String normalized = _replaceGenericActor(rawTitle, name);
+      return _prefixNameIfMissing(normalized, name);
     }
     if (rawMessage.isNotEmpty) {
-      return _prefixNameIfMissing(rawMessage, name);
+      final String normalized = _replaceGenericActor(rawMessage, name);
+      return _prefixNameIfMissing(normalized, name);
     }
     if (name == 'Unknown member') {
       return 'Emergency alert';
@@ -342,8 +363,143 @@ class _AlertsScreenState extends State<AlertsScreen> {
     );
   }
 
+  Widget _buildSectionHeader(String label) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+      child: Text(
+        label,
+        style: KinCircleTypography.caption12(
+          color: KinCirclePalette.textMuted,
+          weight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAlertTile(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final Map<String, dynamic> data = doc.data();
+    final String name = _resolveName(data);
+    final String title = _resolveTitle(data, name);
+    final String message = _resolveMessage(data, name);
+    final bool seen = data['seen'] as bool? ?? false;
+    final String timeLabel = _relativeTime(data['timestamp'] as Timestamp?);
+    final bool urgent =
+        _isUrgentAlert(data: data, title: title, message: message);
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        color: seen
+            ? KinCirclePalette.surface
+            : KinCirclePalette.surfaceAlt.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(14),
+        border: Border(
+          left: BorderSide(
+            color: seen
+                ? KinCirclePalette.border
+                : KinCirclePalette.accent,
+            width: 3,
+          ),
+          top: const BorderSide(color: KinCirclePalette.border, width: 1),
+          right: const BorderSide(color: KinCirclePalette.border, width: 1),
+          bottom: const BorderSide(color: KinCirclePalette.border, width: 1),
+        ),
+      ),
+      child: ListTile(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => AlertDetailsScreen(alertId: doc.id, alertData: data),
+            ),
+          );
+        },
+        leading: Icon(
+          urgent
+              ? Icons.sos_rounded
+              : Icons.notifications_none_rounded,
+          color: urgent
+              ? KinCirclePalette.error
+              : (seen
+                  ? KinCirclePalette.textMuted
+                  : KinCirclePalette.accent),
+        ),
+        title: Row(
+          children: [
+            if (!seen)
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(right: 8),
+                decoration: const BoxDecoration(
+                  color: KinCirclePalette.accent,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            Expanded(
+              child: Text(
+                title,
+                style: KinCircleTypography.body14(
+                  weight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                message,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: KinCircleTypography.caption12(
+                  color: KinCirclePalette.textMuted,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                timeLabel,
+                style: KinCircleTypography.caption12(
+                  color: seen
+                      ? KinCirclePalette.textMuted
+                      : KinCirclePalette.accent,
+                  weight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        trailing: seen
+            ? const Icon(
+                Icons.chevron_right_rounded,
+                color: KinCirclePalette.textMuted,
+              )
+            : TextButton(
+                onPressed: () => _markRead(doc),
+                child: const Text('Read'),
+              ),
+      ),
+    );
+  }
+
   Widget _listView() {
     if (_docs.isEmpty) return _emptyView();
+    final DateTime now = DateTime.now();
+    final List<QueryDocumentSnapshot<Map<String, dynamic>>> recentDocs =
+        <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+    final List<QueryDocumentSnapshot<Map<String, dynamic>>> archivedDocs =
+        <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in _docs) {
+      final Timestamp? ts = doc.data()['timestamp'] as Timestamp?;
+      if (ts != null && now.difference(ts.toDate()).inDays > 7) {
+        archivedDocs.add(doc);
+      } else {
+        recentDocs.add(doc);
+      }
+    }
+
     final bool hasUnread = _docs.any(
       (QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
           !(doc.data()['seen'] as bool? ?? false),
@@ -389,115 +545,15 @@ class _AlertsScreenState extends State<AlertsScreen> {
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            itemCount: _docs.length,
-            itemBuilder: (_, int index) {
-              final QueryDocumentSnapshot<Map<String, dynamic>> doc = _docs[index];
-              final Map<String, dynamic> data = doc.data();
-              final String name = _resolveName(data);
-              final String title = _resolveTitle(data, name);
-              final String message = _resolveMessage(data, name);
-              final bool seen = data['seen'] as bool? ?? false;
-              final String timeLabel = _relativeTime(data['timestamp'] as Timestamp?);
-              final bool urgent =
-                  _isUrgentAlert(data: data, title: title, message: message);
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                decoration: BoxDecoration(
-                  color: seen
-                      ? KinCirclePalette.surface
-                      : KinCirclePalette.surfaceAlt.withValues(alpha: 0.75),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border(
-                    left: BorderSide(
-                      color: seen
-                          ? KinCirclePalette.border
-                          : KinCirclePalette.accent,
-                      width: 3,
-                    ),
-                    top: const BorderSide(color: KinCirclePalette.border, width: 1),
-                    right: const BorderSide(color: KinCirclePalette.border, width: 1),
-                    bottom: const BorderSide(color: KinCirclePalette.border, width: 1),
-                  ),
-                ),
-                child: ListTile(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => AlertDetailsScreen(alertId: doc.id, alertData: data),
-                      ),
-                    );
-                  },
-                  leading: Icon(
-                    urgent
-                        ? Icons.sos_rounded
-                        : Icons.notifications_none_rounded,
-                    color: urgent
-                        ? KinCirclePalette.error
-                        : (seen
-                            ? KinCirclePalette.textMuted
-                            : KinCirclePalette.accent),
-                  ),
-                  title: Row(
-                    children: [
-                      if (!seen)
-                        Container(
-                          width: 8,
-                          height: 8,
-                          margin: const EdgeInsets.only(right: 8),
-                          decoration: const BoxDecoration(
-                            color: KinCirclePalette.accent,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: KinCircleTypography.body14(
-                            weight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          message,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: KinCircleTypography.caption12(
-                            color: KinCirclePalette.textMuted,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          timeLabel,
-                          style: KinCircleTypography.caption12(
-                            color: seen
-                                ? KinCirclePalette.textMuted
-                                : KinCirclePalette.accent,
-                            weight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  trailing: seen
-                      ? const Icon(
-                          Icons.chevron_right_rounded,
-                          color: KinCirclePalette.textMuted,
-                        )
-                      : TextButton(
-                          onPressed: () => _markRead(doc),
-                          child: const Text('Read'),
-                        ),
-                ),
-              );
-            },
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 12),
+            children: [
+              if (recentDocs.isNotEmpty) _buildSectionHeader('Recent'),
+              ...recentDocs.map(_buildAlertTile),
+              if (archivedDocs.isNotEmpty)
+                _buildSectionHeader('Archive (older than 7 days)'),
+              ...archivedDocs.map(_buildAlertTile),
+            ],
           ),
         ),
       ],
