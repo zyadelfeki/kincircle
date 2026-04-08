@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -15,6 +16,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../design/kincircle_screen_tokens.dart';
 import '../models/user_model.dart';
+import '../services/circle_status_service.dart';
 import '../services/anomaly_alert_service.dart';
 import '../services/location_service.dart';
 import '../services/theme_controller.dart';
@@ -54,6 +56,7 @@ class _MapScreenState extends State<MapScreen> {
 
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _familySub;
   StreamSubscription<Position>? _positionSub;
+  StreamSubscription<List<CircleMemberStatusEntry>>? _statusSub;
   GoogleMapController? _mapController;
 
   final Map<String, BitmapDescriptor> _markerCache =
@@ -70,9 +73,15 @@ class _MapScreenState extends State<MapScreen> {
   LatLng _cameraTarget = const LatLng(30.0444, 31.2357);
   Set<Marker> _markers = <Marker>{};
   Set<Circle> _circles = <Circle>{};
+  Set<Circle> _helpCircles = <Circle>{};
   List<_MemberRowData> _members = <_MemberRowData>[];
+  String? _currentCircleId;
+  List<CircleMemberStatusEntry> _circleStatuses =
+      <CircleMemberStatusEntry>[];
   int _currentBatteryLevel = 0;
   double _currentUserSpeedKmh = 0.0;
+  double _pulsePhase = 0;
+  Timer? _pulseTimer;
 
   static const String _privacyBubblePrefsKey = 'map.privacyBubble';
 
@@ -114,6 +123,8 @@ class _MapScreenState extends State<MapScreen> {
   void dispose() {
     _familySub?.cancel();
     _positionSub?.cancel();
+    _statusSub?.cancel();
+    _pulseTimer?.cancel();
     _mapController?.dispose();
     super.dispose();
   }
@@ -162,20 +173,27 @@ class _MapScreenState extends State<MapScreen> {
       final DocumentSnapshot<Map<String, dynamic>> currentUserDoc =
           await _firestore.collection('users').doc(user.uid).get();
       final String? familyId = currentUserDoc.data()?['currentFamilyId'] as String?;
+      final String? circleId = currentUserDoc.data()?['circleId'] as String?;
       if (familyId == null || familyId.isEmpty) {
         if (!mounted) return;
         setState(() {
           _currentFamilyId = null;
+          _currentCircleId = null;
           _members = <_MemberRowData>[];
           _markers = <Marker>{};
           _circles = <Circle>{};
+          _helpCircles = <Circle>{};
           _state = _MapState.ready;
         });
         return;
       }
 
       _currentFamilyId = familyId;
+      _currentCircleId = (circleId != null && circleId.isNotEmpty)
+          ? circleId
+          : familyId;
       _subscribeToFamilyMembers(familyId);
+      _subscribeToCircleStatuses(_currentCircleId!);
       if (!mounted) return;
       setState(() => _state = _MapState.ready);
     } catch (_) {
@@ -345,6 +363,7 @@ class _MapScreenState extends State<MapScreen> {
           _members = rows;
           _markers = markers;
           _circles = circles;
+          _helpCircles = _buildNeedsHelpCircles(markers);
           _cameraTarget = nextTarget;
         });
       },
@@ -356,6 +375,81 @@ class _MapScreenState extends State<MapScreen> {
         });
       },
     );
+  }
+
+  void _subscribeToCircleStatuses(String circleId) {
+    _statusSub?.cancel();
+    _statusSub = CircleStatusService.instance
+        .watchCircleStatuses(circleId)
+        .listen((List<CircleMemberStatusEntry> statuses) {
+      if (!mounted) return;
+      setState(() {
+        _circleStatuses = statuses;
+        _helpCircles = _buildNeedsHelpCircles(_markers);
+      });
+      _ensurePulseTimer();
+    }, onError: (Object error) {
+      debugPrint('MapScreen status stream error: $error');
+    });
+  }
+
+  void _ensurePulseTimer() {
+    final bool hasHelp =
+        _circleStatuses.any((s) => s.status == CircleMemberStatus.needsHelp);
+    if (!hasHelp) {
+      _pulseTimer?.cancel();
+      _pulseTimer = null;
+      return;
+    }
+    _pulseTimer ??= Timer.periodic(const Duration(milliseconds: 700), (_) {
+      if (!mounted) return;
+      setState(() {
+        _pulsePhase += 0.35;
+        _helpCircles = _buildNeedsHelpCircles(_markers);
+      });
+    });
+  }
+
+  Set<Circle> _buildNeedsHelpCircles(Set<Marker> markers) {
+    final Map<String, LatLng> markerPositions = <String, LatLng>{
+      for (final Marker marker in markers) marker.markerId.value: marker.position,
+    };
+
+    final double pulse = (sin(_pulsePhase) + 1) / 2;
+    final double radius = 180 + (110 * pulse);
+
+    return _circleStatuses
+        .where((CircleMemberStatusEntry status) =>
+            status.status == CircleMemberStatus.needsHelp)
+        .map((CircleMemberStatusEntry status) {
+      final LatLng? position = markerPositions[status.uid];
+      if (position == null) {
+        return null;
+      }
+      return Circle(
+        circleId: CircleId('needs_help_${status.uid}'),
+        center: position,
+        radius: radius,
+        fillColor: Colors.red.withValues(alpha: 0.16 + (0.12 * pulse)),
+        strokeColor: Colors.red.withValues(alpha: 0.45 + (0.35 * pulse)),
+        strokeWidth: 2,
+      );
+    }).whereType<Circle>().toSet();
+  }
+
+  Future<void> _broadcastCircleStatus(
+    CircleMemberStatus status,
+    String confirmation,
+  ) async {
+    try {
+      await CircleStatusService.instance.broadcastStatus(status);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(confirmation)),
+      );
+    } catch (e) {
+      debugPrint('MapScreen status broadcast error: $e');
+    }
   }
 
   void _recordLocationHistory(List<_MemberRowData> rows) {
@@ -680,10 +774,42 @@ class _MapScreenState extends State<MapScreen> {
             _mapController = controller;
           },
           markers: _markers,
-          circles: _circles,
+          circles: <Circle>{..._circles, ..._helpCircles},
           myLocationEnabled: true,
           myLocationButtonEnabled: true,
           zoomControlsEnabled: false,
+        ),
+        Positioned(
+          left: 14,
+          bottom: 220,
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                FloatingActionButton.extended(
+                  heroTag: 'status_safe',
+                  backgroundColor: Colors.green,
+                  onPressed: () => _broadcastCircleStatus(
+                    CircleMemberStatus.safe,
+                    'Status shared with your circle',
+                  ),
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text('I\'m Safe'),
+                ),
+                const SizedBox(height: 10),
+                FloatingActionButton.extended(
+                  heroTag: 'status_help',
+                  backgroundColor: Colors.red,
+                  onPressed: () => _broadcastCircleStatus(
+                    CircleMemberStatus.needsHelp,
+                    'Circle members notified',
+                  ),
+                  icon: const Icon(Icons.sos),
+                  label: const Text('Need Help'),
+                ),
+              ],
+            ),
+          ),
         ),
         Positioned(
           top: 14,
