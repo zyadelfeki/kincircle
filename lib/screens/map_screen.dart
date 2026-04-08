@@ -8,6 +8,7 @@ import 'package:battery_plus/battery_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -57,12 +58,17 @@ class _MapScreenState extends State<MapScreen> {
 
   _MapState _state = _MapState.loading;
   String? _error;
+  String? _currentFamilyId;
   bool _isPermissionPermanentlyDenied = false;
+  bool _privacyBubbleMode = false;
   LatLng _cameraTarget = const LatLng(30.0444, 31.2357);
   Set<Marker> _markers = <Marker>{};
+  Set<Circle> _circles = <Circle>{};
   List<_MemberRowData> _members = <_MemberRowData>[];
   int _currentBatteryLevel = 0;
   double _currentUserSpeedKmh = 0.0;
+
+  static const String _privacyBubblePrefsKey = 'map.privacyBubble';
 
   static const String _darkMapStyle = '''
 [
@@ -83,7 +89,13 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _refreshCurrentBatteryLevel();
-    _initialize();
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    await _loadPrivacyBubbleMode();
+    if (!mounted) return;
+    await _initialize();
   }
 
   @override
@@ -141,13 +153,16 @@ class _MapScreenState extends State<MapScreen> {
       if (familyId == null || familyId.isEmpty) {
         if (!mounted) return;
         setState(() {
+          _currentFamilyId = null;
           _members = <_MemberRowData>[];
           _markers = <Marker>{};
+          _circles = <Circle>{};
           _state = _MapState.ready;
         });
         return;
       }
 
+      _currentFamilyId = familyId;
       _subscribeToFamilyMembers(familyId);
       if (!mounted) return;
       setState(() => _state = _MapState.ready);
@@ -158,6 +173,43 @@ class _MapScreenState extends State<MapScreen> {
         _error = 'Failed to load map data.';
       });
     }
+  }
+
+  Future<void> _loadPrivacyBubbleMode() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final bool enabled = prefs.getBool(_privacyBubblePrefsKey) ?? false;
+    if (!mounted) return;
+    setState(() {
+      _privacyBubbleMode = enabled;
+    });
+  }
+
+  Future<void> _togglePrivacyBubbleMode() async {
+    final bool next = !_privacyBubbleMode;
+    if (!mounted) return;
+    setState(() {
+      _privacyBubbleMode = next;
+      if (!next) {
+        _circles = <Circle>{};
+      }
+    });
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_privacyBubblePrefsKey, next);
+
+    final String? familyId = _currentFamilyId;
+    if (familyId != null && familyId.isNotEmpty) {
+      _subscribeToFamilyMembers(familyId);
+    }
+  }
+
+  LatLng _markerPositionForMode(String uid, LatLng exactPosition) {
+    if (!_privacyBubbleMode || uid.isEmpty) return exactPosition;
+    final double jitter = (uid.codeUnits.first % 10) * 0.0001;
+    return LatLng(
+      exactPosition.latitude + jitter,
+      exactPosition.longitude + jitter,
+    );
   }
 
   Future<bool> _ensureLocationPermission() async {
@@ -208,6 +260,7 @@ class _MapScreenState extends State<MapScreen> {
         .snapshots()
         .listen(
       (QuerySnapshot<Map<String, dynamic>> snapshot) async {
+        final bool bubbleMode = _privacyBubbleMode;
         final List<_MemberRowData> rows = snapshot.docs
           .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
             final AppUser user = AppUser.fromFirestore(doc);
@@ -221,10 +274,15 @@ class _MapScreenState extends State<MapScreen> {
             .toList();
 
         final Set<Marker> markers = <Marker>{};
+        final Set<Circle> circles = <Circle>{};
         for (final _MemberRowData row in rows) {
           final BitmapDescriptor icon =
               await _markerForMember(row.user.uid, row.user.displayName);
-          final LatLng position = row.user.lastKnownLocation!;
+          final LatLng exactPosition = row.user.lastKnownLocation!;
+          final LatLng position = bubbleMode
+              ? _markerPositionForMode(row.user.uid, exactPosition)
+              : exactPosition;
+
           markers.add(
             Marker(
               markerId: MarkerId(row.user.uid),
@@ -236,17 +294,36 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
           );
+
+          if (bubbleMode) {
+            circles.add(
+              Circle(
+                circleId: CircleId(row.user.uid),
+                center: position,
+                radius: 300,
+                fillColor: Colors.blue.withValues(alpha: 0.15),
+                strokeColor: Colors.blue.withValues(alpha: 0.4),
+                strokeWidth: 1,
+              ),
+            );
+          }
         }
 
         LatLng nextTarget = _cameraTarget;
         if (rows.isNotEmpty) {
-          nextTarget = rows.first.user.lastKnownLocation!;
+          nextTarget = bubbleMode
+              ? _markerPositionForMode(
+                  rows.first.user.uid,
+                  rows.first.user.lastKnownLocation!,
+                )
+              : rows.first.user.lastKnownLocation!;
         }
 
         if (!mounted) return;
         setState(() {
           _members = rows;
           _markers = markers;
+          _circles = circles;
           _cameraTarget = nextTarget;
         });
       },
@@ -551,9 +628,33 @@ class _MapScreenState extends State<MapScreen> {
             _mapController = controller;
           },
           markers: _markers,
+          circles: _circles,
           myLocationEnabled: true,
           myLocationButtonEnabled: true,
           zoomControlsEnabled: false,
+        ),
+        Positioned(
+          top: 14,
+          right: 14,
+          child: SafeArea(
+            child: Material(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              elevation: 2,
+              child: IconButton(
+                tooltip: 'Privacy Bubbles',
+                onPressed: _togglePrivacyBubbleMode,
+                icon: Icon(
+                  _privacyBubbleMode
+                      ? Icons.blur_circular
+                      : Icons.location_on,
+                  color: _privacyBubbleMode
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ),
         ),
         DraggableScrollableSheet(
           minChildSize: 0.15,
