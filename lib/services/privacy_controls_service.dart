@@ -245,6 +245,11 @@ class PrivacySettings {
   }
 
   factory PrivacySettings.fromMap(Map<String, dynamic> map) {
+    final dynamic rawLastUpdated = map['last_updated'];
+    final String? lastUpdatedValue = rawLastUpdated is Timestamp
+        ? rawLastUpdated.toDate().toIso8601String()
+        : rawLastUpdated as String?;
+
     return PrivacySettings(
       locationSharingEnabled:
           map['location_sharing_enabled'] as bool? ?? true,
@@ -261,8 +266,7 @@ class PrivacySettings {
       thirdPartySharing:
           Map<String, bool>.from(map['third_party_sharing'] as Map? ?? <String, bool>{}),
       aiProcessingEnabled: map['ai_processing_enabled'] as bool? ?? true,
-      lastUpdated: DateTime.tryParse(map['last_updated'] as String? ?? '') ??
-          DateTime.now(),
+      lastUpdated: DateTime.tryParse(lastUpdatedValue ?? '') ?? DateTime.now(),
     );
   }
 

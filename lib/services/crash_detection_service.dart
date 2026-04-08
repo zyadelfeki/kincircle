@@ -42,6 +42,8 @@ class CrashDetectionService {
 
   final List<_GSample> _samples = <_GSample>[];
   final CrashPrefs _crashPrefs = CrashPrefs();
+  final EmergencyResponseService _emergencyResponseService =
+      EmergencyResponseService();
 
   StreamSubscription<AccelerometerEvent>? _accelSub;
   _CrashCandidate? _candidate;
@@ -182,7 +184,7 @@ class CrashDetectionService {
         message: 'Crash candidate confirmed at ${DateTime.now().toIso8601String()} (peak ${peakG.toStringAsFixed(2)}g)',
       );
 
-      final bool delegated = await _triggerEmergencyServiceIfAvailable();
+      final bool delegated = await _triggerEmergencyServiceIfAvailable(peakG);
       if (!delegated) {
         await _writeCrashDocument(peakG);
       }
@@ -191,17 +193,11 @@ class CrashDetectionService {
     }
   }
 
-  Future<bool> _triggerEmergencyServiceIfAvailable() async {
+  Future<bool> _triggerEmergencyServiceIfAvailable(double peakG) async {
     try {
-      const dynamic serviceType = EmergencyResponseService;
-      final dynamic trigger = serviceType.triggerCrashAlert;
-      if (trigger is Function) {
-        final dynamic result = trigger();
-        if (result is Future) {
-          await result;
-        }
-        return true;
-      }
+      await _emergencyResponseService.triggerCrashAlert(peakG: peakG);
+      return true;
+    } on UnimplementedError {
       return false;
     } catch (e) {
       debugPrint('CrashDetectionService triggerCrashAlert unavailable: $e');

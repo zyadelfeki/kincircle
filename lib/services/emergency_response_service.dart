@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -29,6 +30,28 @@ class EmergencyAlert {
 /// Emergency Response Service - AI-powered crisis coordination
 class EmergencyResponseService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<void> triggerCrashAlert({double? peakG}) async {
+    final String? userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null || userId.isEmpty) {
+      throw StateError('No authenticated user for crash alert');
+    }
+
+    final EmergencyAlert alert = EmergencyAlert(
+      currentLat: 0,
+      currentLng: 0,
+      riskLevel: EmergencyRiskLevel.high,
+      riskFactors: <String>[
+        'crash_detected',
+        if (peakG != null) 'peak_g_${peakG.toStringAsFixed(2)}',
+      ],
+    );
+
+    await EmergencyResponseService.triggerEmergencyResponse(
+      userId: userId,
+      alert: alert,
+    );
+  }
 
   /// Main entry point: Trigger emergency response based on emergency alert
   static Future<EmergencyResponse> triggerEmergencyResponse({
