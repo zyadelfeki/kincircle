@@ -179,6 +179,7 @@ class _PricingBlock extends StatelessWidget {
   const _PricingBlock();
   @override
   Widget build(BuildContext context) {
+    final TextStyle? titleStyle = Theme.of(context).textTheme.headlineMedium;
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -191,57 +192,107 @@ class _PricingBlock extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Simple, transparent pricing',
-                  style: Theme.of(context).textTheme.headlineMedium,
+                  style: titleStyle,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _priceCard(context, title: 'Monthly', price: '\$5.99', subtitle: 'Billed monthly')),
-              const SizedBox(width: 12),
-              Expanded(child: _priceCard(context, title: 'Annual', price: '\$59.99', subtitle: 'Best Value • Just \$4.99/month')),
+          _tierCard(
+            context,
+            title: 'Coordination (Free)',
+            monthly: '\$0',
+            annual: '\$0',
+            features: const [
+              'Up to 3 circle members',
+              '2 saved places',
+              '2-day location history',
             ],
           ),
-          const SizedBox(height: 8),
-          const Row(children: [
-            Icon(Icons.lock_clock, size: 18),
-            SizedBox(width: 6),
-            Expanded(child: Text('Your trial is free for 14 days. Cancel anytime in Settings.')),
-          ]),
+          const SizedBox(height: 10),
+          _tierCard(
+            context,
+            title: 'Peace of Mind (Plus)',
+            monthly: '\$9.99/mo',
+            annual: '\$89.99/yr',
+            features: const [
+              'Up to 6 members',
+              '5 places',
+              '30-day history',
+              'Crash detection alerts',
+            ],
+          ),
+          const SizedBox(height: 10),
+          _tierCard(
+            context,
+            title: 'Sage Pro',
+            monthly: '\$14.99/mo',
+            annual: '\$149.99/yr',
+            features: const [
+              'Unlimited members & places',
+              'AI Sage insights',
+              'Anomaly alerts',
+              'Sensory modes',
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _priceCard(BuildContext context, {required String title, required String price, required String subtitle}) {
-  final scheme = Theme.of(context).colorScheme;
-    final isAnnual = title == 'Annual';
+  Widget _tierCard(
+    BuildContext context, {
+    required String title,
+    required String monthly,
+    required String annual,
+    required List<String> features,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
     return Card(
-      color: isAnnual ? scheme.primary.withValues(alpha: 0.06) : null,
+      color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium,
-                  overflow: TextOverflow.ellipsis,
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Monthly: $monthly',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'Annual: $annual',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ...features.map(
+              (String feature) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      size: 16,
+                      color: scheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(feature)),
+                  ],
                 ),
               ),
-              if (isAnnual) ...[
-                const SizedBox(width: 8),
-                const Chip(label: Text('Best Value')),
-              ],
-            ]),
-            const SizedBox(height: 8),
-            Text(price, style: Theme.of(context).textTheme.displaySmall?.copyWith(color: scheme.primary)),
-            const SizedBox(height: 4),
-            Text(subtitle),
+            ),
           ],
         ),
       ),
