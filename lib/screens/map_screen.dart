@@ -620,7 +620,7 @@ class _MapScreenState extends State<MapScreen> {
     final String trimmed = displayName.trim();
     final String lowered = trimmed.toLowerCase();
     if (trimmed.isEmpty || lowered == 'u' || lowered == 'no name') {
-      return 'Family member';
+      return 'Unknown';
     }
     return trimmed;
   }
@@ -861,6 +861,10 @@ class _MapScreenState extends State<MapScreen> {
                           backgroundColor: KinCirclePalette.accent,
                           foregroundColor: Colors.black,
                           minimumSize: const Size(0, 48),
+                          textStyle: KinCircleTypography.body14(
+                            color: Colors.black,
+                            weight: FontWeight.w600,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -881,6 +885,10 @@ class _MapScreenState extends State<MapScreen> {
                           backgroundColor: KinCirclePalette.error,
                           foregroundColor: KinCirclePalette.textPrimary,
                           minimumSize: const Size(0, 48),
+                          textStyle: KinCircleTypography.body14(
+                            color: KinCirclePalette.textPrimary,
+                            weight: FontWeight.w600,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -909,7 +917,9 @@ class _MapScreenState extends State<MapScreen> {
                   border: Border.all(color: KinCirclePalette.border),
                 ),
                 child: IconButton(
-                  tooltip: 'Privacy Bubbles',
+                  tooltip: _privacyBubbleMode
+                      ? 'Disable privacy bubbles'
+                      : 'Enable privacy bubbles',
                   onPressed: _togglePrivacyBubbleMode,
                   icon: Icon(
                     _privacyBubbleMode
@@ -958,15 +968,29 @@ class _MapScreenState extends State<MapScreen> {
                   const SizedBox(height: 12),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text('Family Members', style: KinCircleTypography.cardTitle16()),
-                        ),
-                        if (_members.length > 1)
-                          Text('${_members.length}', style: KinCircleTypography.caption12()),
-                      ],
-                    ),
+                    child: _members.length <= 1 && _members.isNotEmpty
+                        ? Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              _safeDisplayName(_members.first.user.displayName),
+                              style: KinCircleTypography.cardTitle16(),
+                            ),
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Family Members',
+                                  style: KinCircleTypography.cardTitle16(),
+                                ),
+                              ),
+                              if (_members.length > 1)
+                                Text(
+                                  '${_members.length}',
+                                  style: KinCircleTypography.caption12(),
+                                ),
+                            ],
+                          ),
                   ),
                   const SizedBox(height: 10),
                   Expanded(
@@ -1044,7 +1068,7 @@ class _MapScreenState extends State<MapScreen> {
                                         const SizedBox(height: 4),
                                         Text(
                                           stationary
-                                              ? '0 km/h'
+                                              ? 'Stationary'
                                               : '${row.speedKmh.toStringAsFixed(0)} km/h',
                                           style: KinCircleTypography.caption12(
                                             color: KinCirclePalette.textMuted,

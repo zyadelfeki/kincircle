@@ -34,7 +34,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   String _appLanguage = 'English';
   bool _busyToggle = false;
-  final GlobalKey _notificationsSectionKey = GlobalKey();
 
   final FirestoreService _firestoreService = FirestoreService();
 
@@ -157,7 +156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Widget _sectionLabel(String value, {Key? key}) {
+  Widget _sectionLabel(String value, {Key? key, Color? color}) {
     return Padding(
       key: key,
       padding: const EdgeInsets.only(left: 16, top: 24, bottom: 8),
@@ -167,7 +166,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             value,
             style: KinCircleTypography.caption12(
-              color: KinCirclePalette.accent,
+              color: color ?? KinCirclePalette.accent,
               weight: FontWeight.w700,
             ),
           ),
@@ -193,17 +192,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _jumpToNotificationsSection() {
-    final BuildContext? targetContext = _notificationsSectionKey.currentContext;
-    if (targetContext == null) return;
-    Scrollable.ensureVisible(
-      targetContext,
-      duration: const Duration(milliseconds: 260),
-      curve: Curves.easeInOut,
-      alignment: 0.08,
-    );
-  }
-
   Widget _row({
     required IconData icon,
     required String title,
@@ -211,6 +199,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     TextStyle? subtitleStyle,
     Widget? trailing,
     Color iconColor = Colors.white,
+    Color? titleColor,
     VoidCallback? onTap,
   }) {
     return Container(
@@ -225,7 +214,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         leading: Icon(icon, color: iconColor),
         title: Text(
           title,
-          style: KinCircleTypography.body14(weight: FontWeight.w600),
+          style: KinCircleTypography.body14(
+            weight: FontWeight.w600,
+            color: titleColor ?? KinCirclePalette.textPrimary,
+          ),
         ),
         subtitle: subtitle == null
             ? null
@@ -264,7 +256,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final ThemeController themeController = context.watch<ThemeController>();
-    final bool isDarkMode = themeController.mode == ThemeMode.dark;
+    final bool isDarkMode = themeController.mode == ThemeMode.dark ||
+        (themeController.mode == ThemeMode.system &&
+            MediaQuery.of(context).platformBrightness == Brightness.dark);
     return NavShell(
       currentIndex: 4,
       title: 'Settings',
@@ -281,11 +275,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () => Navigator.of(context).pushNamed('/account'),
                 ),
                 _row(
-                  icon: Icons.notifications_outlined,
-                  title: 'Notification settings',
-                  onTap: _jumpToNotificationsSection,
-                ),
-                _row(
                   icon: Icons.lock_outline_rounded,
                   title: 'Change Password',
                   onTap: _showComingSoon,
@@ -296,7 +285,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: _showComingSoon,
                 ),
                 _sectionSpacer(),
-                _sectionLabel('Notifications', key: _notificationsSectionKey),
+                _sectionLabel('Notifications'),
                 _toggleRow(
                   icon: Icons.notifications_active_outlined,
                   title: 'Push notifications',
@@ -393,6 +382,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _row(
                   icon: Icons.cleaning_services_outlined,
                   title: 'Clear cache',
+                  subtitle: 'Free up local storage',
                   onTap: () async {
                     final ScaffoldMessengerState messenger =
                         ScaffoldMessenger.of(context);
@@ -437,7 +427,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Navigator.of(context).pushNamed('/privacy/dashboard'),
                 ),
                 _sectionSpacer(),
-                _sectionLabel('Danger zone'),
+                _sectionLabel('Danger zone', color: KinCirclePalette.error),
                 _row(
                   icon: Icons.exit_to_app_rounded,
                   iconColor: KinCirclePalette.textMuted,
@@ -452,6 +442,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   icon: Icons.delete_forever_outlined,
                   iconColor: KinCirclePalette.error,
                   title: 'Delete Account',
+                  titleColor: KinCirclePalette.error,
                   onTap: () => _confirmDestructive(
                     title: 'Delete Account?',
                     body: 'This action is permanent.',

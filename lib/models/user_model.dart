@@ -10,9 +10,21 @@ class AppUser {
       location = LatLng(geoPoint.latitude, geoPoint.longitude);
     }
 
+    final String rawDisplayName = (data['displayName'] ?? '').toString().trim();
+    final String email = (data['email'] ?? '').toString().trim();
+    String resolvedDisplayName = rawDisplayName;
+    if (resolvedDisplayName.isEmpty) {
+      if (email.contains('@')) {
+        resolvedDisplayName = email.split('@').first.trim();
+      }
+      if (resolvedDisplayName.isEmpty) {
+        resolvedDisplayName = 'Unknown';
+      }
+    }
+
     return AppUser(
       uid: doc.id,
-      displayName: data['displayName'] ?? 'No Name',
+      displayName: resolvedDisplayName,
       photoURL: data['photoURL'] ?? '',
       isInvisible: data['invisibleMode'] ?? false,
       lastKnownLocation: location,
