@@ -7,6 +7,7 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // Dynamic links are accessed via a small abstraction to ease testing.
 import 'services/dynamic_link_service.dart';
 import 'services/app_links_dynamic_link_service.dart';
@@ -58,6 +59,7 @@ import 'services/wellbeing_analytics_service.dart';
 import 'services/crash_detection_service.dart';
 import 'services/sage_recap_service.dart';
 import 'screens/privacy/privacy_dashboard_screen.dart';
+import 'screens/privacy/privacy_tour_screen.dart';
 import 'design/dark_academia_theme.dart';
 import 'screens/emotion_feed_screen.dart';
 import 'screens/wellbeing_screen.dart';
@@ -460,7 +462,9 @@ class _KinCircleAppState extends State<KinCircleApp> {
             routes: {
               '/welcome': (context) => const WelcomeScreen(),
               '/auth': (context) => const LoginSignupScreen(),
+              '/home': (context) => const DashboardScreen(),
               '/dashboard': (context) => const DashboardScreen(),
+              '/privacy-tour': (context) => const PrivacyTourScreen(),
               '/map': (context) => const MapScreen(),
               '/circles': (context) => const CirclesScreen(),
               '/places': (context) => const PlacesScreen(),
@@ -542,6 +546,11 @@ class AuthWrapper extends StatelessWidget {
       if (data == null || data['onboardingComplete'] != true) {
         return _AuthDestination.onboarding;
       }
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final bool privacyTourSeen = prefs.getBool('privacy_tour_seen') ?? false;
+      if (!privacyTourSeen) {
+        return _AuthDestination.privacyTour;
+      }
       return _AuthDestination.dashboard;
     } catch (_) {
       return _AuthDestination.login;
@@ -566,6 +575,8 @@ class AuthWrapper extends StatelessWidget {
             return OnboardingScreen(userId: firebaseUser.uid);
           case _AuthDestination.login:
             return const LoginScreen();
+          case _AuthDestination.privacyTour:
+            return const PrivacyTourScreen();
           case _AuthDestination.dashboard:
           default:
             return const DashboardScreen();
@@ -575,7 +586,7 @@ class AuthWrapper extends StatelessWidget {
   }
 }
 
-enum _AuthDestination { login, onboarding, dashboard }
+enum _AuthDestination { login, onboarding, privacyTour, dashboard }
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});

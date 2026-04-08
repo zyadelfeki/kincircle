@@ -109,7 +109,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
       _busy = false;
     });
     if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed('/dashboard');
+    Navigator.of(context).pushReplacementNamed('/privacy-tour');
   }
 
   @override
