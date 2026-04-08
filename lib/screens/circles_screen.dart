@@ -56,8 +56,8 @@ class _CirclesScreenState extends State<CirclesScreen> {
             AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
           if (snapshot.hasError) {
             return _ErrorState(
-              title: 'Unable to load circles',
-              message: 'Check your connection or permissions.',
+              title: 'Something went wrong',
+              message: 'Something went wrong. Please try again.',
               onRetry: _retry,
             );
           }
@@ -401,7 +401,7 @@ class _ErrorState extends StatelessWidget {
               title,
               style: KinCircleTypography.cardTitle16(weight: FontWeight.w600),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               message,
               textAlign: TextAlign.center,
@@ -409,7 +409,7 @@ class _ErrorState extends StatelessWidget {
                 color: KinCirclePalette.textMuted,
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(

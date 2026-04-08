@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../services/auth_service.dart';
 import '../../services/auth_mail_service.dart';
 import '../../services/password_reset_service.dart';
+import '../../design/kincircle_screen_tokens.dart';
 
 // ignore_for_file: library_private_types_in_public_api
 class LoginSignupScreen extends StatefulWidget {
@@ -156,11 +157,15 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
+          backgroundColor: KinCirclePalette.surface,
+          foregroundColor: KinCirclePalette.textPrimary,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(
+              color: KinCirclePalette.border,
+              width: 1,
+            ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16),
         ),
@@ -176,7 +181,7 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.black,
+                color: KinCirclePalette.textPrimary,
               ),
             ),
           ],
@@ -219,15 +224,20 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    const Color background = KinCirclePalette.background;
+    const Color inputSurface = KinCirclePalette.surfaceAlt;
+    const Color border = KinCirclePalette.border;
+    const Color accent = KinCirclePalette.accent;
+    const Color textPrimary = KinCirclePalette.textPrimary;
+    const Color textMuted = KinCirclePalette.textMuted;
     final heading = _isLoginView ? 'Welcome back' : 'Create account';
     final subtitle = _isLoginView
         ? 'Sign in to your account.'
         : 'Sign up to create your account.';
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: background,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -247,7 +257,7 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                             style: GoogleFonts.spaceGrotesk(
                               fontSize: 44,
                               fontWeight: FontWeight.w700,
-                              color: colorScheme.onSurface,
+                              color: textPrimary,
                               height: 1.05,
                             ),
                           ),
@@ -256,14 +266,17 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                             subtitle,
                             style: GoogleFonts.inter(
                               fontSize: 16,
-                              color: colorScheme.onSurfaceVariant,
+                              color: textMuted,
                             ),
                           ),
                           const SizedBox(height: 28),
                           _buildSocialButton(
                             label: 'Continue with Apple',
-                            icon: const Icon(Icons.apple,
-                                color: Colors.black, size: 24),
+                            icon: const Icon(
+                              Icons.apple,
+                              color: KinCirclePalette.textPrimary,
+                              size: 24,
+                            ),
                             onPressed: _isLoading
                                 ? null
                                 : () => _handleAuthAction(
@@ -279,12 +292,12 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                               height: 24,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) =>
-                                  const Text(
+                                   const Text(
                                 'G',
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF4285F4),
+                                  color: KinCirclePalette.accent,
                                 ),
                               ),
                             ),
@@ -298,7 +311,10 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                           Row(
                             children: [
                               const Expanded(
-                                child: Divider(thickness: 1),
+                                child: Divider(
+                                  thickness: 1,
+                                  color: KinCirclePalette.border,
+                                ),
                               ),
                               Padding(
                                 padding:
@@ -307,12 +323,15 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                                   'or',
                                   style: GoogleFonts.inter(
                                     fontSize: 16,
-                                    color: colorScheme.onSurfaceVariant,
+                                    color: textMuted,
                                   ),
                                 ),
                               ),
                               const Expanded(
-                                child: Divider(thickness: 1),
+                                child: Divider(
+                                  thickness: 1,
+                                  color: KinCirclePalette.border,
+                                ),
                               ),
                             ],
                           ),
@@ -322,7 +341,7 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
-                              color: colorScheme.onSurface,
+                              color: textPrimary,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -331,16 +350,16 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                             keyboardType: TextInputType.emailAddress,
                             enabled: !_isLoading,
                             style: GoogleFonts.inter(
-                              color: colorScheme.onSurface,
+                              color: textPrimary,
                               fontSize: 16,
                             ),
-                            cursorColor: colorScheme.primary,
+                            cursorColor: accent,
                             decoration: _fieldDecoration(
                               hintText: 'Enter your email',
-                              hintColor: colorScheme.onSurfaceVariant,
-                              fillColor: colorScheme.surface,
-                              borderColor: colorScheme.outline,
-                              focusColor: colorScheme.primary,
+                              hintColor: textMuted,
+                              fillColor: inputSurface,
+                              borderColor: border,
+                              focusColor: accent,
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -349,7 +368,7 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
-                              color: colorScheme.onSurface,
+                              color: textPrimary,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -358,16 +377,16 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                             obscureText: true,
                             enabled: !_isLoading,
                             style: GoogleFonts.inter(
-                              color: colorScheme.onSurface,
+                              color: textPrimary,
                               fontSize: 16,
                             ),
-                            cursorColor: colorScheme.primary,
+                            cursorColor: accent,
                             decoration: _fieldDecoration(
                               hintText: '••••••••••••',
-                              hintColor: colorScheme.onSurfaceVariant,
-                              fillColor: colorScheme.surface,
-                              borderColor: colorScheme.outline,
-                              focusColor: colorScheme.primary,
+                              hintColor: textMuted,
+                              fillColor: inputSurface,
+                              borderColor: border,
+                              focusColor: accent,
                             ),
                           ),
                           if (_isLoginView) ...[
@@ -379,7 +398,7 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                                     ? null
                                     : _showForgotPasswordDialog,
                                 style: TextButton.styleFrom(
-                                  foregroundColor: colorScheme.primary,
+                                  foregroundColor: accent,
                                   minimumSize: const Size(44, 36),
                                   padding: EdgeInsets.zero,
                                 ),
@@ -387,7 +406,7 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                                   'Forgot password?',
                                   style: GoogleFonts.inter(
                                     fontSize: 16,
-                                    color: colorScheme.primary,
+                                    color: accent,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -441,11 +460,11 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                                       }
                                     },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: colorScheme.primary,
-                                foregroundColor: colorScheme.onPrimary,
+                                backgroundColor: accent,
+                                foregroundColor: Colors.black,
                                 disabledBackgroundColor:
-                                    colorScheme.primary.withValues(alpha: 0.6),
-                                disabledForegroundColor: colorScheme.onPrimary
+                                    accent.withValues(alpha: 0.6),
+                                disabledForegroundColor: Colors.black
                                     .withValues(alpha: 0.7),
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
@@ -453,20 +472,20 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                                 ),
                               ),
                               child: _isLoading
-                                  ? SizedBox(
-                                      width: 22,
-                                      height: 22,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.4,
-                                        color: colorScheme.onPrimary,
-                                      ),
-                                    )
+                                   ? const SizedBox(
+                                       width: 22,
+                                       height: 22,
+                                       child: CircularProgressIndicator(
+                                         strokeWidth: 2.4,
+                                         color: Colors.black,
+                                       ),
+                                     )
                                   : Text(
                                       _isLoginView ? 'Log In' : 'Sign Up',
                                       style: GoogleFonts.inter(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w700,
-                                        color: colorScheme.onPrimary,
+                                        color: Colors.black,
                                       ),
                                     ),
                             ),
@@ -481,23 +500,23 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                                           () => _isLoginView = !_isLoginView);
                                     },
                               style: TextButton.styleFrom(
-                                foregroundColor: colorScheme.onSurface,
+                                foregroundColor: textPrimary,
                                 minimumSize: const Size(44, 40),
                               ),
                               child: RichText(
                                 text: TextSpan(
                                   style: GoogleFonts.inter(
                                     fontSize: 16,
-                                    color: colorScheme.onSurface,
+                                    color: textPrimary,
                                   ),
                                   children: _isLoginView
                                       ? [
                                         const TextSpan(
                                               text: "Don't have an account? "),
-                                          TextSpan(
+                                          const TextSpan(
                                             text: 'Sign Up',
                                             style: TextStyle(
-                                              color: colorScheme.primary,
+                                              color: accent,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -506,10 +525,10 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                                           const TextSpan(
                                               text:
                                                   'Already have an account? '),
-                                          TextSpan(
+                                          const TextSpan(
                                             text: 'Log In',
                                             style: TextStyle(
-                                              color: colorScheme.primary,
+                                              color: accent,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -527,7 +546,7 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: colorScheme.onSurfaceVariant,
+                      color: textMuted,
                     ),
                   ),
                   const SizedBox(height: 2),

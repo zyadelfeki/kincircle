@@ -34,6 +34,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   String _appLanguage = 'English';
   bool _busyToggle = false;
+  final GlobalKey _notificationsSectionKey = GlobalKey();
 
   final FirestoreService _firestoreService = FirestoreService();
 
@@ -156,18 +157,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Widget _sectionLabel(String value) {
+  Widget _sectionLabel(String value, {Key? key}) {
     return Padding(
+      key: key,
       padding: const EdgeInsets.only(left: 16, top: 24, bottom: 8),
-      child: Text(
-        value,
-        style: const TextStyle(
-          color: Color(0xFF00C9A7),
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 1.2,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: KinCircleTypography.caption12(
+              color: KinCirclePalette.accent,
+              weight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: 1,
+            margin: const EdgeInsets.only(right: 16),
+            color: KinCirclePalette.border,
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _sectionSpacer() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      height: 6,
+      decoration: BoxDecoration(
+        color: KinCirclePalette.background.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(999),
+      ),
+    );
+  }
+
+  void _jumpToNotificationsSection() {
+    final BuildContext? targetContext = _notificationsSectionKey.currentContext;
+    if (targetContext == null) return;
+    Scrollable.ensureVisible(
+      targetContext,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeInOut,
+      alignment: 0.08,
     );
   }
 
@@ -231,6 +264,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final ThemeController themeController = context.watch<ThemeController>();
+    final bool isDarkMode = themeController.mode == ThemeMode.dark;
     return NavShell(
       currentIndex: 4,
       title: 'Settings',
@@ -247,6 +281,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () => Navigator.of(context).pushNamed('/account'),
                 ),
                 _row(
+                  icon: Icons.notifications_outlined,
+                  title: 'Notification settings',
+                  onTap: _jumpToNotificationsSection,
+                ),
+                _row(
                   icon: Icons.lock_outline_rounded,
                   title: 'Change Password',
                   onTap: _showComingSoon,
@@ -256,7 +295,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: 'Linked Accounts',
                   onTap: _showComingSoon,
                 ),
-                _sectionLabel('Notifications'),
+                _sectionSpacer(),
+                _sectionLabel('Notifications', key: _notificationsSectionKey),
                 _toggleRow(
                   icon: Icons.notifications_active_outlined,
                   title: 'Push notifications',
@@ -287,6 +327,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     setState(() => _quietHours = value);
                   },
                 ),
+                _sectionSpacer(),
                 _sectionLabel('Privacy'),
                 _toggleRow(
                   icon: Icons.location_on_outlined,
@@ -304,11 +345,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     setState(() => _circleVisibility = value);
                   },
                 ),
+                _sectionSpacer(),
                 _sectionLabel('App'),
                 _toggleRow(
                   icon: Icons.dark_mode_outlined,
-                  title: 'Theme (Dark)',
-                  value: themeController.mode == ThemeMode.dark,
+                  title: 'Theme (${isDarkMode ? 'Dark' : 'Light'})',
+                  value: isDarkMode,
                   onChanged: (bool value) {
                     themeController
                         .setMode(value ? ThemeMode.dark : ThemeMode.light);
@@ -364,6 +406,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     await _loadPrefs();
                   },
                 ),
+                _sectionSpacer(),
                 _sectionLabel('AI & Wellbeing'),
                 _row(
                   icon: Icons.smart_toy_outlined,
@@ -393,10 +436,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () =>
                       Navigator.of(context).pushNamed('/privacy/dashboard'),
                 ),
+                _sectionSpacer(),
                 _sectionLabel('Danger zone'),
                 _row(
                   icon: Icons.exit_to_app_rounded,
-                  iconColor: KinCirclePalette.error,
+                  iconColor: KinCirclePalette.textMuted,
                   title: 'Leave Family',
                   onTap: () => _confirmDestructive(
                     title: 'Leave Family?',

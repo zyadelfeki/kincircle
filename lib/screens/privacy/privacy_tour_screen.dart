@@ -125,25 +125,29 @@ class _PrivacyTourScreenState extends State<PrivacyTourScreen> {
                 },
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _PageDots(
-                    pageCount: _pages.length,
-                    activeIndex: _currentPage,
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isCompleting ? null : _onNextPressed,
-                      style: KinCircleButtons.primary(),
-                      child: Text(isLastPage ? 'Get Started' : 'Next'),
+            SafeArea(
+              top: false,
+              minimum: const EdgeInsets.only(bottom: 12),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _PageDots(
+                      pageCount: _pages.length,
+                      activeIndex: _currentPage,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isCompleting ? null : _onNextPressed,
+                        style: KinCircleButtons.primary(),
+                        child: Text(isLastPage ? 'Get Started' : 'Next'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -250,10 +254,12 @@ class _PageDots extends StatelessWidget {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           margin: const EdgeInsets.symmetric(horizontal: 4),
-          height: 8,
-          width: active ? 20 : 8,
+          height: 10,
+          width: active ? 24 : 10,
           decoration: BoxDecoration(
-            color: active ? KinCirclePalette.accent : KinCirclePalette.border,
+            color: active
+                ? KinCirclePalette.accent
+                : KinCirclePalette.textMuted.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(999),
           ),
         );

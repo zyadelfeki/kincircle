@@ -136,13 +136,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _subscribeToActiveAlerts(familyId);
     } on FirebaseException catch (e) {
       if (!mounted) return;
-      String msg = 'Check your connection or permissions.';
+      String msg = 'Something went wrong. Please try again.';
       if (e.code == 'permission-denied') {
-        msg = 'Permission denied. Check Firestore rules.';
-      }
-      if (e.code == 'failed-precondition') {
-        msg =
-            'Missing Firestore index. Check Firebase console logs for the index creation link.';
+        msg = 'Something went wrong. Please try again.';
+      } else if (e.code == 'failed-precondition') {
+        msg = 'Something went wrong. Please try again.';
       }
       debugPrint('DashboardScreen error: ${e.code} ${e.message}');
       setState(() {
@@ -154,7 +152,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       debugPrint('DashboardScreen unexpected error: $e');
       setState(() {
         _loading = false;
-        _error = 'Check your connection or permissions.';
+        _error = 'Something went wrong. Please try again.';
       });
     }
   }
@@ -309,8 +307,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildErrorState() {
     return _ErrorState(
-      title: 'Failed to load dashboard',
-      message: _error ?? 'Check your connection or permissions.',
+      title: 'Something went wrong',
+      message: _error ?? 'Please try again.',
       onRetry: _load,
     );
   }
@@ -528,21 +526,21 @@ class _ErrorState extends StatelessWidget {
               title,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 18,
+                fontSize: 17,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               message,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Color(0xFF8A8FA8),
                 fontSize: 14,
-                height: 1.5,
+                height: 1.4,
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
