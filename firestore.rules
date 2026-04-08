@@ -87,11 +87,12 @@ service cloud.firestore {
 
     // Alerts collection
     match /alerts/{alertId} {
-      allow read: if request.auth != null && (
-        resource.data.userId == request.auth.uid ||
-        request.auth.uid in resource.data.circleMembers
-      );
-      allow write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read, list: if request.auth != null &&
+        resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null &&
+        request.resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null &&
+        resource.data.userId == request.auth.uid;
     }
 
     // Alert feedback collection
@@ -171,15 +172,8 @@ service cloud.firestore {
 
     // Community stats (for social contagion features)
     match /community/{docId} {
-      allow read: if isSignedIn();
-      allow create, update: if isSignedIn();
-      allow delete: if false;
-      
-      match /{subcollection}/{subDocId} {
-        allow read: if isSignedIn();
-        allow create: if isSignedIn();
-        allow update, delete: if false;
-      }
+      allow read: if request.auth != null;
+      allow write: if false;
     }
 
     match /community/stats {
