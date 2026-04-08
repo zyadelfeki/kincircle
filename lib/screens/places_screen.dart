@@ -89,43 +89,52 @@ class _PlacesScreenState extends State<PlacesScreen> {
   }
 
   Widget _emptyView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.place_outlined, color: KinCirclePalette.textMuted, size: 48),
-            const SizedBox(height: 12),
-            Text(
-              'No safe places yet',
-              style: KinCircleTypography.cardTitle16(),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Create your first safe place so your circle gets arrival and departure updates.',
-              textAlign: TextAlign.center,
-              style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Examples: Home · School · Work',
-              textAlign: TextAlign.center,
-              style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
-            ),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: 220,
-              child: ElevatedButton(
-                style: KinCircleButtons.primary(),
-                onPressed: () async {
-                  final result = await Navigator.of(context).pushNamed('/add-geofence');
-                  if (result == true) _load();
-                },
-                child: const Text('Add Place'),
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.place_outlined, color: KinCirclePalette.textMuted, size: 48),
+                  const SizedBox(height: 12),
+                  Text(
+                    'No safe places yet',
+                    style: KinCircleTypography.cardTitle16(),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Create your first safe place so your circle gets arrival and departure updates.',
+                    textAlign: TextAlign.center,
+                    style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Examples: Home · School · Work',
+                    textAlign: TextAlign.center,
+                    style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: 220,
+                    child: ElevatedButton(
+                      style: KinCircleButtons.primary(),
+                      onPressed: () async {
+                        final result = await Navigator.of(context).pushNamed('/add-geofence');
+                        if (result == true) _load();
+                      },
+                      child: const Text('Add Place'),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

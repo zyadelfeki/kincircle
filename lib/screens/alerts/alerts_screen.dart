@@ -308,26 +308,35 @@ class _AlertsScreenState extends State<AlertsScreen> {
   }
 
   Widget _emptyView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.notifications_off_outlined, color: KinCirclePalette.textMuted, size: 48),
-            const SizedBox(height: 10),
-            Text(
-              _showUnreadOnly ? 'No unread alerts' : 'No alerts yet',
-              style: KinCircleTypography.cardTitle16(),
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.notifications_off_outlined, color: KinCirclePalette.textMuted, size: 48),
+                  const SizedBox(height: 10),
+                  Text(
+                    _showUnreadOnly ? 'No unread alerts' : 'No alerts yet',
+                    style: KinCircleTypography.cardTitle16(),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _showUnreadOnly
+                        ? 'All alerts are already marked as read.'
+                        : 'No alerts yet. New family safety alerts will appear here.',
+                    style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              _showUnreadOnly
-                  ? 'All alerts are already marked as read.'
-                  : 'No alerts yet. New family safety alerts will appear here.',
-              style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
-            ),
-          ],
+          ),
         ),
       ),
     );
