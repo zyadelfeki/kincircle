@@ -142,7 +142,9 @@ class _AlertsScreenState extends State<AlertsScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'You are all caught up.',
+              _showUnreadOnly
+                  ? 'All alerts are already marked as read.'
+                  : 'No alerts yet. New family safety alerts will appear here.',
               style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
             ),
           ],
