@@ -56,6 +56,7 @@ import 'services/companion_service.dart';
 import 'services/social_contagion_service.dart';
 import 'services/wellbeing_analytics_service.dart';
 import 'services/crash_detection_service.dart';
+import 'services/sage_recap_service.dart';
 import 'screens/privacy/privacy_dashboard_screen.dart';
 import 'design/dark_academia_theme.dart';
 import 'screens/emotion_feed_screen.dart';
@@ -156,6 +157,7 @@ Future<void> main() async {
       debugPrint('!!! CrashDetectionService start failed: $e\n$st');
     }
   }
+  unawaited(SageRecapService.instance.maybeRunRecap());
 
   // Pass uncaught errors to Crashlytics if Firebase is initialized.
   FlutterError.onError = (errorDetails) {
