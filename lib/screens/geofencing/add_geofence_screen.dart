@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 // Removed google_maps_webservice in favor of direct HTTP API in PlacesService
@@ -156,28 +158,50 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                         horizontal: 8.0, vertical: 12),
                     child: SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          // Capture references before awaits
-                          final ctx = context;
-                          final messenger = ScaffoldMessenger.of(ctx);
-                          // Enforce Free tier Safe Zone limit
-                          final famId = await FirestoreService().getCurrentFamilyId();
-                          if (!ctx.mounted) return;
-                          if (famId != null) {
-                            // It's safe to use ctx immediately after the mounted check
-                            final ok = await ProGatingService().ensureCanAddSafeZone(ctx, famId);
-                            if (!ctx.mounted) return;
-                            if (!ok) return;
-                          }
-                          // TODO: Save geofence to Firestore
-                          if (!ctx.mounted) return;
-                          messenger.showSnackBar(
-                            const SnackBar(content: Text('Geofence saved.')),
-                          );
-                        },
-                        child: const Text('Save Geofence'),
-                      ),
+                       child: ElevatedButton(
+                         onPressed: () async {
+                           final ctx = context;
+                           final messenger = ScaffoldMessenger.of(ctx);
+                           final name = _nameController.text.trim();
+                           if (name.isEmpty) {
+                             messenger.showSnackBar(const SnackBar(content: Text('Please enter a name.')));
+                             return;
+                           }
+                           if (_markers.isEmpty) {
+                             messenger.showSnackBar(const SnackBar(content: Text('Please select a location first.')));
+                             return;
+                           }
+                           final famId = await FirestoreService().getCurrentFamilyId();
+                           if (!ctx.mounted) return;
+                           if (famId != null) {
+                             final ok = await ProGatingService().ensureCanAddSafeZone(ctx, famId);
+                             if (!ctx.mounted) return;
+                             if (!ok) return;
+                           }
+                           final uid = FirebaseAuth.instance.currentUser?.uid;
+                           if (uid == null || famId == null) {
+                             messenger.showSnackBar(const SnackBar(content: Text('Not signed in or no family found.')));
+                             return;
+                           }
+                           try {
+                             await FirebaseFirestore.instance.collection('geofences').add({
+                               'name': name,
+                               'familyId': famId,
+                               'userId': uid,
+                               'lat': _mapCenter.latitude,
+                               'lng': _mapCenter.longitude,
+                               'radius': 200.0,
+                               'createdAt': FieldValue.serverTimestamp(),
+                             });
+                             if (!ctx.mounted) return;
+                             Navigator.of(ctx).pop(true);
+                           } catch (e) {
+                             if (!ctx.mounted) return;
+                             messenger.showSnackBar(SnackBar(content: Text('Failed to save: $e')));
+                           }
+                         },
+                         child: const Text('Save Geofence'),
+                       ),
                     ),
                   ),
                 ],
