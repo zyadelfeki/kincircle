@@ -118,7 +118,10 @@ class _PlacesScreenState extends State<PlacesScreen> {
               width: 220,
               child: ElevatedButton(
                 style: KinCircleButtons.primary(),
-                onPressed: () => Navigator.of(context).pushNamed('/add-geofence'),
+                onPressed: () async {
+                  final result = await Navigator.of(context).pushNamed('/add-geofence');
+                  if (result == true) _load();
+                },
                 child: const Text('Add Place'),
               ),
             ),
@@ -149,7 +152,10 @@ class _PlacesScreenState extends State<PlacesScreen> {
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
               child: OutlinedButton(
                 style: KinCircleButtons.secondary(),
-                onPressed: () => Navigator.of(context).pushNamed('/add-geofence'),
+                onPressed: () async {
+                  final result = await Navigator.of(context).pushNamed('/add-geofence');
+                  if (result == true) _load();
+                },
                 child: const Text('Add Place'),
               ),
             );
