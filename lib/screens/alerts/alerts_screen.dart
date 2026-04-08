@@ -159,7 +159,11 @@ class _AlertsScreenState extends State<AlertsScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-          child: Row(
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 4,
             children: [
               FilterChip(
                 selected: _showUnreadOnly,
@@ -175,7 +179,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   _load();
                 },
               ),
-              const Spacer(),
               TextButton(
                 onPressed: _markAllRead,
                 child: const Text('Mark all read'),

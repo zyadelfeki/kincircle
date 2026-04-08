@@ -595,10 +595,7 @@ class _MapScreenState extends State<MapScreen> {
                         Expanded(
                           child: Text('Family Members', style: KinCircleTypography.cardTitle16()),
                         ),
-                        const Spacer(),
-                        Expanded(
-                          child: Text('${_members.length}', style: KinCircleTypography.caption12()),
-                        ),
+                        Text('${_members.length}', style: KinCircleTypography.caption12()),
                       ],
                     ),
                   ),
