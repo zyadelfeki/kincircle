@@ -3,15 +3,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class _OnboardingPage {
   final IconData icon;
-  final Color color;
   final String title;
   final String body;
+  final String? preAsk;
+  final bool successState;
 
   const _OnboardingPage({
     required this.icon,
-    required this.color,
     required this.title,
     required this.body,
+    this.preAsk,
+    this.successState = false,
   });
 }
 
@@ -30,23 +32,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   static const _pages = [
     _OnboardingPage(
-      icon: Icons.family_restroom,
-      color: Color(0xFF4CAF50),
-      title: 'Together is safer',
+      icon: Icons.diversity_3,
+      title: 'Your family,\nalways connected',
       body:
-          'Create a private circle for your family so everyone can be in the loop.',
+          'KinCircle keeps everyone in the loop - quietly, privately, and only when it matters.',
     ),
     _OnboardingPage(
       icon: Icons.map_outlined,
-      color: Color(0xFF2196F3),
-      title: 'See what matters',
-      body: 'A calm map and timely alerts - no clutter, just peace of mind.',
+      title: 'See where\neveryone is',
+      body:
+          'A calm map shows your circle in real time. No clutter - just the people you care about.',
+      preAsk:
+          '📍 On the next step, we\'ll ask for location access. This is what powers the family map and safety alerts.',
     ),
     _OnboardingPage(
       icon: Icons.shield_outlined,
-      color: Color(0xFF9C27B0),
-      title: 'You are in control',
-      body: 'You choose what to share and when. Change settings anytime.',
+      title: 'You\'re always\nin control',
+      body:
+          'Choose exactly what to share and when. Pause sharing anytime from settings.',
+      preAsk:
+          '🔔 We\'ll also ask for notifications - so you hear about arrivals, alerts, and safety events as they happen.',
+    ),
+    _OnboardingPage(
+      icon: Icons.check_circle_outline,
+      title: 'You\'re in\nthe circle',
+      body:
+          'Let\'s set up your permissions so KinCircle can protect your family.',
+      successState: true,
     ),
   ];
 
@@ -67,7 +79,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme scheme = theme.colorScheme;
+
+    Future<void> nextOrComplete() async {
+      if (_index == _pages.length - 1) {
+        await _complete();
+        return;
+      }
+      await _controller.nextPage(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -82,7 +107,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemCount: _pages.length,
                 onPageChanged: (i) => setState(() => _index = i),
                 itemBuilder: (context, i) {
-                  final p = _pages[i];
+                  final _OnboardingPage p = _pages[i];
+                  final bool isLast = i == _pages.length - 1;
+                  final Color iconColor =
+                      p.successState ? Colors.green : scheme.primary;
+
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                     child: Column(
@@ -95,24 +124,47 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Text(
                           p.body,
                           style: theme.textTheme.bodyLarge
-                              ?.copyWith(color: theme.hintColor),
+                              ?.copyWith(color: scheme.onSurfaceVariant),
                           textAlign: TextAlign.center,
                         ),
-                        const Spacer(),
-                        Container(
-                          width: 160,
-                          height: 160,
-                          decoration: BoxDecoration(
-                            color: p.color.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            p.icon,
-                            size: 80,
-                            color: p.color,
+                        const SizedBox(height: 20),
+                        Expanded(
+                          child: Center(
+                            child: Container(
+                              width: 220,
+                              height: 220,
+                              decoration: BoxDecoration(
+                                color: iconColor.withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                p.icon,
+                                size: 120,
+                                color: iconColor,
+                              ),
+                            ),
                           ),
                         ),
-                        const Spacer(),
+                        if (p.preAsk != null) ...[
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color:
+                                  scheme.surfaceContainerHighest.withValues(alpha: 0.9),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: scheme.outlineVariant),
+                            ),
+                            child: Text(
+                              p.preAsk!,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(_pages.length, (dot) {
@@ -132,39 +184,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           }),
                         ),
                         const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            if (_index < _pages.length - 1)
+                        if (!isLast)
+                          Row(
+                            children: [
                               TextButton(
                                 onPressed: _saving ? null : _complete,
                                 child: const Text('Skip'),
-                              )
-                            else
-                              const SizedBox(width: 88),
-                            const Spacer(),
-                            FilledButton.icon(
-                              onPressed: _saving
-                                  ? null
-                                  : () {
-                                      if (_index == _pages.length - 1) {
-                                        _complete();
-                                      } else {
-                                        _controller.nextPage(
-                                          duration:
-                                              const Duration(milliseconds: 250),
-                                          curve: Curves.easeOut,
-                                        );
-                                      }
-                                    },
-                              icon: Icon(_index == _pages.length - 1
-                                  ? Icons.check
-                                  : Icons.arrow_forward),
-                              label: Text(_index == _pages.length - 1
-                                  ? 'Get Started'
-                                  : 'Next'),
+                              ),
+                              const Spacer(),
+                              FilledButton.icon(
+                                onPressed: _saving ? null : nextOrComplete,
+                                icon: const Icon(Icons.arrow_forward),
+                                label: const Text('Next'),
+                              ),
+                            ],
+                          )
+                        else
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: _saving ? null : _complete,
+                              style: FilledButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                              child: const Text('Set Up KinCircle'),
                             ),
-                          ],
-                        ),
+                          ),
                       ],
                     ),
                   );
