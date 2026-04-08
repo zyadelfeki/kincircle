@@ -315,8 +315,9 @@ class _MapScreenState extends State<MapScreen> {
         final Set<Marker> markers = <Marker>{};
         final Set<Circle> circles = <Circle>{};
         for (final _MemberRowData row in rows) {
+          final String memberName = _safeDisplayName(row.user.displayName);
           final BitmapDescriptor icon =
-              await _markerForMember(row.user.uid, row.user.displayName);
+              await _markerForMember(row.user.uid, memberName);
           final LatLng exactPosition = row.user.lastKnownLocation!;
           final LatLng position = bubbleMode
               ? _markerPositionForMode(row.user.uid, exactPosition)
@@ -327,8 +328,9 @@ class _MapScreenState extends State<MapScreen> {
               markerId: MarkerId(row.user.uid),
               position: position,
               icon: icon,
+              anchor: const Offset(0.5, 0.68),
               infoWindow: InfoWindow(
-                title: row.user.displayName,
+                title: memberName,
                 snippet: _formatRelative(row.user.lastUpdated),
               ),
             ),
@@ -465,7 +467,7 @@ class _MapScreenState extends State<MapScreen> {
           _memberLocationHistory.putIfAbsent(uid, () => <Map<String, dynamic>>[]);
       history.add(<String, dynamic>{
         'uid': uid,
-        'displayName': row.user.displayName,
+        'displayName': _safeDisplayName(row.user.displayName),
         'lat': position.latitude,
         'lng': position.longitude,
         'timestamp': row.user.lastUpdated ?? now,
@@ -541,35 +543,94 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<BitmapDescriptor> _buildInitialsMarker(String displayName) async {
-    const double size = 132;
+    const double width = 128;
+    const double height = 158;
+    const double avatarSize = 88;
     final ui.PictureRecorder recorder = ui.PictureRecorder();
     final Canvas canvas = Canvas(recorder);
-    const Offset center = Offset(size / 2, size / 2);
+    const Offset center = Offset(width / 2, avatarSize / 2 + 4);
+    final String memberName = _markerLabel(displayName);
+
     final Paint ring = Paint()..color = KinCirclePalette.accent;
     final Paint fill = Paint()..color = KinCirclePalette.surfaceAlt;
-    canvas.drawCircle(center, size / 2, ring);
-    canvas.drawCircle(center, size / 2 - 8, fill);
+    canvas.drawCircle(center, avatarSize / 2, ring);
+    canvas.drawCircle(center, avatarSize / 2 - 7, fill);
 
     final TextPainter painter = TextPainter(
       textDirection: TextDirection.ltr,
       text: TextSpan(
-        text: _initials(displayName),
+        text: _initials(memberName),
         style: KinCircleTypography.cardTitle16(
-          color: Colors.white,
+          color: KinCirclePalette.textPrimary,
           weight: FontWeight.w700,
         ),
       ),
     )..layout();
     painter.paint(
       canvas,
-      Offset((size - painter.width) / 2, (size - painter.height) / 2),
+      Offset((width - painter.width) / 2, (avatarSize - painter.height) / 2 + 4),
+    );
+
+    const double labelTop = 106;
+    const double labelHorizontalPadding = 10;
+    const Rect labelRect = Rect.fromLTWH(
+      10,
+      labelTop,
+      width - 20,
+      32,
+    );
+    final RRect labelRRect = RRect.fromRectAndRadius(
+      labelRect,
+      const Radius.circular(12),
+    );
+    canvas.drawRRect(labelRRect, Paint()..color = KinCirclePalette.surface);
+    canvas.drawRRect(
+      labelRRect,
+      Paint()
+        ..color = KinCirclePalette.border
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
+
+    final TextPainter namePainter = TextPainter(
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+      ellipsis: '…',
+      text: TextSpan(
+        text: memberName,
+        style: KinCircleTypography.caption12(
+          color: KinCirclePalette.textPrimary,
+          weight: FontWeight.w600,
+        ),
+      ),
+    )..layout(maxWidth: width - (labelHorizontalPadding * 2) - 20);
+    namePainter.paint(
+      canvas,
+      Offset((width - namePainter.width) / 2, labelTop + 9),
     );
 
     final ui.Image image =
-        await recorder.endRecording().toImage(size.toInt(), size.toInt());
+        await recorder.endRecording().toImage(width.toInt(), height.toInt());
     final ByteData? data = await image.toByteData(format: ui.ImageByteFormat.png);
     if (data == null) return BitmapDescriptor.defaultMarker;
     return BitmapDescriptor.bytes(Uint8List.view(data.buffer));
+  }
+
+  String _safeDisplayName(String displayName) {
+    final String trimmed = displayName.trim();
+    final String lowered = trimmed.toLowerCase();
+    if (trimmed.isEmpty || lowered == 'u' || lowered == 'no name') {
+      return 'Family member';
+    }
+    return trimmed;
+  }
+
+  String _markerLabel(String displayName) {
+    final String safe = _safeDisplayName(displayName);
+    final String firstToken = safe.split(' ').first.trim();
+    if (firstToken.isEmpty) return safe;
+    if (firstToken.length <= 12) return firstToken;
+    return '${firstToken.substring(0, 12)}…';
   }
 
   String _initials(String displayName) {
@@ -776,37 +837,60 @@ class _MapScreenState extends State<MapScreen> {
           markers: _markers,
           circles: <Circle>{..._circles, ..._helpCircles},
           myLocationEnabled: true,
-          myLocationButtonEnabled: true,
+          myLocationButtonEnabled: false,
           zoomControlsEnabled: false,
         ),
         Positioned(
-          left: 14,
+          left: 16,
+          right: 16,
           bottom: 220,
           child: SafeArea(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                FloatingActionButton.extended(
-                  heroTag: 'status_safe',
-                  backgroundColor: Colors.green,
-                  onPressed: () => _broadcastCircleStatus(
-                    CircleMemberStatus.safe,
-                    'Status shared with your circle',
-                  ),
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text('I\'m Safe'),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _broadcastCircleStatus(
+                          CircleMemberStatus.safe,
+                          'Status shared with your circle',
+                        ),
+                        icon: const Icon(Icons.check_circle_outline_rounded),
+                        label: const Text('I\'m Safe'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: KinCirclePalette.accent,
+                          foregroundColor: Colors.black,
+                          minimumSize: const Size(0, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _broadcastCircleStatus(
+                          CircleMemberStatus.needsHelp,
+                          'Circle members notified',
+                        ),
+                        icon: const Icon(Icons.sos_rounded),
+                        label: const Text('Need Help'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: KinCirclePalette.error,
+                          foregroundColor: KinCirclePalette.textPrimary,
+                          minimumSize: const Size(0, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 2,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 10),
-                FloatingActionButton.extended(
-                  heroTag: 'status_help',
-                  backgroundColor: Colors.red,
-                  onPressed: () => _broadcastCircleStatus(
-                    CircleMemberStatus.needsHelp,
-                    'Circle members notified',
-                  ),
-                  icon: const Icon(Icons.sos),
-                  label: const Text('Need Help'),
-                ),
+                const SizedBox(height: 8),
               ],
             ),
           ),
@@ -816,19 +900,23 @@ class _MapScreenState extends State<MapScreen> {
           right: 14,
           child: SafeArea(
             child: Material(
-              color: Theme.of(context).colorScheme.surface,
+              color: KinCirclePalette.surface,
               borderRadius: BorderRadius.circular(14),
-              elevation: 2,
-              child: IconButton(
-                tooltip: 'Privacy Bubbles',
-                onPressed: _togglePrivacyBubbleMode,
-                icon: Icon(
-                  _privacyBubbleMode
-                      ? Icons.blur_circular
-                      : Icons.location_on,
-                  color: _privacyBubbleMode
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurface,
+              elevation: 6,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: KinCirclePalette.border),
+                ),
+                child: IconButton(
+                  tooltip: 'Privacy Bubbles',
+                  onPressed: _togglePrivacyBubbleMode,
+                  icon: Icon(
+                    _privacyBubbleMode
+                        ? Icons.blur_circular
+                        : Icons.location_on_rounded,
+                    color: KinCirclePalette.accent,
+                  ),
                 ),
               ),
             ),
@@ -849,9 +937,10 @@ class _MapScreenState extends State<MapScreen> {
                 border: Border.all(color: KinCirclePalette.border, width: 1),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.22),
-                    blurRadius: 12,
-                    offset: const Offset(0, -4),
+                    color: Colors.black.withValues(alpha: 0.34),
+                    blurRadius: 22,
+                    spreadRadius: 1,
+                    offset: const Offset(0, -8),
                   ),
                 ],
               ),
@@ -874,7 +963,8 @@ class _MapScreenState extends State<MapScreen> {
                         Expanded(
                           child: Text('Family Members', style: KinCircleTypography.cardTitle16()),
                         ),
-                        Text('${_members.length}', style: KinCircleTypography.caption12()),
+                        if (_members.length > 1)
+                          Text('${_members.length}', style: KinCircleTypography.caption12()),
                       ],
                     ),
                   ),
@@ -904,7 +994,7 @@ class _MapScreenState extends State<MapScreen> {
                                       radius: 20,
                                       backgroundColor: KinCirclePalette.accent.withValues(alpha: 0.2),
                                       child: Text(
-                                        _initials(row.user.displayName),
+                                        _initials(_safeDisplayName(row.user.displayName)),
                                         style: KinCircleTypography.caption12(
                                           color: Colors.white,
                                           weight: FontWeight.w700,
@@ -917,7 +1007,7 @@ class _MapScreenState extends State<MapScreen> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            row.user.displayName,
+                                            _safeDisplayName(row.user.displayName),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: KinCircleTypography.body14(weight: FontWeight.w600),

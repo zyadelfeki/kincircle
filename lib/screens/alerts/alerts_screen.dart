@@ -64,9 +64,12 @@ class _AlertsScreenState extends State<AlertsScreen> {
       });
     } on FirebaseException catch (e) {
       if (!mounted) return;
-      String msg = 'Unable to load alerts';
-      if (e.code == 'permission-denied') msg = 'Permission denied. Check Firestore rules.';
-      if (e.code == 'failed-precondition') msg = 'Missing Firestore index. See logs for index creation link.';
+      String msg = 'Something went wrong. Please try again.';
+      if (e.code == 'permission-denied') {
+        msg = 'Something went wrong. Please try again.';
+      } else if (e.code == 'failed-precondition') {
+        msg = 'Something went wrong. Please try again.';
+      }
       debugPrint('AlertsScreen error: ${e.code} — ${e.message}');
       setState(() {
         _loading = false;
@@ -77,7 +80,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
       debugPrint('AlertsScreen unexpected error: $e');
       setState(() {
         _loading = false;
-        _error = 'Unable to load alerts';
+        _error = 'Something went wrong. Please try again.';
       });
     }
   }
@@ -97,6 +100,85 @@ class _AlertsScreenState extends State<AlertsScreen> {
     }
     await batch.commit();
     _load();
+  }
+
+  String _resolveName(Map<String, dynamic> data) {
+    final List<dynamic> candidates = <dynamic>[
+      data['triggeredByDisplayName'],
+      data['triggeredByName'],
+      data['displayName'],
+      data['memberName'],
+      data['senderName'],
+      data['userName'],
+      data['triggeredBy'],
+    ];
+
+    for (final dynamic candidate in candidates) {
+      final String value = (candidate ?? '').toString().trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+    return 'A family member';
+  }
+
+  String _prefixNameIfMissing(String text, String name) {
+    final String trimmed = text.trim();
+    if (trimmed.isEmpty) return trimmed;
+    final String lower = trimmed.toLowerCase();
+    final String lowerName = name.toLowerCase();
+    final bool startsWithVerb = lower.startsWith('triggered ') ||
+        lower.startsWith('sent ') ||
+        lower.startsWith('started ') ||
+        lower.startsWith('raised ');
+    if (startsWithVerb && !lower.startsWith(lowerName)) {
+      return '$name $trimmed';
+    }
+    return trimmed;
+  }
+
+  String _resolveTitle(Map<String, dynamic> data, String name) {
+    final String rawTitle = (data['title'] ?? '').toString().trim();
+    final String rawMessage = (data['message'] ?? '').toString().trim();
+    if (rawTitle.isNotEmpty) {
+      return _prefixNameIfMissing(rawTitle, name);
+    }
+    if (rawMessage.isNotEmpty) {
+      return _prefixNameIfMissing(rawMessage, name);
+    }
+    return '$name triggered an emergency alert!';
+  }
+
+  String _resolveMessage(Map<String, dynamic> data, String name) {
+    final String rawMessage = (data['message'] ?? '').toString().trim();
+    if (rawMessage.isEmpty) {
+      return 'Tap to view alert details.';
+    }
+    return _prefixNameIfMissing(rawMessage, name);
+  }
+
+  bool _isUrgentAlert({
+    required Map<String, dynamic> data,
+    required String title,
+    required String message,
+  }) {
+    final String type = (data['type'] ?? '').toString().toLowerCase();
+    final String haystack = '$type ${title.toLowerCase()} ${message.toLowerCase()}';
+    return haystack.contains('sos') ||
+        haystack.contains('emergency') ||
+        haystack.contains('help') ||
+        haystack.contains('crash');
+  }
+
+  String _relativeTime(Timestamp? timestamp) {
+    if (timestamp == null) return 'Unknown time';
+    final DateTime value = timestamp.toDate();
+    final Duration diff = DateTime.now().difference(value);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
   }
 
   Widget _loadingView() {
@@ -121,8 +203,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
   Widget _errorView() {
     return _ErrorState(
-      title: 'Unable to load alerts',
-      message: _error ?? 'Check your connection or permissions.',
+      title: 'Something went wrong',
+      message: _error ?? 'Something went wrong. Please try again.',
       onRetry: _load,
     );
   }
@@ -167,11 +249,16 @@ class _AlertsScreenState extends State<AlertsScreen> {
             children: [
               FilterChip(
                 selected: _showUnreadOnly,
+                backgroundColor: KinCirclePalette.surfaceAlt,
                 selectedColor: KinCirclePalette.accent.withValues(alpha: 0.25),
+                showCheckmark: true,
+                checkmarkColor: KinCirclePalette.textPrimary,
                 label: Text(
                   'Unread only',
                   style: KinCircleTypography.caption12(
-                    color: _showUnreadOnly ? KinCirclePalette.accent : KinCirclePalette.textMuted,
+                    color: _showUnreadOnly
+                        ? KinCirclePalette.textPrimary
+                        : KinCirclePalette.textMuted,
                   ),
                 ),
                 onSelected: (bool value) {
@@ -192,15 +279,31 @@ class _AlertsScreenState extends State<AlertsScreen> {
             itemBuilder: (_, int index) {
               final QueryDocumentSnapshot<Map<String, dynamic>> doc = _docs[index];
               final Map<String, dynamic> data = doc.data();
-              final String title = data['title'] as String? ?? 'Alert';
-              final String message = data['message'] as String? ?? '';
+              final String name = _resolveName(data);
+              final String title = _resolveTitle(data, name);
+              final String message = _resolveMessage(data, name);
               final bool seen = data['seen'] as bool? ?? false;
+              final String timeLabel = _relativeTime(data['timestamp'] as Timestamp?);
+              final bool urgent =
+                  _isUrgentAlert(data: data, title: title, message: message);
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
-                  color: KinCirclePalette.surface,
+                  color: seen
+                      ? KinCirclePalette.surface
+                      : KinCirclePalette.surfaceAlt.withValues(alpha: 0.75),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: KinCirclePalette.border, width: 1),
+                  border: Border(
+                    left: BorderSide(
+                      color: seen
+                          ? KinCirclePalette.border
+                          : KinCirclePalette.accent,
+                      width: 3,
+                    ),
+                    top: const BorderSide(color: KinCirclePalette.border, width: 1),
+                    right: const BorderSide(color: KinCirclePalette.border, width: 1),
+                    bottom: const BorderSide(color: KinCirclePalette.border, width: 1),
+                  ),
                 ),
                 child: ListTile(
                   onTap: () {
@@ -211,18 +314,55 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     );
                   },
                   leading: Icon(
-                    Icons.notification_important_outlined,
-                    color: seen ? KinCirclePalette.textMuted : KinCirclePalette.accent,
+                    urgent
+                        ? Icons.warning_amber_rounded
+                        : Icons.notifications_none_rounded,
+                    color: urgent
+                        ? KinCirclePalette.error
+                        : (seen
+                            ? KinCirclePalette.textMuted
+                            : KinCirclePalette.accent),
                   ),
-                  title: Text(title, style: KinCircleTypography.body14(weight: FontWeight.w600)),
-                  subtitle: Text(
-                    message,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+                  title: Text(
+                    title,
+                    style: KinCircleTypography.body14(
+                      weight: FontWeight.w600,
+                      color: seen
+                          ? KinCirclePalette.textPrimary
+                          : KinCirclePalette.textPrimary,
+                    ),
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          message,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: KinCircleTypography.caption12(
+                            color: KinCirclePalette.textMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          timeLabel,
+                          style: KinCircleTypography.caption12(
+                            color: seen
+                                ? KinCirclePalette.textMuted
+                                : KinCirclePalette.accent,
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   trailing: seen
-                      ? null
+                      ? const Icon(
+                          Icons.chevron_right_rounded,
+                          color: KinCirclePalette.textMuted,
+                        )
                       : TextButton(
                           onPressed: () => _markRead(doc),
                           child: const Text('Read'),
