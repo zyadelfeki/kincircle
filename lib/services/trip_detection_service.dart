@@ -5,6 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:activity_recognition_flutter/activity_recognition_flutter.dart' as ar;
 import 'package:geolocator/geolocator.dart';
 
+import 'crash_detection_service.dart';
+
 class TripDetectionService {
   TripDetectionService._internal();
   factory TripDetectionService() => _instance;
@@ -60,6 +62,7 @@ class TripDetectionService {
     _isInTrip = true;
     _tripStartTime = DateTime.now();
     _tripLocations.clear();
+    unawaited(CrashDetectionService.instance.start());
     _locationSub?.cancel();
     _locationSub = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
@@ -75,6 +78,7 @@ class TripDetectionService {
     _stillTimer?.cancel();
     _stillTimer = null;
     _locationSub?.cancel();
+    await CrashDetectionService.instance.stop();
     if (_tripLocations.length < 2) return;
     final user = _auth.currentUser;
     if (user == null) {
@@ -111,6 +115,7 @@ class TripDetectionService {
     _stillTimer?.cancel();
     _isInTrip = false;
     _tripStartTime = null;
+    await CrashDetectionService.instance.stop();
   }
 
   void dispose() {
