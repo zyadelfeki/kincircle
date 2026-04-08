@@ -15,6 +15,7 @@ import '../../widgets/dashboard/family_online_card.dart';
 import '../../widgets/dashboard/quick_actions_card.dart';
 import '../../widgets/dashboard/recent_activity_card.dart';
 import '../../widgets/dashboard/safe_places_card.dart';
+import '../../widgets/battery_shield_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -360,6 +361,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Navigator.of(context).pushNamed('/add-geofence'),
                 ),
               ]),
+            ),
+          ),
+          const SliverPadding(
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+            sliver: SliverToBoxAdapter(
+              child: BatteryShieldCard(),
             ),
           ),
           SliverPadding(
