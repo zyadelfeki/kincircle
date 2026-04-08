@@ -10,9 +10,8 @@ class SubscriptionManagementScreen extends StatefulWidget {
 }
 
 class _SubscriptionManagementScreenState extends State<SubscriptionManagementScreen> {
-  String _currentPlan = 'Free';
+  String _currentPlan = 'Coordination (Free)';
   bool _processing = false;
-  bool _annual = false;
 
   Future<void> _changePlan(String plan) async {
     setState(() => _processing = true);
@@ -22,12 +21,12 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
       _currentPlan = plan;
       _processing = false;
     });
-    await context.read<ThemeController>().setPro(plan == 'Pro');
+    await context.read<ThemeController>().setPro(plan == 'Sage Pro');
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('🎉 Switched to $plan plan'),
-        backgroundColor: plan == 'Pro' ? Colors.green : null,
+        backgroundColor: plan == 'Sage Pro' ? Colors.green : null,
       ),
     );
   }
@@ -53,7 +52,7 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: _currentPlan == 'Pro'
+                  colors: _currentPlan == 'Sage Pro'
                       ? [Colors.amber.shade600, Colors.orange.shade700]
                       : [scheme.primary, scheme.primary.withValues(alpha: 0.7)],
                   begin: Alignment.topLeft,
@@ -67,7 +66,9 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
                   Row(
                     children: [
                       Icon(
-                        _currentPlan == 'Pro' ? Icons.workspace_premium : Icons.person,
+                        _currentPlan == 'Sage Pro'
+                            ? Icons.workspace_premium
+                            : Icons.person,
                         color: Colors.white,
                         size: 28,
                       ),
@@ -84,7 +85,7 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _currentPlan == 'Pro' ? 'KinCircle Pro' : 'KinCircle Free',
+                    _currentPlan,
                     style: theme.textTheme.headlineMedium?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -92,74 +93,16 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _currentPlan == 'Pro' 
-                        ? 'Enjoy all premium features!' 
-                        : 'Upgrade for advanced features',
+                    _currentPlan == 'Sage Pro'
+                        ? 'Full premium protection is active.'
+                        : 'Choose the tier that fits your family.',
                     style: TextStyle(color: Colors.white.withValues(alpha: 0.85)),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            
-            // Billing toggle
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Monthly',
-                      style: TextStyle(
-                        fontWeight: !_annual ? FontWeight.bold : FontWeight.normal,
-                        color: !_annual ? scheme.primary : null,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Switch(
-                    value: _annual,
-                    onChanged: (v) => setState(() => _annual = v),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Annual',
-                      style: TextStyle(
-                        fontWeight: _annual ? FontWeight.bold : FontWeight.normal,
-                        color: _annual ? scheme.primary : null,
-                      ),
-                    ),
-                  ),
-                  if (_annual) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'Save 17%',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Plan comparison
+
             Text(
               'Compare Plans',
               style: theme.textTheme.titleLarge?.copyWith(
@@ -167,60 +110,65 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
               ),
             ),
             const SizedBox(height: 16),
-            
-            // Free Plan Card
+
             _buildPlanCard(
               context,
-              title: 'Free',
-              subtitle: 'Essential family safety',
-              price: '\$0',
-              period: 'forever',
+              title: 'Coordination (Free)',
+              subtitle: 'Essential family coordination',
+              monthlyPrice: '\$0',
+              annualPrice: '\$0',
               features: [
-                ('Live location sharing', true),
-                ('2 place alerts', true),
-                ('Basic check-ins', true),
-                ('Unlimited geofences', false),
-                ('AI Smart Alerts', false),
-                ('Wellbeing Analytics', false),
-                ('Priority support', false),
+                'Up to 3 circle members',
+                '2 saved places',
+                '2-day location history',
               ],
-              isSelected: _currentPlan == 'Free',
-              onTap: () => _changePlan('Free'),
+              isSelected: _currentPlan == 'Coordination (Free)',
+              onTap: () => _changePlan('Coordination (Free)'),
             ),
             const SizedBox(height: 16),
-            
-            // Pro Plan Card
+
             _buildPlanCard(
               context,
-              title: 'Pro',
-              subtitle: 'Complete peace of mind',
-              price: _annual ? '\$59.99' : '\$5.99',
-              period: _annual ? 'year' : 'month',
+              title: 'Peace of Mind (Plus)',
+              subtitle: 'Expanded safety coverage',
+              monthlyPrice: '\$9.99/mo',
+              annualPrice: '\$89.99/yr',
               features: [
-                ('Live location sharing', true),
-                ('Unlimited place alerts', true),
-                ('Advanced check-ins', true),
-                ('Unlimited geofences', true),
-                ('AI Smart Alerts', true),
-                ('Wellbeing Analytics', true),
-                ('Priority support', true),
+                'Up to 6 members',
+                '5 places',
+                '30-day history',
+                'Crash detection alerts',
               ],
-              isSelected: _currentPlan == 'Pro',
+              isSelected: _currentPlan == 'Peace of Mind (Plus)',
+              onTap: () => _changePlan('Peace of Mind (Plus)'),
+            ),
+            const SizedBox(height: 16),
+
+            _buildPlanCard(
+              context,
+              title: 'Sage Pro',
+              subtitle: 'Highest protection and intelligence',
+              monthlyPrice: '\$14.99/mo',
+              annualPrice: '\$149.99/yr',
+              features: [
+                'Unlimited members & places',
+                'AI Sage insights',
+                'Anomaly alerts',
+                'Sensory modes',
+              ],
+              isSelected: _currentPlan == 'Sage Pro',
               isPro: true,
-              onTap: () => _changePlan('Pro'),
+              onTap: () => _changePlan('Sage Pro'),
             ),
             const SizedBox(height: 24),
-            
-            // CTA Button
+
             SizedBox(
               width: double.infinity,
               height: 56,
               child: FilledButton(
-                onPressed: _processing 
-                    ? null 
-                    : () => _changePlan(_currentPlan == 'Pro' ? 'Free' : 'Pro'),
+                onPressed: _processing ? null : () {},
                 style: FilledButton.styleFrom(
-                  backgroundColor: _currentPlan == 'Pro' ? Colors.grey : scheme.primary,
+                  backgroundColor: scheme.primary,
                 ),
                 child: _processing
                     ? const SizedBox(
@@ -228,25 +176,23 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
                         width: 24,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : Row(
+                    : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(_currentPlan == 'Pro' ? Icons.arrow_downward : Icons.rocket_launch),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _currentPlan == 'Pro' ? 'Downgrade to Free' : 'Upgrade to Pro',
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
+                          Icon(Icons.receipt_long),
+                          SizedBox(width: 8),
+                          Text(
+                            'Choose a plan above to continue',
+                            style:
+                                TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
               ),
             ),
             const SizedBox(height: 16),
-            
-            // Money-back guarantee
-            if (_currentPlan != 'Pro')
+
+            if (_currentPlan != 'Sage Pro')
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -268,8 +214,7 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
                 ),
               ),
             const SizedBox(height: 24),
-            
-            // FAQ Section
+
             Text(
               'Frequently Asked Questions',
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -292,9 +237,9 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
     BuildContext context, {
     required String title,
     required String subtitle,
-    required String price,
-    required String period,
-    required List<(String, bool)> features,
+    required String monthlyPrice,
+    required String annualPrice,
+    required List<String> features,
     required bool isSelected,
     bool isPro = false,
     required VoidCallback onTap,
@@ -355,46 +300,76 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
             Text(subtitle, style: TextStyle(color: Colors.grey.shade600)),
             const SizedBox(height: 12),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
-                  child: Text(
-                    price,
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: isPro ? Colors.amber.shade700 : scheme.primary,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Monthly',
+                          style: theme.textTheme.labelMedium,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          monthlyPrice,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: isPro ? Colors.amber.shade700 : scheme.primary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text('/$period', style: TextStyle(color: Colors.grey.shade600)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Annual',
+                          style: theme.textTheme.labelMedium,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          annualPrice,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: isPro ? Colors.amber.shade700 : scheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             const Divider(),
             const SizedBox(height: 12),
-            ...features.map((f) => Padding(
+            ...features.map((String feature) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
                   Icon(
-                    f.$2 ? Icons.check_circle : Icons.cancel,
+                    Icons.check_circle,
                     size: 18,
-                    color: f.$2 ? Colors.green : Colors.grey.shade400,
+                    color: scheme.primary,
                   ),
                   const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      f.$1,
-                      style: TextStyle(
-                        color: f.$2 ? null : Colors.grey.shade400,
-                        decoration: f.$2 ? null : TextDecoration.lineThrough,
-                      ),
-                    ),
-                  ),
+                  Expanded(child: Text(feature)),
                 ],
               ),
             )),
