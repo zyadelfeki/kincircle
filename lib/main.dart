@@ -306,6 +306,7 @@ class _KinCircleAppState extends State<KinCircleApp> {
   DynamicLinkService? _linkService;
   final PendingInviteStore _pending = PendingInviteStore();
   final ThemeController _themeController = ThemeController();
+  bool _didShowSageRecapBanner = false;
 
   @override
   void initState() {
@@ -346,6 +347,9 @@ class _KinCircleAppState extends State<KinCircleApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _themeController.startUserProSync();
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showSageRecapBannerIfNeeded();
+    });
   }
 
   void _navigateToInvite(String inviteId) {
@@ -356,6 +360,47 @@ class _KinCircleAppState extends State<KinCircleApp> {
         ),
       );
     });
+  }
+
+  void _showSageRecapBannerIfNeeded() {
+    if (_didShowSageRecapBanner ||
+        !SageRecapService.instance.recapRanThisSession) {
+      return;
+    }
+
+    final navigatorContext = globalNavigatorKey.currentContext;
+    if (navigatorContext == null) {
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.maybeOf(navigatorContext);
+    if (messenger == null) {
+      return;
+    }
+
+    _didShowSageRecapBanner = true;
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Your weekly Sage recap is ready 🌿'),
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'View',
+          onPressed: () {
+            final contextForNavigation = globalNavigatorKey.currentContext;
+            if (contextForNavigation == null) {
+              return;
+            }
+
+            final materialApp =
+                contextForNavigation.findAncestorWidgetOfExactType<MaterialApp>();
+            final routes = materialApp?.routes;
+            if (routes != null && routes.containsKey('/sage-summary')) {
+              Navigator.of(contextForNavigation).pushNamed('/sage-summary');
+            }
+          },
+        ),
+      ),
+    );
   }
 
   @override
