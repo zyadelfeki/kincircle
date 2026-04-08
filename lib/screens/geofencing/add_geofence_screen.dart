@@ -142,6 +142,12 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                           CameraPosition(target: _mapCenter, zoom: 12),
                       markers: _markers,
                       myLocationEnabled: true,
+                      zoomGesturesEnabled: true,
+                      scrollGesturesEnabled: true,
+                      rotateGesturesEnabled: true,
+                      tiltGesturesEnabled: true,
+                      zoomControlsEnabled: true,
+                      myLocationButtonEnabled: true,
                     ),
                   ),
                   Padding(
