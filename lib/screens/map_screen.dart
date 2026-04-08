@@ -939,15 +939,19 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
         ),
-        DraggableScrollableSheet(
-          minChildSize: 0.15,
-          initialChildSize: 0.30,
-          maxChildSize: 0.80,
-          expand: false,
-          snap: true,
-          snapSizes: const <double>[0.15, 0.30, 0.80],
-          builder: (BuildContext context, ScrollController controller) {
-            return Container(
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: DraggableScrollableSheet(
+            minChildSize: 0.15,
+            initialChildSize: 0.30,
+            maxChildSize: 0.80,
+            expand: false,
+            snap: true,
+            snapSizes: const <double>[0.15, 0.30, 0.80],
+            builder: (BuildContext context, ScrollController controller) {
+              return Container(
               decoration: BoxDecoration(
                 color: KinCirclePalette.surface,
                 borderRadius: const BorderRadius.only(
@@ -1106,8 +1110,9 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ],
               ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ],
     );
