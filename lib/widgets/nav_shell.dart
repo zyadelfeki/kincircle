@@ -31,6 +31,14 @@ class NavShell extends StatefulWidget {
 }
 
 class _NavShellState extends State<NavShell> {
+  static const Map<int, String> _defaultTabTitles = <int, String>{
+    0: 'Live Map',
+    1: 'Circles',
+    2: 'Places',
+    3: 'Alerts',
+    4: 'Profile & Settings',
+  };
+
   late final PageController _pageController;
   late int _selectedIndex;
 
@@ -91,20 +99,28 @@ class _NavShellState extends State<NavShell> {
     ];
   }
 
+  String? _effectiveTitle() {
+    if (widget.title == null) return null;
+    if (_selectedIndex == widget.currentIndex) return widget.title;
+    return _defaultTabTitles[_selectedIndex] ?? widget.title;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_NavShellEmbeddedScope.isInScope(context)) {
       return widget.body;
     }
 
+    final String? appBarTitle = _effectiveTitle();
+
     return Scaffold(
       backgroundColor: KinCirclePalette.background,
-      appBar: widget.title == null
+      appBar: appBarTitle == null
           ? null
           : AppBar(
               automaticallyImplyLeading: widget.automaticallyImplyLeading,
               title: Text(
-                widget.title!,
+                appBarTitle,
                 style: KinCircleTypography.cardTitle16(
                   color: KinCirclePalette.textPrimary,
                 ),
