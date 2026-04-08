@@ -8,13 +8,16 @@ import 'package:battery_plus/battery_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../design/kincircle_screen_tokens.dart';
 import '../models/user_model.dart';
+import '../services/anomaly_alert_service.dart';
 import '../services/location_service.dart';
+import '../services/theme_controller.dart';
 import '../widgets/nav_shell.dart';
 
 class MapScreen extends StatefulWidget {
@@ -55,11 +58,14 @@ class _MapScreenState extends State<MapScreen> {
 
   final Map<String, BitmapDescriptor> _markerCache =
       <String, BitmapDescriptor>{};
+    final Map<String, List<Map<String, dynamic>>> _memberLocationHistory =
+      <String, List<Map<String, dynamic>>>{};
 
   _MapState _state = _MapState.loading;
   String? _error;
   String? _currentFamilyId;
   bool _isPermissionPermanentlyDenied = false;
+  bool _isProUser = false;
   bool _privacyBubbleMode = false;
   LatLng _cameraTarget = const LatLng(30.0444, 31.2357);
   Set<Marker> _markers = <Marker>{};
@@ -90,6 +96,12 @@ class _MapScreenState extends State<MapScreen> {
     super.initState();
     _refreshCurrentBatteryLevel();
     _bootstrap();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _isProUser = context.read<ThemeController>().isPro;
   }
 
   Future<void> _bootstrap() async {
@@ -273,6 +285,15 @@ class _MapScreenState extends State<MapScreen> {
           .whereType<_MemberRowData>()
             .toList();
 
+        _recordLocationHistory(rows);
+        if (_isProUser && familyId.isNotEmpty) {
+          final List<Map<String, dynamic>> history = _memberLocationHistory
+              .values
+              .expand((List<Map<String, dynamic>> items) => items)
+              .toList();
+          AnomalyAlertService.checkForAnomalies(familyId, history);
+        }
+
         final Set<Marker> markers = <Marker>{};
         final Set<Circle> circles = <Circle>{};
         for (final _MemberRowData row in rows) {
@@ -335,6 +356,37 @@ class _MapScreenState extends State<MapScreen> {
         });
       },
     );
+  }
+
+  void _recordLocationHistory(List<_MemberRowData> rows) {
+    final DateTime now = DateTime.now();
+    final DateTime cutoff = now.subtract(const Duration(hours: 2));
+
+    for (final _MemberRowData row in rows) {
+      final String uid = row.user.uid;
+      final LatLng? position = row.user.lastKnownLocation;
+      if (uid.isEmpty || position == null) continue;
+
+      final List<Map<String, dynamic>> history =
+          _memberLocationHistory.putIfAbsent(uid, () => <Map<String, dynamic>>[]);
+      history.add(<String, dynamic>{
+        'uid': uid,
+        'displayName': row.user.displayName,
+        'lat': position.latitude,
+        'lng': position.longitude,
+        'timestamp': row.user.lastUpdated ?? now,
+        'speed': row.speedKmh,
+      });
+
+      history.removeWhere(
+        (Map<String, dynamic> item) =>
+            (item['timestamp'] as DateTime).isBefore(cutoff),
+      );
+
+      if (history.length > 240) {
+        history.removeRange(0, history.length - 240);
+      }
+    }
   }
 
   _MemberRowData _toRowData(AppUser user, {int? firestoreBattery}) {
