@@ -90,6 +90,35 @@ async function fetchThreshold(): Promise<number> {
   return 0.85; // default
 }
 
+type AlertIdentity = {
+  triggeredByUid: string;
+  triggeredByName: string;
+  familyId?: string;
+};
+
+async function resolveAlertIdentity(userId: string): Promise<AlertIdentity> {
+  const fallback: AlertIdentity = {
+    triggeredByUid: userId,
+    triggeredByName: 'Family member',
+  };
+  try {
+    const userDoc = await db.collection('users').doc(userId).get();
+    const data = userDoc.data() ?? {};
+    const displayName = String(data.displayName ?? '').trim();
+    const email = String(data.email ?? '').trim();
+    const inferredFromEmail = email.includes('@') ? email.split('@')[0].trim() : '';
+    const familyId = String(data.currentFamilyId ?? '').trim();
+    return {
+      triggeredByUid: userId,
+      triggeredByName: displayName || inferredFromEmail || 'Family member',
+      familyId: familyId || undefined,
+    };
+  } catch (err) {
+    console.warn('resolveAlertIdentity failed', err);
+    return fallback;
+  }
+}
+
 // HTTP callable to get anomaly score
 export const getAnomalyScore = functions.https.onCall(async (data: any, context: any) => {
   if (!ENDPOINT_ID || ENDPOINT_ID === 'REPLACE_WITH_ENDPOINT_ID') {
@@ -179,6 +208,7 @@ export const onUserLocationChange = functions.firestore
       };
 
       try {
+        const identity = await resolveAlertIdentity(userId);
         const endpoint = vertexAI.endpoint(ENDPOINT_ID);
         const [prediction] = await endpoint.predict({instances: [instance]});
         const pred = prediction?.predictions?.[0] ?? {};
@@ -186,9 +216,15 @@ export const onUserLocationChange = functions.firestore
   if (pred['predicted_label'] === 'anomalous' && (pred['confidence'] ?? 0) > threshold) {
           await db.collection('alerts').add({
             userId,
-      message: 'AI Smart Alert: Unusual activity detected!',
+            familyId: identity.familyId ?? null,
+            triggeredByUid: identity.triggeredByUid,
+            triggeredByName: identity.triggeredByName,
+            title: `${identity.triggeredByName} unusual activity detected`,
+            message: 'AI Smart Alert: Unusual activity detected!',
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
             confidence: pred['confidence'] ?? 0,
+            type: 'anomaly',
+            seen: false,
           });
         }
       } catch (e) {
@@ -220,6 +256,7 @@ export const checkRuleBasedAlerts = functions.firestore
   const location = data.location as any;
   const timestamp = data.timestamp as any;
     if (!location || !timestamp) return null;
+    const identity = await resolveAlertIdentity(userId);
 
   // Retrieve all geofences from Firestore
   const geofencesSnap = await db.collection('geofences').get();
@@ -239,8 +276,14 @@ export const checkRuleBasedAlerts = functions.firestore
     if (distanceToSchool <= 200 && isWeekday && (hour < 8 || hour >= 16)) {
       await db.collection('alerts').add({
         userId,
+        familyId: identity.familyId ?? null,
+        triggeredByUid: identity.triggeredByUid,
+        triggeredByName: identity.triggeredByName,
+        title: `${identity.triggeredByName} activity outside expected hours`,
         message: 'Unusual activity detected at School.',
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        type: 'geofence',
+        seen: false,
       });
     }
 
@@ -281,9 +324,15 @@ export const checkRuleBasedAlerts = functions.firestore
       if (isWeekday && outsideAllowedHours) {
         await db.collection('alerts').add({
           userId,
+          familyId: identity.familyId ?? null,
+          triggeredByUid: identity.triggeredByUid,
+          triggeredByName: identity.triggeredByName,
           geofenceId: doc.id,
+          title: `${identity.triggeredByName} unusual activity at ${name}`,
           message: `Unusual activity detected at ${name}.`,
           timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          type: 'geofence',
+          seen: false,
         });
       }
     }
