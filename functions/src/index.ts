@@ -1,5 +1,6 @@
 import * as functions from 'firebase-functions';
 import { defineSecret } from 'firebase-functions/params';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as admin from 'firebase-admin';
 import {VertexAI} from '@google-cloud/vertexai';
 import {BigQuery} from '@google-cloud/bigquery';
@@ -758,4 +759,114 @@ export const backfillFamilyOwnerIds = functions.runWith({
     console.error('Backfill failed:', error);
     throw new functions.https.HttpsError('internal', `Backfill failed after processing ${processedCount} documents: ${error}`);
   }
+});
+
+type WeeklyWellbeingAgg = {
+  moodSum: number;
+  moodCount: number;
+  totalCheckIns: number;
+  emotionCounts: Record<string, number>;
+};
+
+function dominantEmotionFrom(agg: WeeklyWellbeingAgg): string {
+  const entries = Object.entries(agg.emotionCounts);
+  if (entries.length === 0) return 'unknown';
+  entries.sort((a, b) => b[1] - a[1]);
+  return entries[0][0];
+}
+
+export const sageWeeklyRecap = onSchedule('every monday 08:00', async (_event) => {
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const sevenDaysAgoTs = admin.firestore.Timestamp.fromDate(sevenDaysAgo);
+  const weekStart = sevenDaysAgo.toISOString().split('T')[0];
+
+  try {
+    const logsSnap = await db
+      .collection('wellbeingLogs')
+      .where('createdAt', '>=', sevenDaysAgoTs)
+      .get();
+
+    const byUser: Record<string, WeeklyWellbeingAgg> = {};
+
+    for (const doc of logsSnap.docs) {
+      const data = doc.data() as {
+        userId?: string;
+        mood?: number;
+        emotion?: string;
+      };
+
+      const userId = String(data.userId ?? '').trim();
+      if (!userId) {
+        continue;
+      }
+
+      const agg = byUser[userId] ?? {
+        moodSum: 0,
+        moodCount: 0,
+        totalCheckIns: 0,
+        emotionCounts: {},
+      };
+
+      const mood = Number(data.mood);
+      if (Number.isFinite(mood)) {
+        agg.moodSum += mood;
+        agg.moodCount += 1;
+      }
+
+      const emotion = typeof data.emotion === 'string' ? data.emotion.trim() : '';
+      if (emotion) {
+        agg.emotionCounts[emotion] = (agg.emotionCounts[emotion] ?? 0) + 1;
+      }
+
+      agg.totalCheckIns += 1;
+      byUser[userId] = agg;
+    }
+
+    for (const [userId, agg] of Object.entries(byUser)) {
+      try {
+        const avgMood = agg.moodCount > 0 ? agg.moodSum / agg.moodCount : 0;
+        const dominantEmotion = dominantEmotionFrom(agg);
+
+        await db
+          .collection('sageSummaries')
+          .doc(userId)
+          .collection('weeks')
+          .doc(weekStart)
+          .set(
+            {
+              avgMood,
+              totalCheckIns: agg.totalCheckIns,
+              dominantEmotion,
+              weekStart,
+              generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true },
+          );
+
+        const userDoc = await db.collection('users').doc(userId).get();
+        const fcmToken = userDoc.data()?.fcmToken;
+
+        if (typeof fcmToken !== 'string' || fcmToken.trim().length === 0) {
+          continue;
+        }
+
+        await admin.messaging().send({
+          token: fcmToken,
+          notification: {
+            title: 'Your weekly Sage recap is ready 🌿',
+            body: `You checked in ${agg.totalCheckIns} times this week.`,
+          },
+        });
+      } catch (error) {
+        functions.logger.error('sageWeeklyRecap user processing error', {
+          userId,
+          error: String(error),
+        });
+      }
+    }
+  } catch (error) {
+    functions.logger.error('sageWeeklyRecap failed', { error: String(error) });
+  }
+
+  return;
 });
