@@ -14,6 +14,31 @@ class EmotionFeedScreen extends StatefulWidget {
 }
 
 class _EmotionFeedScreenState extends State<EmotionFeedScreen> {
+  static const Map<String, dynamic> _defaultCommunityStats =
+      <String, dynamic>{
+    'activeToday': 0,
+    'checkInsToday': 0,
+  };
+
+  Stream<Map<String, dynamic>> _communityStatsStream() {
+    try {
+      return FirebaseFirestore.instance
+          .doc('community/stats')
+          .snapshots()
+          .map((DocumentSnapshot<Map<String, dynamic>> snapshot) {
+        if (!snapshot.exists) {
+          return _defaultCommunityStats;
+        }
+        return snapshot.data() ?? _defaultCommunityStats;
+      }).handleError((Object error, StackTrace stackTrace) {
+        debugPrint('EmotionFeedScreen community/stats stream error: $error');
+      });
+    } catch (e) {
+      debugPrint('EmotionFeedScreen community/stats init error: $e');
+      return Stream<Map<String, dynamic>>.value(_defaultCommunityStats);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -136,20 +161,18 @@ class _EmotionFeedScreenState extends State<EmotionFeedScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              StreamBuilder<DocumentSnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('community')
-                    .doc('stats')
-                    .snapshots(),
+              StreamBuilder<Map<String, dynamic>>(
+                stream: _communityStatsStream(),
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      !snapshot.hasData) {
                     return const Text(
                       'Loading...',
                       style: TextStyle(color: Colors.white70),
                     );
                   }
 
-                  final stats = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                  final stats = snapshot.data ?? _defaultCommunityStats;
                   final activeToday = stats['activeToday'] ?? 0;
                   final checkInsToday = stats['checkInsToday'] ?? 0;
                   
