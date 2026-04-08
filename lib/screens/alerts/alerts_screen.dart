@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +25,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
   bool _showUnreadOnly = false;
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _docs =
       <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+  Map<String, String> _memberNamesByUid = <String, String>{};
 
   @override
   void initState() {
@@ -57,10 +60,13 @@ class _AlertsScreenState extends State<AlertsScreen> {
       }
 
       final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
+      final Map<String, String> memberNames =
+          await _loadMemberNamesFromAlerts(snapshot.docs);
       if (!mounted) return;
       setState(() {
         _loading = false;
         _docs = snapshot.docs;
+        _memberNamesByUid = memberNames;
       });
     } on FirebaseException catch (e) {
       if (!mounted) return;
@@ -102,6 +108,76 @@ class _AlertsScreenState extends State<AlertsScreen> {
     _load();
   }
 
+  bool _looksLikeUid(String value) {
+    final String trimmed = value.trim();
+    if (trimmed.isEmpty) return false;
+    if (trimmed.contains('@')) return false;
+    return RegExp(r'^[a-zA-Z0-9_-]{16,}$').hasMatch(trimmed);
+  }
+
+  Set<String> _candidateAlertUserIds(Map<String, dynamic> data) {
+    final List<dynamic> candidates = <dynamic>[
+      data['triggeredByUid'],
+      data['triggeredByUserId'],
+      data['senderUid'],
+      data['memberUid'],
+      data['uid'],
+      data['triggeredBy'],
+      data['userId'],
+    ];
+
+    final Set<String> ids = <String>{};
+    for (final dynamic candidate in candidates) {
+      final String value = (candidate ?? '').toString().trim();
+      if (_looksLikeUid(value)) {
+        ids.add(value);
+      }
+    }
+    return ids;
+  }
+
+  Future<Map<String, String>> _loadMemberNamesFromAlerts(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) async {
+    final Set<String> userIds = <String>{};
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in docs) {
+      userIds.addAll(_candidateAlertUserIds(doc.data()));
+    }
+
+    if (userIds.isEmpty) {
+      return <String, String>{};
+    }
+
+    final List<String> idList = userIds.toList();
+    final Map<String, String> names = <String, String>{};
+
+    for (int i = 0; i < idList.length; i += 10) {
+      final int end = math.min(i + 10, idList.length);
+      final List<String> chunk = idList.sublist(i, end);
+      final QuerySnapshot<Map<String, dynamic>> users = await _firestore
+          .collection('users')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> userDoc
+          in users.docs) {
+        final Map<String, dynamic> userData = userDoc.data();
+        String displayName = (userData['displayName'] ?? '').toString().trim();
+        if (displayName.isEmpty) {
+          final String email = (userData['email'] ?? '').toString().trim();
+          if (email.contains('@')) {
+            displayName = email.split('@').first.trim();
+          }
+        }
+        if (displayName.isNotEmpty) {
+          names[userDoc.id] = displayName;
+        }
+      }
+    }
+
+    return names;
+  }
+
   String _resolveName(Map<String, dynamic> data) {
     final List<dynamic> candidates = <dynamic>[
       data['triggeredByDisplayName'],
@@ -115,11 +191,29 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
     for (final dynamic candidate in candidates) {
       final String value = (candidate ?? '').toString().trim();
+      if (value.isEmpty) continue;
+      if (_looksLikeUid(value)) {
+        final String? resolved = _memberNamesByUid[value];
+        if (resolved != null && resolved.trim().isNotEmpty) {
+          return resolved.trim();
+        }
+        continue;
+      }
+      if (value.contains('@')) {
+        return value.split('@').first.trim();
+      }
       if (value.isNotEmpty) {
         return value;
       }
     }
-    return 'A family member';
+
+    for (final String uid in _candidateAlertUserIds(data)) {
+      final String? resolved = _memberNamesByUid[uid];
+      if (resolved != null && resolved.trim().isNotEmpty) {
+        return resolved.trim();
+      }
+    }
+    return 'Unknown member';
   }
 
   String _prefixNameIfMissing(String text, String name) {
@@ -145,6 +239,9 @@ class _AlertsScreenState extends State<AlertsScreen> {
     }
     if (rawMessage.isNotEmpty) {
       return _prefixNameIfMissing(rawMessage, name);
+    }
+    if (name == 'Unknown member') {
+      return 'Emergency alert';
     }
     return '$name triggered an emergency alert!';
   }
@@ -177,8 +274,9 @@ class _AlertsScreenState extends State<AlertsScreen> {
     if (diff.inMinutes < 1) return 'Just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
     if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
+    if (diff.inDays < 30) return '${diff.inDays}d ago';
+    if (diff.inDays < 365) return '${(diff.inDays / 30).floor()}mo ago';
+    return '${(diff.inDays / 365).floor()}y ago';
   }
 
   Widget _loadingView() {
@@ -237,6 +335,11 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
   Widget _listView() {
     if (_docs.isEmpty) return _emptyView();
+    final bool hasUnread = _docs.any(
+      (QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+          !(doc.data()['seen'] as bool? ?? false),
+    );
+
     return Column(
       children: [
         Padding(
@@ -250,15 +353,17 @@ class _AlertsScreenState extends State<AlertsScreen> {
               FilterChip(
                 selected: _showUnreadOnly,
                 backgroundColor: KinCirclePalette.surfaceAlt,
-                selectedColor: KinCirclePalette.accent.withValues(alpha: 0.25),
+                selectedColor: KinCirclePalette.accent,
+                side: const BorderSide(color: KinCirclePalette.border),
                 showCheckmark: true,
-                checkmarkColor: KinCirclePalette.textPrimary,
+                checkmarkColor: Colors.black,
                 label: Text(
                   'Unread only',
                   style: KinCircleTypography.caption12(
                     color: _showUnreadOnly
-                        ? KinCirclePalette.textPrimary
+                        ? Colors.black
                         : KinCirclePalette.textMuted,
+                    weight: FontWeight.w600,
                   ),
                 ),
                 onSelected: (bool value) {
@@ -267,7 +372,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 },
               ),
               TextButton(
-                onPressed: _markAllRead,
+                onPressed: hasUnread ? _markAllRead : null,
+                style: KinCircleButtons.ghost(),
                 child: const Text('Mark all read'),
               ),
             ],
@@ -315,7 +421,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   },
                   leading: Icon(
                     urgent
-                        ? Icons.warning_amber_rounded
+                        ? Icons.sos_rounded
                         : Icons.notifications_none_rounded,
                     color: urgent
                         ? KinCirclePalette.error
@@ -323,14 +429,27 @@ class _AlertsScreenState extends State<AlertsScreen> {
                             ? KinCirclePalette.textMuted
                             : KinCirclePalette.accent),
                   ),
-                  title: Text(
-                    title,
-                    style: KinCircleTypography.body14(
-                      weight: FontWeight.w600,
-                      color: seen
-                          ? KinCirclePalette.textPrimary
-                          : KinCirclePalette.textPrimary,
-                    ),
+                  title: Row(
+                    children: [
+                      if (!seen)
+                        Container(
+                          width: 8,
+                          height: 8,
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: const BoxDecoration(
+                            color: KinCirclePalette.accent,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: KinCircleTypography.body14(
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   subtitle: Padding(
                     padding: const EdgeInsets.only(top: 2),

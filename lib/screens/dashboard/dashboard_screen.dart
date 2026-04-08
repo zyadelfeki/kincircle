@@ -476,7 +476,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return NavShell(
       currentIndex: 1,
-      title: 'Family Dashboard',
+      title: 'Home',
       body: _buildBody(),
     );
   }

@@ -80,15 +80,30 @@ class AuthService extends ChangeNotifier {
     final userDoc =
         _firestore.collection(AppConstants.usersCollection).doc(user.uid);
     final docSnapshot = await userDoc.get();
+    final String email = (user.email ?? '').trim();
+    final String displayName = (user.displayName ?? '').trim().isNotEmpty
+        ? user.displayName!.trim()
+        : (email.contains('@') ? email.split('@').first.trim() : 'Unknown');
+
     if (!docSnapshot.exists) {
       await userDoc.set({
         AppConstants.userUid: user.uid,
         AppConstants.userEmail: user.email,
-        AppConstants.userDisplayName: user.displayName ?? '',
+        AppConstants.userDisplayName: displayName,
         AppConstants.userPhotoUrl: user.photoURL ?? '',
         AppConstants.userCreatedAt: FieldValue.serverTimestamp(),
         'onboardingComplete': false,
         AppConstants.userSetupComplete: false,
+      });
+      return;
+    }
+
+    final Map<String, dynamic>? existing = docSnapshot.data();
+    final String existingName =
+        (existing?[AppConstants.userDisplayName] ?? '').toString().trim();
+    if (existingName.isEmpty) {
+      await userDoc.update(<String, dynamic>{
+        AppConstants.userDisplayName: displayName,
       });
     }
   }

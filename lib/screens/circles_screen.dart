@@ -45,6 +45,10 @@ class _CirclesScreenState extends State<CirclesScreen> {
     Navigator.of(context).pushNamed('/join-family');
   }
 
+  void _openSupport() {
+    Navigator.of(context).pushNamed('/support/remote');
+  }
+
   @override
   Widget build(BuildContext context) {
     return NavShell(
@@ -55,10 +59,16 @@ class _CirclesScreenState extends State<CirclesScreen> {
         builder: (BuildContext context,
             AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
           if (snapshot.hasError) {
+            final Object? error = snapshot.error;
+            final bool permissionDenied = error is FirebaseException &&
+                error.code == 'permission-denied';
             return _ErrorState(
-              title: 'Something went wrong',
-              message: 'Something went wrong. Please try again.',
-              onRetry: _retry,
+              title: 'Can\'t load your circles',
+              message: permissionDenied
+                  ? 'There\'s a setup issue. Contact support.'
+                  : 'Check your connection and try again.',
+              onRetry: permissionDenied ? _openSupport : _retry,
+              actionLabel: permissionDenied ? 'Contact Support' : 'Try Again',
             );
           }
 
@@ -368,11 +378,13 @@ class _ErrorState extends StatelessWidget {
     required this.title,
     required this.message,
     required this.onRetry,
+    this.actionLabel = 'Try Again',
   });
 
   final String title;
   final String message;
   final VoidCallback onRetry;
+  final String actionLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -415,7 +427,7 @@ class _ErrorState extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: onRetry,
                 style: KinCircleButtons.primary(),
-                child: const Text('Try Again'),
+                child: Text(actionLabel),
               ),
             ),
           ],

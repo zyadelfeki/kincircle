@@ -107,11 +107,20 @@ class _PlacesScreenState extends State<PlacesScreen> {
               textAlign: TextAlign.center,
               style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
             ),
+            const SizedBox(height: 10),
+            Text(
+              'Examples: Home · School · Work',
+              textAlign: TextAlign.center,
+              style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+            ),
             const SizedBox(height: 14),
-            ElevatedButton(
-              style: KinCircleButtons.primary(),
-              onPressed: () => Navigator.of(context).pushNamed('/add-geofence'),
-              child: const Text('Add Place'),
+            SizedBox(
+              width: 220,
+              child: ElevatedButton(
+                style: KinCircleButtons.primary(),
+                onPressed: () => Navigator.of(context).pushNamed('/add-geofence'),
+                child: const Text('Add Place'),
+              ),
             ),
           ],
         ),
