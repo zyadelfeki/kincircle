@@ -124,6 +124,29 @@ async function fetchThreshold() {
     catch (_) { /* swallow */ }
     return 0.85; // default
 }
+async function resolveAlertIdentity(userId) {
+    const fallback = {
+        triggeredByUid: userId,
+        triggeredByName: 'Family member',
+    };
+    try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        const data = userDoc.data() ?? {};
+        const displayName = String(data.displayName ?? '').trim();
+        const email = String(data.email ?? '').trim();
+        const inferredFromEmail = email.includes('@') ? email.split('@')[0].trim() : '';
+        const familyId = String(data.currentFamilyId ?? '').trim();
+        return {
+            triggeredByUid: userId,
+            triggeredByName: displayName || inferredFromEmail || 'Family member',
+            familyId: familyId || undefined,
+        };
+    }
+    catch (err) {
+        console.warn('resolveAlertIdentity failed', err);
+        return fallback;
+    }
+}
 // HTTP callable to get anomaly score
 exports.getAnomalyScore = functions.https.onCall(async (data, context) => {
     if (!ENDPOINT_ID || ENDPOINT_ID === 'REPLACE_WITH_ENDPOINT_ID') {
@@ -203,6 +226,7 @@ exports.onUserLocationChange = functions.firestore
             hour_of_day: now.getHours(),
         };
         try {
+            const identity = await resolveAlertIdentity(userId);
             const endpoint = vertexAI.endpoint(ENDPOINT_ID);
             const [prediction] = await endpoint.predict({ instances: [instance] });
             const pred = prediction?.predictions?.[0] ?? {};
@@ -210,9 +234,15 @@ exports.onUserLocationChange = functions.firestore
             if (pred['predicted_label'] === 'anomalous' && (pred['confidence'] ?? 0) > threshold) {
                 await db.collection('alerts').add({
                     userId,
+                    familyId: identity.familyId ?? null,
+                    triggeredByUid: identity.triggeredByUid,
+                    triggeredByName: identity.triggeredByName,
+                    title: `${identity.triggeredByName} unusual activity detected`,
                     message: 'AI Smart Alert: Unusual activity detected!',
                     timestamp: admin.firestore.FieldValue.serverTimestamp(),
                     confidence: pred['confidence'] ?? 0,
+                    type: 'anomaly',
+                    seen: false,
                 });
             }
         }
@@ -244,6 +274,7 @@ exports.checkRuleBasedAlerts = functions.firestore
     const timestamp = data.timestamp;
     if (!location || !timestamp)
         return null;
+    const identity = await resolveAlertIdentity(userId);
     // Retrieve all geofences from Firestore
     const geofencesSnap = await db.collection('geofences').get();
     // --- Hard-coded School check (200m radius, weekdays 08-16h) ---
@@ -256,8 +287,14 @@ exports.checkRuleBasedAlerts = functions.firestore
     if (distanceToSchool <= 200 && isWeekday && (hour < 8 || hour >= 16)) {
         await db.collection('alerts').add({
             userId,
+            familyId: identity.familyId ?? null,
+            triggeredByUid: identity.triggeredByUid,
+            triggeredByName: identity.triggeredByName,
+            title: `${identity.triggeredByName} activity outside expected hours`,
             message: 'Unusual activity detected at School.',
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            type: 'geofence',
+            seen: false,
         });
     }
     for (const doc of geofencesSnap.docs) {
@@ -293,9 +330,15 @@ exports.checkRuleBasedAlerts = functions.firestore
         if (isWeekday && outsideAllowedHours) {
             await db.collection('alerts').add({
                 userId,
+                familyId: identity.familyId ?? null,
+                triggeredByUid: identity.triggeredByUid,
+                triggeredByName: identity.triggeredByName,
                 geofenceId: doc.id,
+                title: `${identity.triggeredByName} unusual activity at ${name}`,
                 message: `Unusual activity detected at ${name}.`,
                 timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                type: 'geofence',
+                seen: false,
             });
         }
     }
