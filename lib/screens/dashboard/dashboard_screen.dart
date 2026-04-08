@@ -133,8 +133,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
       });
 
       _subscribeToActiveAlerts(familyId);
-    } catch (_) {
+    } on FirebaseException catch (e) {
       if (!mounted) return;
+      String msg = 'Check your connection or permissions.';
+      if (e.code == 'permission-denied') {
+        msg = 'Permission denied. Check Firestore rules.';
+      }
+      if (e.code == 'failed-precondition') {
+        msg =
+            'Missing Firestore index. Check Firebase console logs for the index creation link.';
+      }
+      debugPrint('DashboardScreen error: ${e.code} ${e.message}');
+      setState(() {
+        _loading = false;
+        _error = msg;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('DashboardScreen unexpected error: $e');
       setState(() {
         _loading = false;
         _error = 'Check your connection or permissions.';
