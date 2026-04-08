@@ -74,7 +74,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
       if (e.code == 'permission-denied') {
         msg = 'Something went wrong. Please try again.';
       } else if (e.code == 'failed-precondition') {
-        msg = 'Something went wrong. Please try again.';
+        msg = 'Index not ready yet. Please wait a minute and try again.';
       }
       debugPrint('AlertsScreen error: ${e.code} — ${e.message}');
       setState(() {
