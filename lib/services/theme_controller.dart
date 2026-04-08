@@ -10,7 +10,7 @@ class ThemeController extends ChangeNotifier {
   static const _kThemeModeKey = 'appearance.themeMode';
   static const _kProKey = 'subscription.isPro';
 
-  ThemeMode _mode = ThemeMode.system;
+  ThemeMode _mode = ThemeMode.light;
   bool _isPro = false;
   bool _loaded = false;
   Stream<DocumentSnapshot<Map<String, dynamic>>>? _userStream;
@@ -33,7 +33,7 @@ class ThemeController extends ChangeNotifier {
           break;
         case 'system':
         default:
-          _mode = ThemeMode.system;
+          _mode = ThemeMode.light;
       }
       _isPro = p.getBool(_kProKey) ?? false;
     } catch (_) {
