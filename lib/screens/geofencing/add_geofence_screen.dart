@@ -37,9 +37,8 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
   @override
   void initState() {
     super.initState();
-    // Ideally, the API key should come from secure storage / Remote Config.
-    const apiKey = String.fromEnvironment('GOOGLE_MAPS_API_KEY',
-        defaultValue: 'YOUR_GOOGLE_MAPS_API_KEY');
+    const apiKey = String.fromEnvironment('GOOGLE_MAPS_API_KEY');
+    assert(apiKey.isNotEmpty, 'GOOGLE_MAPS_API_KEY is not set via --dart-define');
     _placesService = PlacesService(apiKey: apiKey);
   }
 
@@ -62,7 +61,11 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
           setState(() => _suggestions = preds);
         }
       } catch (e) {
-        // Silently ignore for now; you might show a SnackBar instead.
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Search failed: $e')),
+          );
+        }
       }
     });
   }
