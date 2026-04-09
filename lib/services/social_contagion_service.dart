@@ -13,6 +13,8 @@ class SocialContagionService extends ChangeNotifier {
   SocialContagionService._internal();
 
   Timer? _fomoTimer;
+  StreamSubscription<User?>? _authStateSub;
+  bool _initialized = false;
   int _communityActiveCount = 0;
   int _todayCheckIns = 0;
 
@@ -22,8 +24,26 @@ class SocialContagionService extends ChangeNotifier {
 
   /// Initialize the service
   Future<void> initialize() async {
+    if (_initialized) return;
+    _initialized = true;
     try {
-      await _loadCommunityStats();
+      _authStateSub?.cancel();
+      _authStateSub = FirebaseAuth.instance.authStateChanges().listen(
+        (User? user) async {
+          if (user == null) {
+            _communityActiveCount = 0;
+            _todayCheckIns = 0;
+            notifyListeners();
+            return;
+          }
+          await _loadCommunityStats();
+        },
+        onError: (Object error) {
+          if (kDebugMode) {
+            debugPrint('SocialContagionService auth listener error: $error');
+          }
+        },
+      );
       _startFOMOLoop();
 
       if (kDebugMode) {
@@ -252,6 +272,9 @@ class SocialContagionService extends ChangeNotifier {
   @override
   void dispose() {
     _fomoTimer?.cancel();
+    _authStateSub?.cancel();
+    _authStateSub = null;
+    _initialized = false;
     super.dispose();
   }
 }

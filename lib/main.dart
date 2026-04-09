@@ -65,6 +65,83 @@ import 'screens/emotion_feed_screen.dart';
 import 'screens/wellbeing_screen.dart';
 import 'widgets/companion_widgets.dart';
 
+Future<void> _initializeDeferredNonCriticalServices() async {
+  await Future<void>.delayed(Duration.zero);
+
+  // Initialize AgeDetectionService for elderly UI adaptation
+  try {
+    await AgeDetectionService().initialize();
+    if (kDebugMode) {
+      debugPrint('--- AgeDetectionService initialized ---');
+    }
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('!!! AgeDetectionService init failed: $e\n$st');
+    }
+  }
+
+  // Initialize FeatureUnlockService for progressive feature reveals
+  try {
+    await FeatureUnlockService().initialize();
+    await FeatureUnlockService().recordLogin();
+    if (kDebugMode) {
+      debugPrint('--- FeatureUnlockService initialized ---');
+    }
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('!!! FeatureUnlockService init failed: $e\n$st');
+    }
+  }
+
+  // Initialize SensoryRegulationService for neurodivergent accessibility
+  try {
+    await SensoryRegulationService().initialize();
+    if (kDebugMode) {
+      debugPrint('--- SensoryRegulationService initialized ---');
+    }
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('!!! SensoryRegulationService init failed: $e\n$st');
+    }
+  }
+
+  // Initialize CompanionService for AI companion features
+  try {
+    await CompanionService().initialize();
+    if (kDebugMode) {
+      debugPrint('--- CompanionService initialized ---');
+    }
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('!!! CompanionService init failed: $e\n$st');
+    }
+  }
+
+  // Initialize SocialContagionService for community positivity
+  try {
+    await SocialContagionService().initialize();
+    if (kDebugMode) {
+      debugPrint('--- SocialContagionService initialized ---');
+    }
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('!!! SocialContagionService init failed: $e\n$st');
+    }
+  }
+
+  // Initialize WellbeingAnalyticsService for family health tracking
+  try {
+    await WellbeingAnalyticsService().initialize();
+    if (kDebugMode) {
+      debugPrint('--- WellbeingAnalyticsService initialized ---');
+    }
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('!!! WellbeingAnalyticsService init failed: $e\n$st');
+    }
+  }
+}
+
 Future<void> main() async {
   if (kDebugMode) {
     debugPrint('--- App starting ---');
@@ -211,80 +288,7 @@ Future<void> main() async {
         debugPrint('!!! TripServiceManager init failed: $e\n$st');
       }
     }
-
-    // Initialize AgeDetectionService for elderly UI adaptation
-    try {
-      await AgeDetectionService().initialize();
-      if (kDebugMode) {
-        debugPrint('--- AgeDetectionService initialized ---');
-      }
-    } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('!!! AgeDetectionService init failed: $e\n$st');
-      }
-    }
-
-    // Initialize FeatureUnlockService for progressive feature reveals
-    try {
-      await FeatureUnlockService().initialize();
-      // Record login for streak tracking
-      await FeatureUnlockService().recordLogin();
-      if (kDebugMode) {
-        debugPrint('--- FeatureUnlockService initialized ---');
-      }
-    } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('!!! FeatureUnlockService init failed: $e\n$st');
-      }
-    }
-
-    // Initialize SensoryRegulationService for neurodivergent accessibility
-    try {
-      await SensoryRegulationService().initialize();
-      if (kDebugMode) {
-        debugPrint('--- SensoryRegulationService initialized ---');
-      }
-    } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('!!! SensoryRegulationService init failed: $e\n$st');
-      }
-    }
-
-    // Initialize CompanionService for AI companion features
-    try {
-      await CompanionService().initialize();
-      if (kDebugMode) {
-        debugPrint('--- CompanionService initialized ---');
-      }
-    } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('!!! CompanionService init failed: $e\n$st');
-      }
-    }
-
-    // Initialize SocialContagionService for community positivity
-    try {
-      await SocialContagionService().initialize();
-      if (kDebugMode) {
-        debugPrint('--- SocialContagionService initialized ---');
-      }
-    } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('!!! SocialContagionService init failed: $e\n$st');
-      }
-    }
-
-    // Initialize WellbeingAnalyticsService for family health tracking
-    try {
-      await WellbeingAnalyticsService().initialize();
-      if (kDebugMode) {
-        debugPrint('--- WellbeingAnalyticsService initialized ---');
-      }
-    } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('!!! WellbeingAnalyticsService init failed: $e\n$st');
-      }
-    }
+    unawaited(_initializeDeferredNonCriticalServices());
   });
 
   if (kDebugMode) {
