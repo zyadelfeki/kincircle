@@ -943,6 +943,7 @@ class _MapScreenState extends State<MapScreen> {
           left: 0,
           right: 0,
           bottom: 0,
+          height: MediaQuery.of(context).size.height * 0.8,
           child: DraggableScrollableSheet(
             minChildSize: 0.15,
             initialChildSize: 0.30,
