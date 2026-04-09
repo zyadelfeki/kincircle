@@ -13,10 +13,22 @@ class PlacesService {
   PlacesService({required this.apiKey});
   final String apiKey;
 
+  void _ensureConfigured() {
+    final String trimmed = apiKey.trim();
+    if (trimmed.isEmpty ||
+        trimmed == 'YOUR_ACTUAL_KEY' ||
+        trimmed == 'YOUR_GOOGLE_MAPS_API_KEY') {
+      throw StateError(
+        'Google Maps API key not configured. Pass --dart-define=GOOGLE_MAPS_API_KEY=...',
+      );
+    }
+  }
+
   /// Returns a list of Autocomplete [Prediction] for the given [input].
   /// If the input is empty, an empty list is returned immediately.
   Future<List<PlacePrediction>> getAutocompleteSuggestions(String input) async {
     if (input.trim().isEmpty) return [];
+    _ensureConfigured();
 
     final uri =
         Uri.https('maps.googleapis.com', '/maps/api/place/autocomplete/json', {
@@ -45,6 +57,7 @@ class PlacesService {
 
   /// Retrieves the exact [LatLng] of a place by its [placeId].
   Future<LatLng> getPlaceDetails(String placeId) async {
+    _ensureConfigured();
     final uri =
         Uri.https('maps.googleapis.com', '/maps/api/place/details/json', {
       'place_id': placeId,

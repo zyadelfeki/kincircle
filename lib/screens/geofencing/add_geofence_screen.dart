@@ -38,7 +38,6 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
   void initState() {
     super.initState();
     const apiKey = String.fromEnvironment('GOOGLE_MAPS_API_KEY');
-    assert(apiKey.isNotEmpty, 'GOOGLE_MAPS_API_KEY is not set via --dart-define');
     _placesService = PlacesService(apiKey: apiKey);
   }
 
