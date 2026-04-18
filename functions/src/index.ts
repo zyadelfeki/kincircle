@@ -64,7 +64,10 @@ export const sendInviteEmail = functions.runWith({ secrets: [SENDGRID_API_KEY] }
 // --- Generate Password Reset Link (callable) ---
 // Allows the client to request a password reset link without revealing
 // whether the email exists (we return an empty link on errors).
-export const generatePasswordResetLink = functions.https.onCall(async (data: any) => {
+export const generatePasswordResetLink = functions.https.onCall(async (data: any, context: any) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be signed in');
+  }
   const email = String(data?.email || '').trim();
   if (!email) {
     throw new functions.https.HttpsError('invalid-argument', 'email required');
@@ -257,35 +260,12 @@ export const checkRuleBasedAlerts = functions.firestore
   const timestamp = data.timestamp as any;
     if (!location || !timestamp) return null;
     const identity = await resolveAlertIdentity(userId);
+    const eventDate = timestamp.toDate();
+    const day = eventDate.getDay();
+    const hour = eventDate.getHours();
 
   // Retrieve all geofences from Firestore
   const geofencesSnap = await db.collection('geofences').get();
-
-    // --- Hard-coded School check (200m radius, weekdays 08-16h) ---
-    const SCHOOL_COORD = {lat: 37.7596, lng: -122.4269};
-    const distanceToSchool = haversineDistanceMeters(
-      location.latitude,
-      location.longitude,
-      SCHOOL_COORD.lat,
-      SCHOOL_COORD.lng,
-    );
-    const eventDate = timestamp.toDate();
-    const day = eventDate.getDay(); // 0 Sunday
-    const hour = eventDate.getHours();
-    const isWeekday = day >= 1 && day <= 5;
-    if (distanceToSchool <= 200 && isWeekday && (hour < 8 || hour >= 16)) {
-      await db.collection('alerts').add({
-        userId,
-        familyId: identity.familyId ?? null,
-        triggeredByUid: identity.triggeredByUid,
-        triggeredByName: identity.triggeredByName,
-        title: `${identity.triggeredByName} activity outside expected hours`,
-        message: 'Unusual activity detected at School.',
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        type: 'geofence',
-        seen: false,
-      });
-    }
 
     for (const doc of geofencesSnap.docs) {
       const gf = doc.data();
@@ -413,27 +393,6 @@ export const onAlertFeedbackCreate = functions.firestore
         console.error('BigQuery insert error', err);
       }
     }
-
-    return null;
-  });
-
-// --- Normalize Location Event Cloud Function ---
-export const normalizeLocationEvent = functions.firestore
-  .document('users/{userId}')
-  .onUpdate(async (change: any, context: any) => {
-    const beforeLoc = change.before.data()?.lastKnownLocation;
-    const afterLoc = change.after.data()?.lastKnownLocation;
-
-    if (!afterLoc || (beforeLoc && beforeLoc.latitude === afterLoc.latitude && beforeLoc.longitude === afterLoc.longitude)) {
-      return null; // No change in location
-    }
-
-    const userId = context.params.userId as string;
-    await db.collection('location_events').add({
-      userId,
-      location: afterLoc,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    });
 
     return null;
   });
@@ -674,9 +633,9 @@ export const backfillFamilyOwnerIds = functions.runWith({
   timeoutSeconds: 540, // 9 minutes - max for callable functions
   memory: '1GB'
 }).https.onCall(async (data: any, context: any) => {
-  // Verify this is an admin call (you may want to add additional auth checks)
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'Must be signed in');
+  const adminUids = ['Uv2gOORYXuaTNX7vqldBzyNBlSD3'];
+  if (!context.auth || !adminUids.includes(context.auth.uid)) {
+    throw new functions.https.HttpsError('permission-denied', 'Admin only');
   }
 
   console.log('Starting family ownerId backfill process...');
