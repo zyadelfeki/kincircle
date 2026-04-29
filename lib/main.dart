@@ -29,6 +29,8 @@ import 'screens/settings/settings_screen.dart';
 import 'screens/family/accept_invite_screen.dart';
 import 'screens/family/manage_invites_screen.dart';
 import 'screens/geofencing/add_geofence_screen.dart';
+import 'screens/join_family_screen.dart';
+import 'screens/circle_detail_screen.dart';
 import 'screens/driving/driver_safety_hub_screen.dart';
 import 'services/driver_safety/driver_safety_service.dart';
 import 'services/trip_service_manager.dart';
@@ -457,56 +459,58 @@ class _KinCircleAppState extends State<KinCircleApp> {
               ? DarkAcademiaTheme.moodyCalmTheme
               : kinTheme(brightness: Brightness.dark, pro: pro);
 
-          return MaterialApp(
-            title: 'Kin Arc',
-            theme: light,
-            darkTheme: dark,
-            themeMode: context.watch<ThemeController>().mode,
-            home: const AuthWrapper(),
-            routes: {
-              '/welcome': (context) => const WelcomeScreen(),
-              '/auth': (context) => const LoginSignupScreen(),
-              '/home': (context) => const DashboardScreen(),
-              '/dashboard': (context) => const DashboardScreen(),
-              '/privacy-tour': (context) => const PrivacyTourScreen(),
-              '/map': (context) => const MapScreen(),
-              '/circles': (context) => const CirclesScreen(),
-              '/places': (context) => const PlacesScreen(),
-              '/permissions': (context) => const PermissionScreen(),
-              '/help': (context) => const HelpScreen(),
-              '/onboarding': (context) {
-                final uid =
-                    Provider.of<AuthService>(context, listen: false).user?.uid;
-                return uid == null
-                    ? const WelcomeScreen()
-                    : OnboardingScreen(userId: uid);
-              },
-              '/invite': (context) => const InviteScreen(),
-              '/create-family': (context) => const CreateFamilyScreen(),
-              '/manage-family': (context) => const ManageFamilyScreen(),
-              '/settings': (context) => const SettingsScreen(),
-              '/alerts': (context) => const AlertsScreen(),
-              '/add-geofence': (context) => const AddGeofenceScreen(),
-              '/driver-safety': (context) => const DriverSafetyHubScreen(),
-              '/accept-invite': (context) => const Scaffold(),
-              '/manage-invites': (context) => const ManageInvitesScreen(),
-              '/diagnostics': (context) => const DiagnosticsScreen(),
-              '/account': (context) => const ProfileManagementScreen(),
-              '/subscription': (context) =>
-                  const SubscriptionManagementScreen(),
-              '/paywall': (context) => const ProPaywallScreen(),
-              '/emergency-contacts': (context) =>
-                  const EmergencyContactsScreen(),
-              '/support/remote': (context) => const RemoteSupportScreen(),
-              '/settings/sensory-controls': (context) =>
-                  const SensoryControlsScreen(),
-              '/community/feed': (context) => const EmotionFeedScreen(),
-              '/companion/select': (context) =>
-                  const CompanionSelectionScreen(),
-              '/analytics/wellbeing': (context) => const WellbeingScreen(),
-              '/wellbeing': (context) => const WellbeingScreen(),
-              '/privacy/dashboard': (context) => const PrivacyDashboardScreen(),
-            },
+           return MaterialApp(
+             title: 'Kin Arc',
+             theme: light,
+             darkTheme: dark,
+             themeMode: context.watch<ThemeController>().mode,
+             home: const AuthWrapper(),
+             routes: {
+               '/welcome': (context) => const WelcomeScreen(),
+               '/auth': (context) => const LoginSignupScreen(),
+               '/home': (context) => const DashboardScreen(),
+               '/dashboard': (context) => const DashboardScreen(),
+               '/privacy-tour': (context) => const PrivacyTourScreen(),
+               '/map': (context) => const MapScreen(),
+               '/circles': (context) => const CirclesScreen(),
+               '/places': (context) => const PlacesScreen(),
+               '/permissions': (context) => const PermissionScreen(),
+               '/help': (context) => const HelpScreen(),
+               '/onboarding': (context) {
+                 final uid =
+                     Provider.of<AuthService>(context, listen: false).user?.uid;
+                 return uid == null
+                     ? const WelcomeScreen()
+                     : OnboardingScreen(userId: uid);
+               },
+               '/invite': (context) => const InviteScreen(),
+               '/create-family': (context) => const CreateFamilyScreen(),
+               '/manage-family': (context) => const ManageFamilyScreen(),
+               '/join-family': (context) => const JoinFamilyScreen(),
+               '/circle-detail': (context) => const CircleDetailScreen(),
+               '/settings': (context) => const SettingsScreen(),
+               '/alerts': (context) => const AlertsScreen(),
+               '/add-geofence': (context) => const AddGeofenceScreen(),
+               '/driver-safety': (context) => const DriverSafetyHubScreen(),
+               '/accept-invite': (context) => const Scaffold(),
+               '/manage-invites': (context) => const ManageInvitesScreen(),
+               '/diagnostics': (context) => const DiagnosticsScreen(),
+               '/account': (context) => const ProfileManagementScreen(),
+               '/subscription': (context) =>
+                   const SubscriptionManagementScreen(),
+               '/paywall': (context) => const ProPaywallScreen(),
+               '/emergency-contacts': (context) =>
+                   const EmergencyContactsScreen(),
+               '/support/remote': (context) => const RemoteSupportScreen(),
+               '/settings/sensory-controls': (context) =>
+                   const SensoryControlsScreen(),
+               '/community/feed': (context) => const EmotionFeedScreen(),
+               '/companion/select': (context) =>
+                   const CompanionSelectionScreen(),
+               '/analytics/wellbeing': (context) => const WellbeingScreen(),
+               '/wellbeing': (context) => const WellbeingScreen(),
+               '/privacy/dashboard': (context) => const PrivacyDashboardScreen(),
+             },
             builder: (context, widget) {
               // Brand-aligned fatal error UI with retry and support
               ErrorWidget.builder = (FlutterErrorDetails details) {

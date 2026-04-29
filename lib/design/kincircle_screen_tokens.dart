@@ -10,6 +10,7 @@ class KinCirclePalette {
   static const Color textPrimary = Colors.white;
   static const Color textMuted = Color(0xFF8A8FA8);
   static const Color error = Color(0xFFFF5C7A);
+  static const Color success = Color(0xFF4CAF50);
 }
 
 class KinCircleRadii {
@@ -42,16 +43,27 @@ class KinCircleTypography {
     );
   }
 
-  static TextStyle body14({
-    Color color = KinCirclePalette.textPrimary,
-    FontWeight weight = FontWeight.w400,
-  }) {
-    return GoogleFonts.inter(
-      fontSize: 14,
-      fontWeight: weight,
-      color: color,
-    );
-  }
+   static TextStyle body14({
+     Color color = KinCirclePalette.textPrimary,
+     FontWeight weight = FontWeight.w400,
+   }) {
+     return GoogleFonts.inter(
+       fontSize: 14,
+       fontWeight: weight,
+       color: color,
+     );
+   }
+
+   static TextStyle body16({
+     Color color = KinCirclePalette.textPrimary,
+     FontWeight weight = FontWeight.w400,
+   }) {
+     return GoogleFonts.inter(
+       fontSize: 16,
+       fontWeight: weight,
+       color: color,
+     );
+   }
 
   static TextStyle caption12({
     Color color = KinCirclePalette.textMuted,

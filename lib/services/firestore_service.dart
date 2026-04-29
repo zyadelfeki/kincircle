@@ -310,4 +310,23 @@ class FirestoreService {
 
     return Family.fromMap(familyId, familyData);
   }
+
+  /// Get family ID from an invite code
+  Future<String?> getFamilyIdFromInvite(String inviteCode) async {
+    final inviteDoc = await _firestore.collection('invites').doc(inviteCode).get();
+    if (!inviteDoc.exists) {
+      return null;
+    }
+    
+    final inviteData = inviteDoc.data() as Map<String, dynamic>;
+    final familyId = inviteData['familyId'] as String?;
+    
+    // Check if invite is still valid (not expired or already used)
+    final status = inviteData['status'] as String?;
+    if (status != 'pending') {
+      return null;
+    }
+    
+    return familyId;
+  }
 }
