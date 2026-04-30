@@ -21,7 +21,7 @@ class BatteryOverviewCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Battery Overview', style: KinCircleTypography.cardTitle16(color: palette.textPrimary)),
+Text('Battery Overview', style: KinCircleTypography.cardTitle16(color: palette.textPrimary)),
           const SizedBox(height: 10),
           if (member == null || percent == null)
             Text(
@@ -41,7 +41,7 @@ class BatteryOverviewCard extends StatelessWidget {
                     member!.displayName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: KinCircleTypography.body14(color: palette.textPrimary, weight: FontWeight.w600),
+style: KinCircleTypography.body14(color: palette.textPrimary, weight: FontWeight.w600),
                   ),
                 ),
                 Expanded(

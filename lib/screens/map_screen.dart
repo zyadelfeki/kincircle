@@ -914,28 +914,33 @@ class _MapScreenState extends State<MapScreen> {
           top: 14,
           right: 14,
           child: SafeArea(
-            child: Material(
-              color: KinCirclePalette.surface,
-              borderRadius: BorderRadius.circular(14),
-              elevation: 6,
-              child: Container(
-                decoration: BoxDecoration(
+            child: Builder(
+              builder: (ctx) {
+                final fabPalette = KinCirclePalette.of(ctx);
+                return Material(
+                  color: fabPalette.surface,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: KinCirclePalette.border),
-                ),
-                child: IconButton(
-                  tooltip: _privacyBubbleMode
-                      ? 'Disable privacy bubbles'
-                      : 'Enable privacy bubbles',
-                  onPressed: _togglePrivacyBubbleMode,
-                  icon: Icon(
-                    _privacyBubbleMode
-                        ? Icons.blur_circular
-                        : Icons.location_on_rounded,
-                    color: KinCirclePalette.accent,
+                  elevation: 6,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: fabPalette.border),
+                    ),
+                    child: IconButton(
+                      tooltip: _privacyBubbleMode
+                          ? 'Disable privacy bubbles'
+                          : 'Enable privacy bubbles',
+                      onPressed: _togglePrivacyBubbleMode,
+                      icon: Icon(
+                        _privacyBubbleMode
+                            ? Icons.blur_circular
+                            : Icons.location_on_rounded,
+                        color: fabPalette.accent,
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ),
         ),
@@ -1036,19 +1041,19 @@ class _MapScreenState extends State<MapScreen> {
                                 margin: const EdgeInsets.only(bottom: 10),
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: KinCirclePalette.surfaceAlt,
+                                  color: palette.surfaceAlt,
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: KinCirclePalette.border, width: 1),
+                                  border: Border.all(color: palette.border, width: 1),
                                 ),
                                 child: Row(
                                   children: [
                                     CircleAvatar(
                                       radius: 20,
-                                      backgroundColor: KinCirclePalette.accent.withValues(alpha: 0.2),
+                                      backgroundColor: palette.accent.withValues(alpha: 0.2),
                                       child: Text(
                                         _initials(_safeDisplayName(row.user.displayName)),
                                         style: KinCircleTypography.caption12(
-                                          color: Colors.white,
+                                          color: palette.textPrimary,
                                           weight: FontWeight.w700,
                                         ),
                                       ),
@@ -1062,12 +1067,12 @@ class _MapScreenState extends State<MapScreen> {
                                             _safeDisplayName(row.user.displayName),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
-                                            style: KinCircleTypography.body14(weight: FontWeight.w600),
+                                            style: KinCircleTypography.body14(color: palette.textPrimary, weight: FontWeight.w600),
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
                                             _formatRelative(row.user.lastUpdated),
-                                            style: KinCircleTypography.caption12(),
+                                            style: KinCircleTypography.caption12(color: palette.textMuted),
                                           ),
                                         ],
                                       ),
@@ -1099,7 +1104,7 @@ class _MapScreenState extends State<MapScreen> {
                                               ? 'At current location'
                                               : '${row.speedKmh.toStringAsFixed(0)} km/h',
                                           style: KinCircleTypography.caption12(
-                                            color: KinCirclePalette.textMuted,
+                                            color: palette.textSecondary,
                                           ),
                                         ),
                                       ],

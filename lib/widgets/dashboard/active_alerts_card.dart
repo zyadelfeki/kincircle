@@ -29,7 +29,7 @@ class ActiveAlertsCard extends StatelessWidget {
                 Icon(Icons.warning_amber_rounded, color: palette.error),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text('Active Alerts', style: KinCircleTypography.cardTitle16(color: palette.textPrimary)),
+child: Text('Active Alerts', style: KinCircleTypography.cardTitle16(color: palette.textPrimary)),
                 ),
               ],
             ),
