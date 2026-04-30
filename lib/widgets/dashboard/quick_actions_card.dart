@@ -88,12 +88,13 @@ class _ActionButton extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 18),
           const SizedBox(height: 2),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.fade,
-            style: KinCircleTypography.caption12(color: color, weight: FontWeight.w600),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: KinCircleTypography.caption12(color: color, weight: FontWeight.w600),
+            ),
           ),
         ],
       ),

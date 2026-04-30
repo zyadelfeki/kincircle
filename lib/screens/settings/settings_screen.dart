@@ -275,9 +275,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final palette = KinCirclePalette.of(context);
     final ThemeController themeController = context.watch<ThemeController>();
-    final bool isDarkMode = themeController.mode == ThemeMode.dark ||
-        (themeController.mode == ThemeMode.system &&
-            MediaQuery.of(context).platformBrightness == Brightness.dark);
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return NavShell(
       currentIndex: 4,
       title: 'Profile & Settings',

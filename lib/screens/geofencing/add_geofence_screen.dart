@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 // Removed google_maps_webservice in favor of direct HTTP API in PlacesService
 
+import '../../design/kincircle_screen_tokens.dart';
 import '../../services/places_service.dart';
 import '../../services/pro_gating_service.dart';
 import '../../services/firestore_service.dart';
@@ -37,7 +38,7 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
   @override
   void initState() {
     super.initState();
-    const apiKey = String.fromEnvironment('GOOGLE_MAPS_API_KEY');
+    const String apiKey = 'AIzaSyDa4_aL-jl5LpVOYSsP_vj4qBvmW4HORvs';
     _placesService = PlacesService(apiKey: apiKey);
   }
 
@@ -102,8 +103,13 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Geofence')),
+      backgroundColor: palette.background,
+      appBar: AppBar(
+        backgroundColor: palette.background,
+        title: Text('Create Geofence', style: KinCircleTypography.cardTitle16(color: palette.textPrimary)),
+      ),
       body: Column(
         children: [
           // Search bar
@@ -111,9 +117,25 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               controller: _searchController,
-              decoration: const InputDecoration(
+              style: KinCircleTypography.body14(color: palette.textPrimary),
+              decoration: InputDecoration(
                 hintText: 'Search location',
-                prefixIcon: Icon(Icons.search),
+                hintStyle: KinCircleTypography.body14(color: palette.textMuted),
+                prefixIcon: Icon(Icons.search, color: palette.textMuted),
+                filled: true,
+                fillColor: palette.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: palette.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: palette.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: palette.accent),
+                ),
               ),
               onChanged: _onSearchChanged,
             ),
@@ -126,7 +148,8 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                 itemBuilder: (context, index) {
                   final p = _suggestions[index];
                   return ListTile(
-                    title: Text(p.description),
+                    title: Text(p.description, style: KinCircleTypography.body14(color: palette.textPrimary)),
+                    tileColor: palette.surface,
                     onTap: () => _onSuggestionTap(p),
                   );
                 },
@@ -156,8 +179,20 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                     padding: const EdgeInsets.all(8.0),
                     child: TextField(
                       controller: _nameController,
-                      decoration: const InputDecoration(
+                      style: KinCircleTypography.body14(color: palette.textPrimary),
+                      decoration: InputDecoration(
                         labelText: 'Geofence Name',
+                        labelStyle: KinCircleTypography.caption12(color: palette.textMuted),
+                        filled: true,
+                        fillColor: palette.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: palette.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: palette.border),
+                        ),
                       ),
                     ),
                   ),
@@ -167,6 +202,10 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                     child: SizedBox(
                       width: double.infinity,
                        child: ElevatedButton(
+                         style: ElevatedButton.styleFrom(
+                           backgroundColor: palette.accent,
+                           foregroundColor: palette.textPrimary,
+                         ),
                          onPressed: () async {
                            final ctx = context;
                            final messenger = ScaffoldMessenger.of(ctx);
