@@ -80,12 +80,15 @@ class KinCirclePalette extends InheritedWidget {
 
   static KinCirclePaletteData of(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark ? KinCirclePaletteData.dark : KinCirclePaletteData.light;
+    return brightness == Brightness.dark
+        ? KinCirclePaletteData.dark
+        : KinCirclePaletteData.light;
   }
 
   @override
   bool updateShouldNotify(KinCirclePalette oldWidget) => data != oldWidget.data;
 
+  // Legacy static constants kept for backward compat — always dark values.
   static const Color accent = Color(0xFF00C9A7);
   static const Color brand = Color(0xFF00C9A7);
   static const Color background = Color(0xFF0B0F1A);
@@ -108,7 +111,7 @@ class KinCircleRadii {
 
 class KinCircleTypography {
   static TextStyle heading22({
-    Color color = KinCirclePalette.textPrimary,
+    Color color = const Color(0xFF0D1117),
     FontWeight weight = FontWeight.w600,
   }) {
     return GoogleFonts.spaceGrotesk(
@@ -119,7 +122,7 @@ class KinCircleTypography {
   }
 
   static TextStyle cardTitle16({
-    Color color = KinCirclePalette.textPrimary,
+    Color color = const Color(0xFF0D1117),
     FontWeight weight = FontWeight.w600,
   }) {
     return GoogleFonts.spaceGrotesk(
@@ -129,30 +132,30 @@ class KinCircleTypography {
     );
   }
 
-   static TextStyle body14({
-     Color color = KinCirclePalette.textPrimary,
-     FontWeight weight = FontWeight.w400,
-   }) {
-     return GoogleFonts.inter(
-       fontSize: 14,
-       fontWeight: weight,
-       color: color,
-     );
-   }
+  static TextStyle body14({
+    Color color = const Color(0xFF0D1117),
+    FontWeight weight = FontWeight.w400,
+  }) {
+    return GoogleFonts.inter(
+      fontSize: 14,
+      fontWeight: weight,
+      color: color,
+    );
+  }
 
-   static TextStyle body16({
-     Color color = KinCirclePalette.textPrimary,
-     FontWeight weight = FontWeight.w400,
-   }) {
-     return GoogleFonts.inter(
-       fontSize: 16,
-       fontWeight: weight,
-       color: color,
-     );
-   }
+  static TextStyle body16({
+    Color color = const Color(0xFF0D1117),
+    FontWeight weight = FontWeight.w400,
+  }) {
+    return GoogleFonts.inter(
+      fontSize: 16,
+      fontWeight: weight,
+      color: color,
+    );
+  }
 
   static TextStyle caption12({
-    Color color = KinCirclePalette.textMuted,
+    Color color = const Color(0xFF7A8899),
     FontWeight weight = FontWeight.w400,
   }) {
     return GoogleFonts.inter(
@@ -185,12 +188,12 @@ class KinCircleDecorations {
     );
   }
 
-  static BoxDecoration input() {
+  static BoxDecoration input(KinCirclePaletteData palette) {
     return BoxDecoration(
-      color: KinCirclePalette.surfaceAlt,
+      color: palette.surfaceAlt,
       borderRadius: KinCircleRadii.input,
       border: Border.all(
-        color: KinCirclePalette.border,
+        color: palette.border,
         width: 1,
       ),
     );
