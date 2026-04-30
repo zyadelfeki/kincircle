@@ -22,16 +22,21 @@ class QuickActionsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-Text('Quick Actions', style: KinCircleTypography.cardTitle16(color: palette.textPrimary)),
+          Text(
+            'Quick actions',
+            style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
+          ),
           const SizedBox(height: 10),
           Row(
             children: [
+              // SOS — red fill, red border, stands out from the others
               Expanded(
                 child: _ActionButton(
                   icon: Icons.sos_rounded,
                   label: 'SOS',
-                  color: palette.error,
-                  borderColor: palette.border,
+                  iconColor: palette.error,
+                  borderColor: palette.error,
+                  backgroundColor: palette.error.withValues(alpha: 0.12),
                   onTap: onSosTap,
                 ),
               ),
@@ -39,9 +44,10 @@ Text('Quick Actions', style: KinCircleTypography.cardTitle16(color: palette.text
               Expanded(
                 child: _ActionButton(
                   icon: Icons.share_location_rounded,
-                  label: 'Share Location',
-                  color: palette.accent,
+                  label: 'Share location',
+                  iconColor: palette.accent,
                   borderColor: palette.border,
+                  backgroundColor: palette.surfaceAlt,
                   onTap: onShareTap,
                 ),
               ),
@@ -49,9 +55,10 @@ Text('Quick Actions', style: KinCircleTypography.cardTitle16(color: palette.text
               Expanded(
                 child: _ActionButton(
                   icon: Icons.add_location_alt_rounded,
-                  label: 'Add Place',
-                  color: palette.textPrimary,
+                  label: 'Add place',
+                  iconColor: palette.textPrimary,
                   borderColor: palette.border,
+                  backgroundColor: palette.surfaceAlt,
                   onTap: onAddPlaceTap,
                 ),
               ),
@@ -67,15 +74,17 @@ class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.icon,
     required this.label,
-    required this.color,
+    required this.iconColor,
     required this.borderColor,
+    required this.backgroundColor,
     required this.onTap,
   });
 
   final IconData icon;
   final String label;
-  final Color color;
+  final Color iconColor;
   final Color borderColor;
+  final Color backgroundColor;
   final VoidCallback onTap;
 
   @override
@@ -85,22 +94,27 @@ class _ActionButton extends StatelessWidget {
       onPressed: onTap,
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(0, 56),
-side: BorderSide(color: palette.border),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        side: BorderSide(color: borderColor),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        backgroundColor: palette.surfaceAlt,
+        backgroundColor: backgroundColor,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 18),
+          Icon(icon, color: iconColor, size: 18),
           const SizedBox(height: 2),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
               label,
               textAlign: TextAlign.center,
-              style: KinCircleTypography.caption12(color: palette.textPrimary, weight: FontWeight.w600),
+              style: KinCircleTypography.caption12(
+                color: palette.textPrimary,
+                weight: FontWeight.w600,
+              ),
             ),
           ),
         ],
