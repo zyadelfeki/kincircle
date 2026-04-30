@@ -61,7 +61,7 @@ class _MapScreenState extends State<MapScreen> {
 
   final Map<String, BitmapDescriptor> _markerCache =
       <String, BitmapDescriptor>{};
-    final Map<String, List<Map<String, dynamic>>> _memberLocationHistory =
+  final Map<String, List<Map<String, dynamic>>> _memberLocationHistory =
       <String, List<Map<String, dynamic>>>{};
 
   _MapState _state = _MapState.loading;
@@ -302,7 +302,7 @@ class _MapScreenState extends State<MapScreen> {
             return _toRowData(user, firestoreBattery: firestoreBattery);
           })
           .whereType<_MemberRowData>()
-            .toList();
+          .toList();
 
         _recordLocationHistory(rows);
         if (_isProUser && familyId.isNotEmpty) {
@@ -426,9 +426,7 @@ class _MapScreenState extends State<MapScreen> {
             status.status == CircleMemberStatus.needsHelp)
         .map((CircleMemberStatusEntry status) {
       final LatLng? position = markerPositions[status.uid];
-      if (position == null) {
-        return null;
-      }
+      if (position == null) return null;
       return Circle(
         circleId: CircleId('needs_help_${status.uid}'),
         center: position,
@@ -518,9 +516,7 @@ class _MapScreenState extends State<MapScreen> {
       setState(() {
         _currentBatteryLevel = level;
       });
-    } catch (_) {
-      // Keep default battery level on platforms where battery info is unavailable.
-    }
+    } catch (_) {}
   }
 
   double _speedForUser(DateTime? lastUpdated) {
@@ -534,9 +530,7 @@ class _MapScreenState extends State<MapScreen> {
   Future<BitmapDescriptor> _markerForMember(String uid, String displayName) async {
     final String key = '$uid-$displayName';
     final BitmapDescriptor? cached = _markerCache[key];
-    if (cached != null) {
-      return cached;
-    }
+    if (cached != null) return cached;
     final BitmapDescriptor marker = await _buildInitialsMarker(displayName);
     _markerCache[key] = marker;
     return marker;
@@ -573,16 +567,8 @@ class _MapScreenState extends State<MapScreen> {
 
     const double labelTop = 106;
     const double labelHorizontalPadding = 10;
-    const Rect labelRect = Rect.fromLTWH(
-      10,
-      labelTop,
-      width - 20,
-      32,
-    );
-    final RRect labelRRect = RRect.fromRectAndRadius(
-      labelRect,
-      const Radius.circular(12),
-    );
+    const Rect labelRect = Rect.fromLTWH(10, labelTop, width - 20, 32);
+    final RRect labelRRect = RRect.fromRectAndRadius(labelRect, const Radius.circular(12));
     canvas.drawRRect(labelRRect, Paint()..color = KinCirclePalette.surface);
     canvas.drawRRect(
       labelRRect,
@@ -619,9 +605,7 @@ class _MapScreenState extends State<MapScreen> {
   String _safeDisplayName(String displayName) {
     final String trimmed = displayName.trim();
     final String lowered = trimmed.toLowerCase();
-    if (trimmed.isEmpty || lowered == 'u' || lowered == 'no name') {
-      return 'Unknown';
-    }
+    if (trimmed.isEmpty || lowered == 'u' || lowered == 'no name') return 'Unknown';
     return trimmed;
   }
 
@@ -731,11 +715,7 @@ class _MapScreenState extends State<MapScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.location_off_rounded,
-              color: palette.accent,
-              size: 52,
-            ),
+            Icon(Icons.location_off_rounded, color: palette.accent, size: 52),
             const SizedBox(height: 16),
             Text(
               'Location access required',
@@ -749,9 +729,7 @@ class _MapScreenState extends State<MapScreen> {
             Text(
               'KinCircle needs your location to show family members on the map.',
               textAlign: TextAlign.center,
-              style: KinCircleTypography.body14(
-                color: palette.textMuted,
-              ),
+              style: KinCircleTypography.body14(color: palette.textMuted),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -761,8 +739,8 @@ class _MapScreenState extends State<MapScreen> {
               style: KinCircleButtons.primary(),
               child: Text(
                 _isPermissionPermanentlyDenied
-                    ? 'Open Settings'
-                    : 'Grant Location Access',
+                    ? 'Open settings'
+                    : 'Grant location access',
               ),
             ),
           ],
@@ -804,11 +782,7 @@ class _MapScreenState extends State<MapScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.groups_2_outlined,
-            color: palette.textMuted,
-            size: 36,
-          ),
+          Icon(Icons.groups_2_outlined, color: palette.textMuted, size: 36),
           const SizedBox(height: 12),
           Text(
             'No member locations yet',
@@ -834,7 +808,6 @@ class _MapScreenState extends State<MapScreen> {
       children: [
         GoogleMap(
           initialCameraPosition: CameraPosition(target: _cameraTarget, zoom: 13),
-          // Use dark style only in dark mode; null = Google Maps default light style
           style: isDark ? _darkMapStyle : null,
           onMapCreated: (GoogleMapController controller) {
             _mapController = controller;
@@ -866,7 +839,7 @@ class _MapScreenState extends State<MapScreen> {
                           'Status shared with your circle',
                         ),
                         icon: const Icon(Icons.check_circle_outline_rounded),
-                        label: const Text('I\'m Safe'),
+                        label: const Text('I\'m safe'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: KinCirclePalette.accent,
                           foregroundColor: Colors.black,
@@ -891,7 +864,7 @@ class _MapScreenState extends State<MapScreen> {
                           'Circle members notified',
                         ),
                         icon: const Icon(Icons.sos_rounded),
-                        label: const Text('Need Help'),
+                        label: const Text('Need help'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: KinCirclePalette.error,
                           foregroundColor: Colors.white,
@@ -963,29 +936,28 @@ class _MapScreenState extends State<MapScreen> {
             builder: (BuildContext context, ScrollController controller) {
               final palette = KinCirclePalette.of(context);
               return Container(
-              decoration: BoxDecoration(
-                color: palette.surface,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  topRight: Radius.circular(24),
-                ),
-                border: Border.all(color: palette.border, width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.34),
-                    blurRadius: 22,
-                    spreadRadius: 1,
-                    offset: const Offset(0, -8),
+                decoration: BoxDecoration(
+                  color: palette.surface,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    topRight: Radius.circular(24),
                   ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
+                  border: Border.all(color: palette.border, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.34),
+                      blurRadius: 22,
+                      spreadRadius: 1,
+                      offset: const Offset(0, -8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 10),
+                    // Drag handle pill only — no label
+                    Center(
+                      child: Container(
                         width: 44,
                         height: 4,
                         decoration: BoxDecoration(
@@ -993,134 +965,148 @@ class _MapScreenState extends State<MapScreen> {
                           borderRadius: KinCircleRadii.pill,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Swipe up',
-                        style: KinCircleTypography.caption12(
-                          color: palette.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _members.length <= 1 && _members.isNotEmpty
-                        ? Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              _safeDisplayName(_members.first.user.displayName),
-                              style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
-                            ),
-                          )
-                        : Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'Family Members',
-                                  style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
+                    ),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _members.length <= 1 && _members.isNotEmpty
+                          ? Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                _safeDisplayName(_members.first.user.displayName),
+                                style: KinCircleTypography.cardTitle16(
+                                  color: palette.textPrimary,
                                 ),
                               ),
-                              if (_members.length > 1)
-                                Text(
-                                  '${_members.length}',
-                                  style: KinCircleTypography.caption12(color: palette.textSecondary),
+                            )
+                          : Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'Family members',
+                                    style: KinCircleTypography.cardTitle16(
+                                      color: palette.textPrimary,
+                                    ),
+                                  ),
                                 ),
-                            ],
-                          ),
-                  ),
-                  const SizedBox(height: 10),
-                  Expanded(
-                    child: _members.isEmpty
-                        ? _buildEmptySheet()
-                        : ListView.builder(
-                            controller: controller,
-                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                            itemCount: _members.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              final _MemberRowData row = _members[index];
-                              final int battery = row.batteryPercent;
-                              final bool stationary = row.speedKmh <= 0;
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 10),
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: palette.surfaceAlt,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: palette.border, width: 1),
-                                ),
-                                child: Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 20,
-                                      backgroundColor: palette.accent.withValues(alpha: 0.2),
-                                      child: Text(
-                                        _initials(_safeDisplayName(row.user.displayName)),
-                                        style: KinCircleTypography.caption12(
-                                          color: palette.textPrimary,
-                                          weight: FontWeight.w700,
+                                if (_members.length > 1)
+                                  Text(
+                                    '${_members.length}',
+                                    style: KinCircleTypography.caption12(
+                                      color: palette.textSecondary,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: _members.isEmpty
+                          ? _buildEmptySheet()
+                          : ListView.builder(
+                              controller: controller,
+                              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                              itemCount: _members.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                final _MemberRowData row = _members[index];
+                                final int battery = row.batteryPercent;
+                                final bool stationary = row.speedKmh <= 0;
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: palette.surfaceAlt,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: palette.border,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 20,
+                                        backgroundColor:
+                                            palette.accent.withValues(alpha: 0.2),
+                                        child: Text(
+                                          _initials(_safeDisplayName(
+                                              row.user.displayName)),
+                                          style: KinCircleTypography.caption12(
+                                            color: palette.textPrimary,
+                                            weight: FontWeight.w700,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            _safeDisplayName(row.user.displayName),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: KinCircleTypography.body14(color: palette.textPrimary, weight: FontWeight.w600),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            _formatRelative(row.user.lastUpdated),
-                                            style: KinCircleTypography.caption12(color: palette.textMuted),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        Row(
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            Icon(
-                                              Icons.battery_std_rounded,
-                                              size: 15,
-                                              color: _batteryColor(battery),
-                                            ),
-                                            const SizedBox(width: 4),
                                             Text(
-                                              '$battery%',
-                                              style: KinCircleTypography.caption12(
-                                                color: _batteryColor(battery),
+                                              _safeDisplayName(
+                                                  row.user.displayName),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: KinCircleTypography.body14(
+                                                color: palette.textPrimary,
                                                 weight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              _formatRelative(
+                                                  row.user.lastUpdated),
+                                              style:
+                                                  KinCircleTypography.caption12(
+                                                color: palette.textMuted,
                                               ),
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          stationary
-                                              ? 'At current location'
-                                              : '${row.speedKmh.toStringAsFixed(0)} km/h',
-                                          style: KinCircleTypography.caption12(
-                                            color: palette.textSecondary,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.battery_std_rounded,
+                                                size: 15,
+                                                color: _batteryColor(battery),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '$battery%',
+                                                style:
+                                                    KinCircleTypography.caption12(
+                                                  color: _batteryColor(battery),
+                                                  weight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                ],
-              ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            stationary
+                                                ? 'At current location'
+                                                : '${row.speedKmh.toStringAsFixed(0)} km/h',
+                                            style: KinCircleTypography.caption12(
+                                              color: palette.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
               );
             },
           ),
