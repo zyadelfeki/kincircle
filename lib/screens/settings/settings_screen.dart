@@ -181,7 +181,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             value,
             style: KinCircleTypography.caption12(
-              color: color ?? palette.accent,
+              // Default to textMuted (gray), not accent (teal)
+              // Only Danger Zone passes palette.error explicitly
+              color: color ?? palette.textMuted,
               weight: FontWeight.w700,
             ),
           ),
@@ -412,7 +414,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 _row(
                   icon: Icons.logout_rounded,
-                  title: 'Sign Out',
+                  title: 'Sign out',
                   titleColor: palette.error,
                   iconColor: palette.error,
                   onTap: () => _confirmDestructive(
@@ -425,7 +427,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _sectionLabel('AI & Wellbeing'),
                 _row(
                   icon: Icons.smart_toy_outlined,
-                  title: 'Companion Settings',
+                  title: 'Companion settings',
                   subtitle: 'Your AI family companion',
                   subtitleStyle: TextStyle(
                     color: palette.textMuted,
@@ -436,7 +438,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 _row(
                   icon: Icons.analytics_outlined,
-                  title: 'Wellbeing Analytics',
+                  title: 'Wellbeing analytics',
                   subtitle: 'Family health insights',
                   subtitleStyle: TextStyle(
                     color: palette.textMuted,
@@ -447,7 +449,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 _row(
                   icon: Icons.privacy_tip_outlined,
-                  title: 'Privacy Dashboard',
+                  title: 'Privacy dashboard',
                   onTap: () =>
                       Navigator.of(context).pushNamed('/privacy/dashboard'),
                 ),
@@ -456,9 +458,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _row(
                   icon: Icons.exit_to_app_rounded,
                   iconColor: palette.textMuted,
-                  title: 'Leave Family',
+                  title: 'Leave family',
                   onTap: () => _confirmDestructive(
-                    title: 'Leave Family?',
+                    title: 'Leave family?',
                     body: 'You will lose access to family updates.',
                     onConfirmed: _showComingSoon,
                   ),
@@ -466,10 +468,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _row(
                   icon: Icons.delete_forever_outlined,
                   iconColor: palette.error,
-                  title: 'Delete Account',
+                  title: 'Delete account',
                   titleColor: palette.error,
                   onTap: () => _confirmDestructive(
-                    title: 'Delete Account?',
+                    title: 'Delete account?',
                     body: 'This action is permanent.',
                     onConfirmed: _showComingSoon,
                   ),

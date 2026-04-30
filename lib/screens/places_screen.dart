@@ -45,8 +45,6 @@ class _PlacesScreenState extends State<PlacesScreen> {
         setState(() { _loading = false; _places = []; });
         return;
       }
-      // NOTE: orderBy('createdAt') requires a composite index in Firestore.
-      // If the index is missing this will throw. Deploy firestore.indexes.json first.
       final QuerySnapshot<Map<String, dynamic>> geofences = await _firestore
           .collection('geofences')
           .where('familyId', isEqualTo: familyId)
@@ -69,12 +67,13 @@ class _PlacesScreenState extends State<PlacesScreen> {
   }
 
   Widget _loadingView() {
+    final palette = KinCirclePalette.of(context);
     return ListView.builder(
       itemCount: 5,
       itemBuilder: (_, int index) {
         return Shimmer.fromColors(
-          baseColor: KinCirclePalette.surfaceAlt,
-          highlightColor: KinCirclePalette.border,
+          baseColor: palette.surfaceAlt,
+          highlightColor: palette.border,
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             height: 74,
@@ -89,6 +88,7 @@ class _PlacesScreenState extends State<PlacesScreen> {
   }
 
   Widget _emptyView() {
+    final palette = KinCirclePalette.of(context);
     return RefreshIndicator(
       onRefresh: _load,
       child: SingleChildScrollView(
@@ -101,23 +101,23 @@ class _PlacesScreenState extends State<PlacesScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.place_outlined, color: KinCirclePalette.textMuted, size: 48),
+                  Icon(Icons.place_outlined, color: palette.textMuted, size: 48),
                   const SizedBox(height: 12),
                   Text(
                     'No safe places yet',
-                    style: KinCircleTypography.cardTitle16(),
+                    style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Create your first safe place so your circle gets arrival and departure updates.',
                     textAlign: TextAlign.center,
-                    style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+                    style: KinCircleTypography.body14(color: palette.textMuted),
                   ),
                   const SizedBox(height: 10),
                   Text(
                     'Examples: Home · School · Work',
                     textAlign: TextAlign.center,
-                    style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+                    style: KinCircleTypography.caption12(color: palette.textMuted),
                   ),
                   const SizedBox(height: 14),
                   SizedBox(
@@ -128,7 +128,7 @@ class _PlacesScreenState extends State<PlacesScreen> {
                         final result = await Navigator.of(context).pushNamed('/add-geofence');
                         if (result == true) _load();
                       },
-                      child: const Text('Add Place'),
+                      child: const Text('Add place'),
                     ),
                   ),
                 ],
@@ -149,6 +149,7 @@ class _PlacesScreenState extends State<PlacesScreen> {
   }
 
   Widget _listView() {
+    final palette = KinCirclePalette.of(context);
     if (_places.isEmpty) return _emptyView();
     return RefreshIndicator(
       onRefresh: _load,
@@ -165,7 +166,7 @@ class _PlacesScreenState extends State<PlacesScreen> {
                   final result = await Navigator.of(context).pushNamed('/add-geofence');
                   if (result == true) _load();
                 },
-                child: const Text('Add Place'),
+                child: const Text('Add place'),
               ),
             );
           }
@@ -177,23 +178,26 @@ class _PlacesScreenState extends State<PlacesScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: KinCirclePalette.surface,
+              color: palette.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: KinCirclePalette.border, width: 1),
+              border: Border.all(color: palette.border, width: 1),
             ),
             child: Row(
               children: [
-                const Icon(Icons.place_rounded, color: KinCirclePalette.accent),
+                Icon(Icons.place_rounded, color: palette.accent),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name, style: KinCircleTypography.body14(weight: FontWeight.w600)),
+                      Text(name, style: KinCircleTypography.body14(
+                        color: palette.textPrimary,
+                        weight: FontWeight.w600,
+                      )),
                       const SizedBox(height: 4),
                       Text(
                         'Lat: $lat • Lng: $lng',
-                        style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+                        style: KinCircleTypography.caption12(color: palette.textMuted),
                       ),
                     ],
                   ),
@@ -238,6 +242,7 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -247,21 +252,21 @@ class _ErrorState extends StatelessWidget {
             Container(
               width: 72,
               height: 72,
-              decoration: const BoxDecoration(
-                color: Color(0xFF1E2440),
+              decoration: BoxDecoration(
+                color: palette.border,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.cloud_off_rounded,
-                color: Color(0xFF00C9A7),
+                color: palette.accent,
                 size: 32,
               ),
             ),
             const SizedBox(height: 20),
             Text(
               title,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: palette.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
@@ -270,8 +275,8 @@ class _ErrorState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF8A8FA8),
+              style: TextStyle(
+                color: palette.textMuted,
                 fontSize: 14,
                 height: 1.5,
               ),
@@ -282,7 +287,7 @@ class _ErrorState extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: onRetry,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00C9A7),
+                  backgroundColor: palette.accent,
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -290,7 +295,7 @@ class _ErrorState extends StatelessWidget {
                   ),
                 ),
                 child: const Text(
-                  'Try Again',
+                  'Try again',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
