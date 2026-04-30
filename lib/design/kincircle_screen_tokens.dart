@@ -10,9 +10,12 @@ class KinCirclePaletteData {
   final Color cardSurface;
   final Color border;
   final Color textPrimary;
+  final Color textSecondary;
   final Color textMuted;
   final Color error;
   final Color success;
+  final Color warning;
+  final Color mapBackground;
 
   const KinCirclePaletteData({
     this.accent = const Color(0xFF00C9A7),
@@ -23,10 +26,47 @@ class KinCirclePaletteData {
     this.cardSurface = const Color(0xFF151A28),
     this.border = const Color(0xFF1E2640),
     this.textPrimary = Colors.white,
+    this.textSecondary = const Color(0xFFB0B8C4),
     this.textMuted = const Color(0xFF8A8FA8),
     this.error = const Color(0xFFFF5C7A),
     this.success = const Color(0xFF4CAF50),
+    this.warning = const Color(0xFFF6AD55),
+    this.mapBackground = const Color(0xFF1A2030),
   });
+
+  static const KinCirclePaletteData dark = KinCirclePaletteData(
+    accent: Color(0xFF00C9A7),
+    brand: Color(0xFF00C9A7),
+    background: Color(0xFF0B0F1A),
+    surface: Color(0xFF151A28),
+    surfaceAlt: Color(0xFF1A2030),
+    cardSurface: Color(0xFF151A28),
+    border: Color(0xFF1E2640),
+    textPrimary: Colors.white,
+    textSecondary: Color(0xFFB0B8C4),
+    textMuted: Color(0xFF8A8FA8),
+    error: Color(0xFFFF5C7A),
+    success: Color(0xFF4CAF50),
+    warning: Color(0xFFF6AD55),
+    mapBackground: Color(0xFF1A2030),
+  );
+
+  static const KinCirclePaletteData light = KinCirclePaletteData(
+    accent: Color(0xFF00C896),
+    brand: Color(0xFF00C896),
+    background: Color(0xFFF5F7FA),
+    surface: Color(0xFFFFFFFF),
+    surfaceAlt: Color(0xFFEEF1F5),
+    cardSurface: Color(0xFFFFFFFF),
+    border: Color(0xFFDDE2EA),
+    textPrimary: Color(0xFF0D1117),
+    textSecondary: Color(0xFF3D4A5C),
+    textMuted: Color(0xFF7A8899),
+    error: Color(0xFFE53E3E),
+    success: Color(0xFF38A169),
+    warning: Color(0xFFF6AD55),
+    mapBackground: Color(0xFFE8EDF2),
+  );
 }
 
 class KinCirclePalette extends InheritedWidget {
@@ -39,8 +79,8 @@ class KinCirclePalette extends InheritedWidget {
   });
 
   static KinCirclePaletteData of(BuildContext context) {
-    final result = context.dependOnInheritedWidgetOfExactType<KinCirclePalette>();
-    return result?.data ?? const KinCirclePaletteData();
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark ? KinCirclePaletteData.dark : KinCirclePaletteData.light;
   }
 
   @override

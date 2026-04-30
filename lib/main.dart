@@ -460,8 +460,9 @@ class _KinCircleAppState extends State<KinCircleApp> {
               ? DarkAcademiaTheme.moodyCalmTheme
               : kinTheme(brightness: Brightness.dark, pro: pro);
 
-return KinCirclePalette(
-              data: const KinCirclePaletteData(),
+final bool isDark = Theme.of(context).brightness == Brightness.dark;
+          return KinCirclePalette(
+              data: isDark ? KinCirclePaletteData.dark : KinCirclePaletteData.light,
               child: MaterialApp(
                 title: 'Kin Arc',
                 theme: light,
