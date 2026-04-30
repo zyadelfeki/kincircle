@@ -214,7 +214,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     String? subtitle,
     TextStyle? subtitleStyle,
     Widget? trailing,
-    Color iconColor = Colors.white,
+    Color? iconColor,
     Color? titleColor,
     VoidCallback? onTap,
   }) {
@@ -228,7 +228,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       child: ListTile(
         onTap: onTap,
-        leading: Icon(icon, color: iconColor),
+        leading: Icon(icon, color: iconColor ?? palette.textSecondary),
         title: Text(
           title,
           style: KinCircleTypography.body14(

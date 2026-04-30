@@ -14,8 +14,12 @@ class DashboardCardContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return Container(
-      decoration: KinCircleDecorations.card(),
+      decoration: KinCircleDecorations.card(
+        color: palette.surface,
+        borderColor: palette.border,
+      ),
       padding: padding,
       child: child,
     );

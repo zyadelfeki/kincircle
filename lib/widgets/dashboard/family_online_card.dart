@@ -21,7 +21,7 @@ class FamilyOnlineCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Members Online', style: KinCircleTypography.cardTitle16()),
+          Text('Members Online', style: KinCircleTypography.cardTitle16(color: palette.textPrimary)),
           const SizedBox(height: 10),
           if (totalCount == 0)
             Text(
@@ -57,7 +57,7 @@ class FamilyOnlineCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               '${onlineMembers.length} / $totalCount online',
-              style: KinCircleTypography.body14(color: palette.textMuted),
+              style: KinCircleTypography.body14(color: palette.textSecondary),
             ),
           ],
         ],

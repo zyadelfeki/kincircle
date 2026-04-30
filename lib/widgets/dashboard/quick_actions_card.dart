@@ -22,7 +22,7 @@ class QuickActionsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Quick Actions', style: KinCircleTypography.cardTitle16()),
+          Text('Quick Actions', style: KinCircleTypography.cardTitle16(color: palette.textPrimary)),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -75,13 +75,15 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return OutlinedButton(
       onPressed: onTap,
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(0, 56),
-        side: const BorderSide(color: KinCirclePalette.border),
+        side: BorderSide(color: palette.border),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         padding: const EdgeInsets.symmetric(horizontal: 8),
+        backgroundColor: palette.surfaceAlt,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -93,7 +95,7 @@ class _ActionButton extends StatelessWidget {
             child: Text(
               label,
               textAlign: TextAlign.center,
-              style: KinCircleTypography.caption12(color: color, weight: FontWeight.w600),
+              style: KinCircleTypography.caption12(color: palette.textPrimary, weight: FontWeight.w600),
             ),
           ),
         ],

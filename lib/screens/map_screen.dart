@@ -952,14 +952,15 @@ class _MapScreenState extends State<MapScreen> {
             snap: true,
             snapSizes: const <double>[0.15, 0.30, 0.80],
             builder: (BuildContext context, ScrollController controller) {
+              final palette = KinCirclePalette.of(context);
               return Container(
               decoration: BoxDecoration(
-                color: KinCirclePalette.surface,
+                color: palette.surface,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(24),
                   topRight: Radius.circular(24),
                 ),
-                border: Border.all(color: KinCirclePalette.border, width: 1),
+                border: Border.all(color: palette.border, width: 1),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.34),
@@ -979,7 +980,7 @@ class _MapScreenState extends State<MapScreen> {
                         width: 44,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: KinCirclePalette.textMuted.withValues(alpha: 0.4),
+                          color: palette.textMuted.withValues(alpha: 0.4),
                           borderRadius: KinCircleRadii.pill,
                         ),
                       ),
@@ -987,7 +988,7 @@ class _MapScreenState extends State<MapScreen> {
                       Text(
                         'Swipe up',
                         style: KinCircleTypography.caption12(
-                          color: KinCirclePalette.textMuted,
+                          color: palette.textMuted,
                         ),
                       ),
                     ],
@@ -1000,7 +1001,7 @@ class _MapScreenState extends State<MapScreen> {
                             alignment: Alignment.centerLeft,
                             child: Text(
                               _safeDisplayName(_members.first.user.displayName),
-                              style: KinCircleTypography.cardTitle16(),
+                              style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
                             ),
                           )
                         : Row(
@@ -1008,13 +1009,13 @@ class _MapScreenState extends State<MapScreen> {
                               Expanded(
                                 child: Text(
                                   'Family Members',
-                                  style: KinCircleTypography.cardTitle16(),
+                                  style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
                                 ),
                               ),
                               if (_members.length > 1)
                                 Text(
                                   '${_members.length}',
-                                  style: KinCircleTypography.caption12(),
+                                  style: KinCircleTypography.caption12(color: palette.textSecondary),
                                 ),
                             ],
                           ),

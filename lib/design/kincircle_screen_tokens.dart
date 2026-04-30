@@ -165,13 +165,14 @@ class KinCircleTypography {
 
 class KinCircleDecorations {
   static BoxDecoration card({
-    Color color = KinCirclePalette.surface,
+    Color color = const Color(0xFF151A28),
+    Color borderColor = const Color(0xFF1E2640),
   }) {
     return BoxDecoration(
       color: color,
       borderRadius: KinCircleRadii.card,
       border: Border.all(
-        color: KinCirclePalette.border,
+        color: borderColor,
         width: 1,
       ),
       boxShadow: [
