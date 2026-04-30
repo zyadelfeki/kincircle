@@ -74,9 +74,10 @@ class _InviteScreenState extends State<InviteScreen> {
       final String code = _inviteCode ?? await _firestoreService.generateInviteId();
       if (!mounted) return;
       setState(() => _inviteCode = code);
+      final palette = KinCirclePalette.of(context);
       await showModalBottomSheet<void>(
         context: context,
-        backgroundColor: KinCirclePalette.surface,
+        backgroundColor: palette.surface,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
         ),
@@ -93,7 +94,7 @@ class _InviteScreenState extends State<InviteScreen> {
                   const SizedBox(height: 10),
                   Text(
                     'Share link or invite code with your family member.',
-                    style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+                    style: KinCircleTypography.caption12(color: palette.textMuted),
                   ),
                   const SizedBox(height: 14),
                   _sheetAction(
@@ -159,33 +160,35 @@ class _InviteScreenState extends State<InviteScreen> {
     required String title,
     required VoidCallback onTap,
   }) {
+    final palette = KinCirclePalette.of(context);
     return ListTile(
       onTap: onTap,
-      leading: Icon(icon, color: KinCirclePalette.accent),
+      leading: Icon(icon, color: palette.accent),
       title: Text(title, style: KinCircleTypography.body14(weight: FontWeight.w600)),
-      trailing: const Icon(Icons.chevron_right_rounded, color: KinCirclePalette.textMuted),
+      trailing: Icon(Icons.chevron_right_rounded, color: palette.textMuted),
     );
   }
 
   Widget _memberTile(FamilyMember member) {
+    final palette = KinCirclePalette.of(context);
     final String role = member.isOwner ? 'Admin' : 'Member';
-    final Color roleColor = member.isOwner ? KinCirclePalette.accent : Colors.white;
+    final Color roleColor = member.isOwner ? palette.accent : palette.textPrimary;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: KinCirclePalette.surface,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: KinCirclePalette.border, width: 1),
+        border: Border.all(color: palette.border, width: 1),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundColor: KinCirclePalette.surfaceAlt,
+            backgroundColor: palette.surfaceAlt,
             child: Text(
               _initials(member.displayName),
-              style: KinCircleTypography.caption12(color: Colors.white, weight: FontWeight.w700),
+              style: KinCircleTypography.caption12(color: palette.textPrimary, weight: FontWeight.w700),
             ),
           ),
           const SizedBox(width: 10),
@@ -224,13 +227,14 @@ class _InviteScreenState extends State<InviteScreen> {
   }
 
   Widget _body() {
+    final palette = KinCirclePalette.of(context);
     if (_loading) {
       return ListView.builder(
         itemCount: 6,
         itemBuilder: (_, int index) {
           return Shimmer.fromColors(
-            baseColor: KinCirclePalette.surfaceAlt,
-            highlightColor: KinCirclePalette.border,
+            baseColor: palette.surfaceAlt,
+            highlightColor: palette.border,
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               height: 68,
@@ -250,11 +254,11 @@ class _InviteScreenState extends State<InviteScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, color: KinCirclePalette.error, size: 50),
+              Icon(Icons.error_outline, color: palette.error, size: 50),
               const SizedBox(height: 8),
               Text(
                 _error!,
-                style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+                style: KinCircleTypography.body14(color: palette.textMuted),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
@@ -275,12 +279,12 @@ class _InviteScreenState extends State<InviteScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.family_restroom, color: KinCirclePalette.textMuted, size: 46),
+              Icon(Icons.family_restroom, color: palette.textMuted, size: 46),
               const SizedBox(height: 10),
               Text(
                 'Create a circle first to start inviting members.',
                 textAlign: TextAlign.center,
-                style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+                style: KinCircleTypography.body14(color: palette.textMuted),
               ),
               const SizedBox(height: 14),
               ElevatedButton(

@@ -138,9 +138,9 @@ class _HelpScreenState extends State<HelpScreen> {
         },
         style: KinCircleTypography.body14(),
         decoration: InputDecoration(
-          icon: const Icon(Icons.search, color: KinCirclePalette.textMuted),
+          icon: Icon(Icons.search, color: KinCirclePalette.of(context).textMuted),
           hintText: 'Search help articles',
-          hintStyle: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+          hintStyle: KinCircleTypography.body14(color: KinCirclePalette.of(context).textMuted),
           border: InputBorder.none,
         ),
       ),
@@ -148,6 +148,7 @@ class _HelpScreenState extends State<HelpScreen> {
   }
 
   Widget _faqList() {
+    final palette = KinCirclePalette.of(context);
     final List<_FaqGroup> groups = _filteredGroups();
     if (groups.isEmpty) {
       return Center(
@@ -155,11 +156,11 @@ class _HelpScreenState extends State<HelpScreen> {
           padding: const EdgeInsets.symmetric(vertical: 36),
           child: Column(
             children: [
-              const Icon(Icons.search_off, color: KinCirclePalette.textMuted, size: 40),
+              Icon(Icons.search_off, color: palette.textMuted, size: 40),
               const SizedBox(height: 8),
               Text(
                 'No FAQ matches your search',
-                style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+                style: KinCircleTypography.body14(color: palette.textMuted),
               ),
             ],
           ),
@@ -180,8 +181,8 @@ class _HelpScreenState extends State<HelpScreen> {
                 group.category,
                 style: KinCircleTypography.body14(weight: FontWeight.w600),
               ),
-              iconColor: KinCirclePalette.accent,
-              collapsedIconColor: KinCirclePalette.textMuted,
+              iconColor: palette.accent,
+              collapsedIconColor: palette.textMuted,
               childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               children: group.entries.map((_FaqEntry entry) {
                 return Padding(
@@ -189,9 +190,9 @@ class _HelpScreenState extends State<HelpScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: KinCirclePalette.surfaceAlt,
+                      color: palette.surfaceAlt,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: KinCirclePalette.border, width: 1),
+                      border: Border.all(color: palette.border, width: 1),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,7 +205,7 @@ class _HelpScreenState extends State<HelpScreen> {
                         Text(
                           entry.answer,
                           style: KinCircleTypography.caption12(
-                            color: KinCirclePalette.textMuted,
+                            color: palette.textMuted,
                           ),
                         ),
                       ],

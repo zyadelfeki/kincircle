@@ -1,12 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class KinCirclePalette {
+class KinCirclePaletteData {
+  final Color accent;
+  final Color brand;
+  final Color background;
+  final Color surface;
+  final Color surfaceAlt;
+  final Color cardSurface;
+  final Color border;
+  final Color textPrimary;
+  final Color textMuted;
+  final Color error;
+  final Color success;
+
+  const KinCirclePaletteData({
+    this.accent = const Color(0xFF00C9A7),
+    this.brand = const Color(0xFF00C9A7),
+    this.background = const Color(0xFF0B0F1A),
+    this.surface = const Color(0xFF151A28),
+    this.surfaceAlt = const Color(0xFF1A2030),
+    this.cardSurface = const Color(0xFF151A28),
+    this.border = const Color(0xFF1E2640),
+    this.textPrimary = Colors.white,
+    this.textMuted = const Color(0xFF8A8FA8),
+    this.error = const Color(0xFFFF5C7A),
+    this.success = const Color(0xFF4CAF50),
+  });
+}
+
+class KinCirclePalette extends InheritedWidget {
+  final KinCirclePaletteData data;
+
+  const KinCirclePalette({
+    super.key,
+    required this.data,
+    required super.child,
+  });
+
+  static KinCirclePaletteData of(BuildContext context) {
+    final result = context.dependOnInheritedWidgetOfExactType<KinCirclePalette>();
+    return result?.data ?? const KinCirclePaletteData();
+  }
+
+  @override
+  bool updateShouldNotify(KinCirclePalette oldWidget) => data != oldWidget.data;
+
+  static const Color accent = Color(0xFF00C9A7);
+  static const Color brand = Color(0xFF00C9A7);
   static const Color background = Color(0xFF0B0F1A);
   static const Color surface = Color(0xFF151A28);
   static const Color surfaceAlt = Color(0xFF1A2030);
+  static const Color cardSurface = Color(0xFF151A28);
   static const Color border = Color(0xFF1E2640);
-  static const Color accent = Color(0xFF00C9A7);
   static const Color textPrimary = Colors.white;
   static const Color textMuted = Color(0xFF8A8FA8);
   static const Color error = Color(0xFFFF5C7A);

@@ -36,9 +36,10 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
   Future<void> _joinWithCode() async {
     if (!mounted) return;
     final TextEditingController codeController = TextEditingController();
+    final palette = KinCirclePalette.of(context);
     final String? code = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: KinCirclePalette.surface,
+      backgroundColor: palette.surface,
       isScrollControlled: true,
       builder: (BuildContext context) {
         return Padding(
@@ -87,6 +88,7 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return NavShell(
       currentIndex: 1,
       title: 'Create Circle',
@@ -100,11 +102,11 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
                 width: 76,
                 height: 76,
                 decoration: BoxDecoration(
-                  color: KinCirclePalette.surface,
+                  color: palette.surface,
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: KinCirclePalette.border, width: 1),
+                  border: Border.all(color: palette.border, width: 1),
                 ),
-                child: const Icon(Icons.shield_moon_rounded, color: KinCirclePalette.accent, size: 34),
+                child: Icon(Icons.shield_moon_rounded, color: palette.accent, size: 34),
               ),
               const SizedBox(height: 20),
               Text(
@@ -115,7 +117,7 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
               const SizedBox(height: 10),
               Text(
                 'Create a new family circle or join one with an invite code.',
-                style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+                style: KinCircleTypography.body14(color: palette.textMuted),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 22),

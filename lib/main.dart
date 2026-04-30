@@ -63,6 +63,7 @@ import 'services/sage_recap_service.dart';
 import 'screens/privacy/privacy_dashboard_screen.dart';
 import 'screens/privacy/privacy_tour_screen.dart';
 import 'design/dark_academia_theme.dart';
+import 'design/kincircle_screen_tokens.dart';
 import 'screens/emotion_feed_screen.dart';
 import 'screens/wellbeing_screen.dart';
 import 'widgets/companion_widgets.dart';
@@ -459,82 +460,85 @@ class _KinCircleAppState extends State<KinCircleApp> {
               ? DarkAcademiaTheme.moodyCalmTheme
               : kinTheme(brightness: Brightness.dark, pro: pro);
 
-           return MaterialApp(
-             title: 'Kin Arc',
-             theme: light,
-             darkTheme: dark,
-             themeMode: context.watch<ThemeController>().mode,
-             home: const AuthWrapper(),
-             routes: {
-               '/welcome': (context) => const WelcomeScreen(),
-               '/auth': (context) => const LoginSignupScreen(),
-               '/home': (context) => const DashboardScreen(),
-               '/dashboard': (context) => const DashboardScreen(),
-               '/privacy-tour': (context) => const PrivacyTourScreen(),
-               '/map': (context) => const MapScreen(),
-               '/circles': (context) => const CirclesScreen(),
-               '/places': (context) => const PlacesScreen(),
-               '/permissions': (context) => const PermissionScreen(),
-               '/help': (context) => const HelpScreen(),
-               '/onboarding': (context) {
-                 final uid =
-                     Provider.of<AuthService>(context, listen: false).user?.uid;
-                 return uid == null
-                     ? const WelcomeScreen()
-                     : OnboardingScreen(userId: uid);
+return KinCirclePalette(
+              data: const KinCirclePaletteData(),
+              child: MaterialApp(
+                title: 'Kin Arc',
+                theme: light,
+                darkTheme: dark,
+                themeMode: context.watch<ThemeController>().mode,
+                home: const AuthWrapper(),
+                routes: {
+                  '/welcome': (context) => const WelcomeScreen(),
+                  '/auth': (context) => const LoginSignupScreen(),
+                  '/home': (context) => const DashboardScreen(),
+                  '/dashboard': (context) => const DashboardScreen(),
+                  '/privacy-tour': (context) => const PrivacyTourScreen(),
+                  '/map': (context) => const MapScreen(),
+                  '/circles': (context) => const CirclesScreen(),
+                  '/places': (context) => const PlacesScreen(),
+                  '/permissions': (context) => const PermissionScreen(),
+                  '/help': (context) => const HelpScreen(),
+                  '/onboarding': (context) {
+                    final uid =
+                        Provider.of<AuthService>(context, listen: false).user?.uid;
+                    return uid == null
+                        ? const WelcomeScreen()
+                        : OnboardingScreen(userId: uid);
+                  },
+                  '/invite': (context) => const InviteScreen(),
+                  '/create-family': (context) => const CreateFamilyScreen(),
+                  '/manage-family': (context) => const ManageFamilyScreen(),
+                  '/join-family': (context) => const JoinFamilyScreen(),
+                  '/circle-detail': (context) => const CircleDetailScreen(),
+                  '/settings': (context) => const SettingsScreen(),
+                  '/alerts': (context) => const AlertsScreen(),
+                  '/add-geofence': (context) => const AddGeofenceScreen(),
+                  '/driver-safety': (context) => const DriverSafetyHubScreen(),
+                  '/accept-invite': (context) => const Scaffold(),
+                  '/manage-invites': (context) => const ManageInvitesScreen(),
+                  '/diagnostics': (context) => const DiagnosticsScreen(),
+                  '/account': (context) => const ProfileManagementScreen(),
+                  '/subscription': (context) =>
+                      const SubscriptionManagementScreen(),
+                  '/paywall': (context) => const ProPaywallScreen(),
+                  '/emergency-contacts': (context) =>
+                      const EmergencyContactsScreen(),
+                  '/support/remote': (context) => const RemoteSupportScreen(),
+                  '/settings/sensory-controls': (context) =>
+                      const SensoryControlsScreen(),
+                  '/community/feed': (context) => const EmotionFeedScreen(),
+                  '/companion/select': (context) =>
+                      const CompanionSelectionScreen(),
+                  '/analytics/wellbeing': (context) => const WellbeingScreen(),
+                  '/wellbeing': (context) => const WellbeingScreen(),
+                  '/privacy/dashboard': (context) => const PrivacyDashboardScreen(),
+                },
+               builder: (context, widget) {
+                 // Brand-aligned fatal error UI with retry and support
+                 ErrorWidget.builder = (FlutterErrorDetails details) {
+                   return Scaffold(
+                     body: Center(
+                       child: ErrorHandler(
+                         message: details.exceptionAsString(),
+                         onRetry: () {
+                           // Soft reset to splash
+                           Navigator.of(context).pushAndRemoveUntil(
+                             MaterialPageRoute(
+                                 builder: (_) => const SplashScreen()),
+                             (_) => false,
+                           );
+                         },
+                       ),
+                     ),
+                   );
+                 };
+                 return widget ?? const ErrorHandler();
                },
-               '/invite': (context) => const InviteScreen(),
-               '/create-family': (context) => const CreateFamilyScreen(),
-               '/manage-family': (context) => const ManageFamilyScreen(),
-               '/join-family': (context) => const JoinFamilyScreen(),
-               '/circle-detail': (context) => const CircleDetailScreen(),
-               '/settings': (context) => const SettingsScreen(),
-               '/alerts': (context) => const AlertsScreen(),
-               '/add-geofence': (context) => const AddGeofenceScreen(),
-               '/driver-safety': (context) => const DriverSafetyHubScreen(),
-               '/accept-invite': (context) => const Scaffold(),
-               '/manage-invites': (context) => const ManageInvitesScreen(),
-               '/diagnostics': (context) => const DiagnosticsScreen(),
-               '/account': (context) => const ProfileManagementScreen(),
-               '/subscription': (context) =>
-                   const SubscriptionManagementScreen(),
-               '/paywall': (context) => const ProPaywallScreen(),
-               '/emergency-contacts': (context) =>
-                   const EmergencyContactsScreen(),
-               '/support/remote': (context) => const RemoteSupportScreen(),
-               '/settings/sensory-controls': (context) =>
-                   const SensoryControlsScreen(),
-               '/community/feed': (context) => const EmotionFeedScreen(),
-               '/companion/select': (context) =>
-                   const CompanionSelectionScreen(),
-               '/analytics/wellbeing': (context) => const WellbeingScreen(),
-               '/wellbeing': (context) => const WellbeingScreen(),
-               '/privacy/dashboard': (context) => const PrivacyDashboardScreen(),
-             },
-            builder: (context, widget) {
-              // Brand-aligned fatal error UI with retry and support
-              ErrorWidget.builder = (FlutterErrorDetails details) {
-                return Scaffold(
-                  body: Center(
-                    child: ErrorHandler(
-                      message: details.exceptionAsString(),
-                      onRetry: () {
-                        // Soft reset to splash
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                              builder: (_) => const SplashScreen()),
-                          (_) => false,
-                        );
-                      },
-                    ),
-                  ),
-                );
-              };
-              return widget ?? const ErrorHandler();
-            },
-            navigatorKey: globalNavigatorKey,
-            debugShowCheckedModeBanner: false,
-          );
+                navigatorKey: globalNavigatorKey,
+                debugShowCheckedModeBanner: false,
+              ),
+            );
         },
       ),
     );

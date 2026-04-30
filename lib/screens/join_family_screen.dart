@@ -97,6 +97,7 @@ class _JoinFamilyScreenState extends State<JoinFamilyScreen> {
   }
 
   Widget _body() {
+    final palette = KinCirclePalette.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -107,11 +108,11 @@ class _JoinFamilyScreenState extends State<JoinFamilyScreen> {
               width: 76,
               height: 76,
               decoration: BoxDecoration(
-                color: KinCirclePalette.surface,
+                color: palette.surface,
                 borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: KinCirclePalette.border, width: 1),
+                border: Border.all(color: palette.border, width: 1),
               ),
-              child: const Icon(Icons.group_add_rounded, color: KinCirclePalette.accent, size: 34),
+              child: Icon(Icons.group_add_rounded, color: palette.accent, size: 34),
             ),
             const SizedBox(height: 20),
             Text(
@@ -122,7 +123,7 @@ class _JoinFamilyScreenState extends State<JoinFamilyScreen> {
             const SizedBox(height: 10),
             Text(
               'Enter an invite code to join a family circle.',
-              style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+              style: KinCircleTypography.body14(color: palette.textMuted),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 22),
@@ -145,7 +146,7 @@ class _JoinFamilyScreenState extends State<JoinFamilyScreen> {
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(
                   _error!,
-                  style: KinCircleTypography.caption12(color: KinCirclePalette.error),
+                  style: KinCircleTypography.caption12(color: palette.error),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -154,7 +155,7 @@ class _JoinFamilyScreenState extends State<JoinFamilyScreen> {
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(
                   'Joining: $_familyName',
-                  style: KinCircleTypography.caption12(color: KinCirclePalette.success),
+                  style: KinCircleTypography.caption12(color: palette.success),
                   textAlign: TextAlign.center,
                 ),
               ),

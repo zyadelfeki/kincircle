@@ -301,12 +301,13 @@ class _AlertsScreenState extends State<AlertsScreen> {
   }
 
   Widget _loadingView() {
+    final palette = KinCirclePalette.of(context);
     return ListView.builder(
       itemCount: 5,
       itemBuilder: (_, int index) {
         return Shimmer.fromColors(
-          baseColor: KinCirclePalette.surfaceAlt,
-          highlightColor: KinCirclePalette.border,
+          baseColor: palette.surfaceAlt,
+          highlightColor: palette.border,
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             height: 70,
@@ -329,6 +330,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
   }
 
   Widget _emptyView() {
+    final palette = KinCirclePalette.of(context);
     return RefreshIndicator(
       onRefresh: _load,
       child: SingleChildScrollView(
@@ -341,7 +343,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.notifications_off_outlined, color: KinCirclePalette.textMuted, size: 48),
+                  Icon(Icons.notifications_off_outlined, color: palette.textMuted, size: 48),
                   const SizedBox(height: 10),
                   Text(
                     _showUnreadOnly ? 'No unread alerts' : 'No alerts yet',
@@ -352,7 +354,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     _showUnreadOnly
                         ? 'All alerts are already marked as read.'
                         : 'No alerts yet. New family safety alerts will appear here.',
-                    style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+                    style: KinCircleTypography.body14(color: palette.textMuted),
                   ),
                 ],
               ),
@@ -364,12 +366,13 @@ class _AlertsScreenState extends State<AlertsScreen> {
   }
 
   Widget _buildSectionHeader(String label) {
+    final palette = KinCirclePalette.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
       child: Text(
         label,
         style: KinCircleTypography.caption12(
-          color: KinCirclePalette.textMuted,
+          color: palette.textMuted,
           weight: FontWeight.w700,
         ),
       ),
@@ -377,6 +380,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
   }
 
   Widget _buildAlertTile(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final palette = KinCirclePalette.of(context);
     final Map<String, dynamic> data = doc.data();
     final String name = _resolveName(data);
     final String title = _resolveTitle(data, name);
@@ -389,19 +393,19 @@ class _AlertsScreenState extends State<AlertsScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
         color: seen
-            ? KinCirclePalette.surface
-            : KinCirclePalette.surfaceAlt.withValues(alpha: 0.75),
+            ? palette.surface
+            : palette.surfaceAlt.withValues(alpha: 0.75),
         borderRadius: BorderRadius.circular(14),
         border: Border(
           left: BorderSide(
             color: seen
-                ? KinCirclePalette.border
-                : KinCirclePalette.accent,
+                ? palette.border
+                : palette.accent,
             width: 3,
           ),
-          top: const BorderSide(color: KinCirclePalette.border, width: 1),
-          right: const BorderSide(color: KinCirclePalette.border, width: 1),
-          bottom: const BorderSide(color: KinCirclePalette.border, width: 1),
+          top: BorderSide(color: palette.border, width: 1),
+          right: BorderSide(color: palette.border, width: 1),
+          bottom: BorderSide(color: palette.border, width: 1),
         ),
       ),
       child: ListTile(
@@ -417,10 +421,10 @@ class _AlertsScreenState extends State<AlertsScreen> {
               ? Icons.sos_rounded
               : Icons.notifications_none_rounded,
           color: urgent
-              ? KinCirclePalette.error
+              ? palette.error
               : (seen
-                  ? KinCirclePalette.textMuted
-                  : KinCirclePalette.accent),
+                  ? palette.textMuted
+                  : palette.accent),
         ),
         title: Row(
           children: [
@@ -429,8 +433,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 width: 8,
                 height: 8,
                 margin: const EdgeInsets.only(right: 8),
-                decoration: const BoxDecoration(
-                  color: KinCirclePalette.accent,
+                decoration: BoxDecoration(
+                  color: palette.accent,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -454,7 +458,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: KinCircleTypography.caption12(
-                  color: KinCirclePalette.textMuted,
+                  color: palette.textMuted,
                 ),
               ),
               const SizedBox(height: 4),
@@ -462,8 +466,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 timeLabel,
                 style: KinCircleTypography.caption12(
                   color: seen
-                      ? KinCirclePalette.textMuted
-                      : KinCirclePalette.accent,
+                      ? palette.textMuted
+                      : palette.accent,
                   weight: FontWeight.w600,
                 ),
               ),
@@ -471,9 +475,9 @@ class _AlertsScreenState extends State<AlertsScreen> {
           ),
         ),
         trailing: seen
-            ? const Icon(
+            ? Icon(
                 Icons.chevron_right_rounded,
-                color: KinCirclePalette.textMuted,
+                color: palette.textMuted,
               )
             : TextButton(
                 onPressed: () => _markRead(doc),
@@ -505,6 +509,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
           !(doc.data()['seen'] as bool? ?? false),
     );
 
+    final palette = KinCirclePalette.of(context);
+
     return Column(
       children: [
         Padding(
@@ -517,9 +523,9 @@ class _AlertsScreenState extends State<AlertsScreen> {
             children: [
               FilterChip(
                 selected: _showUnreadOnly,
-                backgroundColor: KinCirclePalette.surfaceAlt,
-                selectedColor: KinCirclePalette.accent,
-                side: const BorderSide(color: KinCirclePalette.border),
+                backgroundColor: palette.surfaceAlt,
+                selectedColor: palette.accent,
+                side: BorderSide(color: palette.border),
                 showCheckmark: true,
                 checkmarkColor: Colors.black,
                 label: Text(
@@ -527,7 +533,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   style: KinCircleTypography.caption12(
                     color: _showUnreadOnly
                         ? Colors.black
-                        : KinCirclePalette.textMuted,
+                        : palette.textMuted,
                     weight: FontWeight.w600,
                   ),
                 ),
@@ -592,6 +598,7 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -601,21 +608,21 @@ class _ErrorState extends StatelessWidget {
             Container(
               width: 72,
               height: 72,
-              decoration: const BoxDecoration(
-                color: Color(0xFF1E2440),
+              decoration: BoxDecoration(
+                color: palette.border,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.cloud_off_rounded,
-                color: Color(0xFF00C9A7),
+                color: palette.accent,
                 size: 32,
               ),
             ),
             const SizedBox(height: 20),
             Text(
               title,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: palette.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
@@ -624,8 +631,8 @@ class _ErrorState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF8A8FA8),
+              style: TextStyle(
+                color: palette.textMuted,
                 fontSize: 14,
                 height: 1.5,
               ),
@@ -636,14 +643,14 @@ class _ErrorState extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: onRetry,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00C9A7),
+                  backgroundColor: palette.accent,
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'Try Again',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,

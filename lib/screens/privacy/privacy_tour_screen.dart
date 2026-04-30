@@ -94,17 +94,18 @@ class _PrivacyTourScreenState extends State<PrivacyTourScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     if (_checkingSeen) {
-      return const Scaffold(
-        backgroundColor: KinCirclePalette.background,
-        body: SizedBox.expand(),
+      return Scaffold(
+        backgroundColor: palette.background,
+        body: const SizedBox.expand(),
       );
     }
 
     final bool isLastPage = _currentPage == _pages.length - 1;
 
     return Scaffold(
-      backgroundColor: KinCirclePalette.background,
+      backgroundColor: palette.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -166,6 +167,7 @@ class _PrivacyTourPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 18, 24, 8),
       child: Column(
@@ -178,15 +180,15 @@ class _PrivacyTourPage extends StatelessWidget {
                   width: 132,
                   height: 132,
                   decoration: BoxDecoration(
-                    color: KinCirclePalette.surface,
+                    color: palette.surface,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: KinCirclePalette.border,
+                      color: palette.border,
                     ),
                   ),
                   child: Icon(
                     page.icon,
-                    color: KinCirclePalette.accent,
+                    color: palette.accent,
                     size: 56,
                   ),
                 ),
@@ -203,7 +205,7 @@ class _PrivacyTourPage extends StatelessWidget {
                   page.body,
                   textAlign: TextAlign.center,
                   style: KinCircleTypography.body14(
-                    color: KinCirclePalette.textMuted,
+                    color: palette.textMuted,
                   ),
                 ),
               ],
@@ -247,6 +249,7 @@ class _PageDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List<Widget>.generate(pageCount, (int index) {
@@ -258,8 +261,8 @@ class _PageDots extends StatelessWidget {
           width: active ? 24 : 10,
           decoration: BoxDecoration(
             color: active
-                ? KinCirclePalette.accent
-                : KinCirclePalette.textMuted.withValues(alpha: 0.7),
+                ? palette.accent
+                : palette.textMuted.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(999),
           ),
         );

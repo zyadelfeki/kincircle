@@ -151,19 +151,20 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
     required Widget icon,
     required VoidCallback? onPressed,
   }) {
+    final palette = KinCirclePalette.of(context);
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: KinCirclePalette.surface,
-          foregroundColor: KinCirclePalette.textPrimary,
+          backgroundColor: palette.surface,
+          foregroundColor: palette.textPrimary,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(
-              color: KinCirclePalette.border,
+            side: BorderSide(
+              color: palette.border,
               width: 1,
             ),
           ),
@@ -181,7 +182,7 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: KinCirclePalette.textPrimary,
+                color: palette.textPrimary,
               ),
             ),
           ],
@@ -225,12 +226,13 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    const Color background = KinCirclePalette.background;
-    const Color inputSurface = KinCirclePalette.surfaceAlt;
-    const Color border = KinCirclePalette.border;
-    const Color accent = KinCirclePalette.accent;
-    const Color textPrimary = KinCirclePalette.textPrimary;
-    const Color textMuted = KinCirclePalette.textMuted;
+    final palette = KinCirclePalette.of(context);
+    final background = palette.background;
+    final inputSurface = palette.surfaceAlt;
+    final border = palette.border;
+    final accent = palette.accent;
+    final textPrimary = palette.textPrimary;
+    final textMuted = palette.textMuted;
     final heading = _isLoginView ? 'Welcome back' : 'Create account';
     final subtitle = _isLoginView
         ? 'Sign in to your account.'
@@ -509,11 +511,11 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                                     fontSize: 16,
                                     color: textPrimary,
                                   ),
-                                  children: _isLoginView
+children: _isLoginView
                                       ? [
-                                        const TextSpan(
-                                              text: "Don't have an account? "),
                                           const TextSpan(
+                                              text: "Don't have an account? "),
+                                          TextSpan(
                                             text: 'Sign Up',
                                             style: TextStyle(
                                               color: accent,
@@ -525,7 +527,7 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                                           const TextSpan(
                                               text:
                                                   'Already have an account? '),
-                                          const TextSpan(
+                                          TextSpan(
                                             text: 'Log In',
                                             style: TextStyle(
                                               color: accent,
