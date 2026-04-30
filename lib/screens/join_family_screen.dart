@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 
-import '../../design/kincircle_screen_tokens.dart';
-import '../../services/firestore_service.dart';
-import '../../utils/link_builder.dart';
-import '../../widgets/nav_shell.dart';
+import '../design/kincircle_screen_tokens.dart';
+import '../services/firestore_service.dart';
+import '../utils/link_builder.dart';
+import '../widgets/nav_shell.dart';
 import 'package:clipboard/clipboard.dart';
 
 class JoinFamilyScreen extends StatefulWidget {
@@ -117,7 +117,7 @@ class _JoinFamilyScreenState extends State<JoinFamilyScreen> {
             const SizedBox(height: 20),
             Text(
               'Join a Circle',
-              style: KinCircleTypography.heading22(),
+              style: KinCircleTypography.heading22(color: palette.textPrimary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
@@ -128,17 +128,18 @@ class _JoinFamilyScreenState extends State<JoinFamilyScreen> {
             ),
             const SizedBox(height: 22),
             Container(
-              decoration: KinCircleDecorations.input(),
+              decoration: KinCircleDecorations.input(palette),
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: TextField(
                 controller: _codeController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   border: InputBorder.none,
                   hintText: 'Enter invite code',
+                  hintStyle: KinCircleTypography.body14(color: palette.textMuted),
                 ),
                 textCapitalization: TextCapitalization.characters,
                 autofocus: true,
-                style: KinCircleTypography.body16(),
+                style: KinCircleTypography.body16(color: palette.textPrimary),
               ),
             ),
             if (_error != null)

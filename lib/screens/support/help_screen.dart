@@ -114,7 +114,6 @@ class _HelpScreenState extends State<HelpScreen> {
   }
 
   Future<void> _launchStore() async {
-    // TODO: replace with real App Store / Play Store URL.
     final Uri uri = Uri.parse('https://play.google.com/store/apps/details?id=com.example.kincircle');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -127,20 +126,21 @@ class _HelpScreenState extends State<HelpScreen> {
   }
 
   Widget _searchBar() {
+    final palette = KinCirclePalette.of(context);
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 8),
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: KinCircleDecorations.input(),
+      decoration: KinCircleDecorations.input(palette),
       child: TextField(
         controller: _searchController,
         onChanged: (String value) {
           setState(() => _query = value);
         },
-        style: KinCircleTypography.body14(),
+        style: KinCircleTypography.body14(color: palette.textPrimary),
         decoration: InputDecoration(
-          icon: Icon(Icons.search, color: KinCirclePalette.of(context).textMuted),
+          icon: Icon(Icons.search, color: palette.textMuted),
           hintText: 'Search help articles',
-          hintStyle: KinCircleTypography.body14(color: KinCirclePalette.of(context).textMuted),
+          hintStyle: KinCircleTypography.body14(color: palette.textMuted),
           border: InputBorder.none,
         ),
       ),
@@ -173,13 +173,20 @@ class _HelpScreenState extends State<HelpScreen> {
       children: groups.map((_FaqGroup group) {
         return Container(
           margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-          decoration: KinCircleDecorations.card(),
+          decoration: BoxDecoration(
+            color: palette.surface,
+            borderRadius: KinCircleRadii.card,
+            border: Border.all(color: palette.border, width: 1),
+          ),
           child: Theme(
             data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
             child: ExpansionTile(
               title: Text(
                 group.category,
-                style: KinCircleTypography.body14(weight: FontWeight.w600),
+                style: KinCircleTypography.body14(
+                  color: palette.textPrimary,
+                  weight: FontWeight.w600,
+                ),
               ),
               iconColor: palette.accent,
               collapsedIconColor: palette.textMuted,
@@ -199,7 +206,10 @@ class _HelpScreenState extends State<HelpScreen> {
                       children: [
                         Text(
                           entry.question,
-                          style: KinCircleTypography.body14(weight: FontWeight.w600),
+                          style: KinCircleTypography.body14(
+                            color: palette.textPrimary,
+                            weight: FontWeight.w600,
+                          ),
                         ),
                         const SizedBox(height: 6),
                         Text(
@@ -221,14 +231,22 @@ class _HelpScreenState extends State<HelpScreen> {
   }
 
   Widget _contactSection() {
+    final palette = KinCirclePalette.of(context);
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       padding: const EdgeInsets.all(14),
-      decoration: KinCircleDecorations.card(),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        borderRadius: KinCircleRadii.card,
+        border: Border.all(color: palette.border, width: 1),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Contact Support', style: KinCircleTypography.cardTitle16()),
+          Text(
+            'Contact Support',
+            style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
+          ),
           const SizedBox(height: 10),
           ElevatedButton(
             onPressed: _launchEmail,
@@ -246,12 +264,15 @@ class _HelpScreenState extends State<HelpScreen> {
             dense: true,
             contentPadding: EdgeInsets.zero,
             onTap: _launchStore,
-            leading: const Icon(Icons.star_rate_rounded, color: KinCirclePalette.accent),
+            leading: Icon(Icons.star_rate_rounded, color: palette.accent),
             title: Text(
               'Rate the app',
-              style: KinCircleTypography.body14(weight: FontWeight.w600),
+              style: KinCircleTypography.body14(
+                color: palette.textPrimary,
+                weight: FontWeight.w600,
+              ),
             ),
-            trailing: const Icon(Icons.chevron_right_rounded, color: KinCirclePalette.textMuted),
+            trailing: Icon(Icons.chevron_right_rounded, color: palette.textMuted),
           ),
         ],
       ),

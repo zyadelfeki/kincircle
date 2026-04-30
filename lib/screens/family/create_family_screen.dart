@@ -41,30 +41,32 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
       context: context,
       backgroundColor: palette.surface,
       isScrollControlled: true,
-      builder: (BuildContext context) {
+      builder: (BuildContext ctx) {
         return Padding(
           padding: EdgeInsets.fromLTRB(
             16,
             16,
             16,
-            16 + MediaQuery.of(context).viewInsets.bottom,
+            16 + MediaQuery.of(ctx).viewInsets.bottom,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 'Join with invite code',
-                style: KinCircleTypography.cardTitle16(),
+                style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
               ),
               const SizedBox(height: 10),
               Container(
-                decoration: KinCircleDecorations.input(),
+                decoration: KinCircleDecorations.input(palette),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: TextField(
                   controller: codeController,
-                  decoration: const InputDecoration(
+                  style: KinCircleTypography.body14(color: palette.textPrimary),
+                  decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: 'Enter invite code',
+                    hintStyle: KinCircleTypography.body14(color: palette.textMuted),
                   ),
                   textCapitalization: TextCapitalization.characters,
                 ),
@@ -72,7 +74,7 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
               const SizedBox(height: 12),
               ElevatedButton(
                 style: KinCircleButtons.primary(),
-                onPressed: () => Navigator.of(context).pop(codeController.text.trim()),
+                onPressed: () => Navigator.of(ctx).pop(codeController.text.trim()),
                 child: const Text('Continue'),
               ),
             ],
@@ -111,7 +113,7 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
               const SizedBox(height: 20),
               Text(
                 "You're not in a Circle yet",
-                style: KinCircleTypography.heading22(),
+                style: KinCircleTypography.heading22(color: palette.textPrimary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
