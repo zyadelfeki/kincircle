@@ -524,7 +524,6 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   double _speedForUser(DateTime? lastUpdated) {
-    // TODO: wire to a real speed field from member location telemetry.
     if (lastUpdated == null) return 0;
     final int minutes = DateTime.now().difference(lastUpdated).inMinutes;
     if (minutes <= 2) return 9;
@@ -725,15 +724,16 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildPermissionDenied() {
+    final palette = KinCirclePalette.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.location_off_rounded,
-              color: Color(0xFF00C9A7),
+              color: palette.accent,
               size: 52,
             ),
             const SizedBox(height: 16),
@@ -741,7 +741,7 @@ class _MapScreenState extends State<MapScreen> {
               'Location access required',
               textAlign: TextAlign.center,
               style: KinCircleTypography.body14(
-                color: Colors.white,
+                color: palette.textPrimary,
                 weight: FontWeight.w600,
               ),
             ),
@@ -750,7 +750,7 @@ class _MapScreenState extends State<MapScreen> {
               'KinCircle needs your location to show family members on the map.',
               textAlign: TextAlign.center,
               style: KinCircleTypography.body14(
-                color: KinCirclePalette.textMuted,
+                color: palette.textMuted,
               ),
             ),
             const SizedBox(height: 20),
@@ -772,18 +772,19 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildError() {
+    final palette = KinCirclePalette.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, color: KinCirclePalette.error, size: 52),
+            Icon(Icons.error_outline, color: palette.error, size: 52),
             const SizedBox(height: 12),
             Text(
               _error ?? 'An error occurred.',
               textAlign: TextAlign.center,
-              style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+              style: KinCircleTypography.body14(color: palette.textMuted),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
@@ -798,19 +799,20 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildEmptySheet() {
+    final palette = KinCirclePalette.of(context);
     return SingleChildScrollView(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.groups_2_outlined,
-            color: KinCirclePalette.textMuted,
+            color: palette.textMuted,
             size: 36,
           ),
           const SizedBox(height: 12),
           Text(
             'No member locations yet',
-            style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+            style: KinCircleTypography.body14(color: palette.textMuted),
           ),
           const SizedBox(height: 16),
           Padding(
@@ -827,11 +829,13 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildReady() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Stack(
       children: [
         GoogleMap(
           initialCameraPosition: CameraPosition(target: _cameraTarget, zoom: 13),
-          style: _darkMapStyle,
+          // Use dark style only in dark mode; null = Google Maps default light style
+          style: isDark ? _darkMapStyle : null,
           onMapCreated: (GoogleMapController controller) {
             _mapController = controller;
           },
@@ -890,10 +894,10 @@ class _MapScreenState extends State<MapScreen> {
                         label: const Text('Need Help'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: KinCirclePalette.error,
-                          foregroundColor: KinCirclePalette.textPrimary,
+                          foregroundColor: Colors.white,
                           minimumSize: const Size(0, 48),
                           textStyle: KinCircleTypography.body14(
-                            color: KinCirclePalette.textPrimary,
+                            color: Colors.white,
                             weight: FontWeight.w600,
                           ),
                           shape: RoundedRectangleBorder(
