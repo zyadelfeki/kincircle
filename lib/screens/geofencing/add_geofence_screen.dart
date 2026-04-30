@@ -4,15 +4,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-// Removed google_maps_webservice in favor of direct HTTP API in PlacesService
 
 import '../../design/kincircle_screen_tokens.dart';
 import '../../services/places_service.dart';
 import '../../services/pro_gating_service.dart';
 import '../../services/firestore_service.dart';
 
-/// Screen that allows the user to search for a place using Google Places
-/// Autocomplete, preview it on a map, and define/confirm a geofence.
 class AddGeofenceScreen extends StatefulWidget {
   const AddGeofenceScreen({super.key});
 
@@ -21,6 +18,21 @@ class AddGeofenceScreen extends StatefulWidget {
 }
 
 class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
+  static const String _darkMapStyle = '''
+[
+  {"elementType":"geometry","stylers":[{"color":"#1d2c4d"}]},
+  {"elementType":"labels.text.fill","stylers":[{"color":"#8ec3b9"}]},
+  {"elementType":"labels.text.stroke","stylers":[{"color":"#1a3646"}]},
+  {"featureType":"administrative.country","elementType":"geometry.stroke","stylers":[{"color":"#4b6878"}]},
+  {"featureType":"landscape.natural","elementType":"geometry","stylers":[{"color":"#023e58"}]},
+  {"featureType":"poi","elementType":"geometry","stylers":[{"color":"#283d6a"}]},
+  {"featureType":"road","elementType":"geometry","stylers":[{"color":"#304a7d"}]},
+  {"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#2c6675"}]},
+  {"featureType":"transit.station","elementType":"geometry","stylers":[{"color":"#3a4762"}]},
+  {"featureType":"water","elementType":"geometry","stylers":[{"color":"#0e1626"}]}
+]
+''';
+
   late final PlacesService _placesService;
 
   final TextEditingController _searchController = TextEditingController();
@@ -30,7 +42,7 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
   List<PlacePrediction> _suggestions = [];
   Timer? _debounce;
 
-  LatLng _mapCenter = const LatLng(30.0444, 31.2357); // Default Cairo
+  LatLng _mapCenter = const LatLng(30.0444, 31.2357);
   final Set<Marker> _markers = {};
 
   static const int _debounceMilliseconds = 350;
@@ -75,7 +87,7 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
     setState(() => _suggestions = []);
 
     try {
-      final placeId = prediction.placeId; // non-null
+      final placeId = prediction.placeId;
       final coords = await _placesService.getPlaceDetails(placeId);
       final desc = prediction.description;
       _nameController.text = desc;
@@ -104,15 +116,18 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
   @override
   Widget build(BuildContext context) {
     final palette = KinCirclePalette.of(context);
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: palette.background,
       appBar: AppBar(
         backgroundColor: palette.background,
-        title: Text('Create Geofence', style: KinCircleTypography.cardTitle16(color: palette.textPrimary)),
+        title: Text(
+          'Add safe place',
+          style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
+        ),
       ),
       body: Column(
         children: [
-          // Search bar
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
@@ -140,7 +155,6 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
               onChanged: _onSearchChanged,
             ),
           ),
-          // Suggestion list
           if (_suggestions.isNotEmpty)
             Expanded(
               child: ListView.builder(
@@ -148,7 +162,10 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                 itemBuilder: (context, index) {
                   final p = _suggestions[index];
                   return ListTile(
-                    title: Text(p.description, style: KinCircleTypography.body14(color: palette.textPrimary)),
+                    title: Text(
+                      p.description,
+                      style: KinCircleTypography.body14(color: palette.textPrimary),
+                    ),
                     tileColor: palette.surface,
                     onTap: () => _onSuggestionTap(p),
                   );
@@ -156,7 +173,6 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
               ),
             )
           else
-            // Map & form fields
             Expanded(
               child: Column(
                 children: [
@@ -165,6 +181,8 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                       onMapCreated: (c) => _mapController = c,
                       initialCameraPosition:
                           CameraPosition(target: _mapCenter, zoom: 12),
+                      // Map style follows app theme
+                      style: isDark ? _darkMapStyle : null,
                       markers: _markers,
                       myLocationEnabled: true,
                       zoomGesturesEnabled: true,
@@ -181,7 +199,7 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                       controller: _nameController,
                       style: KinCircleTypography.body14(color: palette.textPrimary),
                       decoration: InputDecoration(
-                        labelText: 'Geofence Name',
+                        labelText: 'Place name',
                         labelStyle: KinCircleTypography.caption12(color: palette.textMuted),
                         filled: true,
                         fillColor: palette.surface,
@@ -201,55 +219,60 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                         horizontal: 8.0, vertical: 12),
                     child: SizedBox(
                       width: double.infinity,
-                       child: ElevatedButton(
-                         style: ElevatedButton.styleFrom(
-                           backgroundColor: palette.accent,
-                           foregroundColor: palette.textPrimary,
-                         ),
-                         onPressed: () async {
-                           final ctx = context;
-                           final messenger = ScaffoldMessenger.of(ctx);
-                           final name = _nameController.text.trim();
-                           if (name.isEmpty) {
-                             messenger.showSnackBar(const SnackBar(content: Text('Please enter a name.')));
-                             return;
-                           }
-                            if (_markers.isEmpty) {
-                              messenger.showSnackBar(const SnackBar(content: Text('Please select a location first.')));
-                              return;
-                            }
-                            final LatLng selectedPosition = _markers.first.position;
-                            final famId = await FirestoreService().getCurrentFamilyId();
-                           if (!ctx.mounted) return;
-                           if (famId != null) {
-                             final ok = await ProGatingService().ensureCanAddSafeZone(ctx, famId);
-                             if (!ctx.mounted) return;
-                             if (!ok) return;
-                           }
-                           final uid = FirebaseAuth.instance.currentUser?.uid;
-                           if (uid == null || famId == null) {
-                             messenger.showSnackBar(const SnackBar(content: Text('Not signed in or no family found.')));
-                             return;
-                           }
-                           try {
-                             await FirebaseFirestore.instance.collection('geofences').add({
-                                'name': name,
-                                'familyId': famId,
-                                'userId': uid,
-                                'lat': selectedPosition.latitude,
-                                'lng': selectedPosition.longitude,
-                                'radius': 200.0,
-                                'createdAt': FieldValue.serverTimestamp(),
-                              });
-                             if (!ctx.mounted) return;
-                             Navigator.of(ctx).pop(true);
-                           } catch (e) {
-                             if (!ctx.mounted) return;
-                             messenger.showSnackBar(SnackBar(content: Text('Failed to save: $e')));
-                           }
-                         },
-                         child: const Text('Save Geofence'),
-                       ),
+                      child: ElevatedButton(
+                        style: KinCircleButtons.primary(),
+                        onPressed: () async {
+                          final ctx = context;
+                          final messenger = ScaffoldMessenger.of(ctx);
+                          final name = _nameController.text.trim();
+                          if (name.isEmpty) {
+                            messenger.showSnackBar(
+                              const SnackBar(content: Text('Please enter a place name.')),
+                            );
+                            return;
+                          }
+                          if (_markers.isEmpty) {
+                            messenger.showSnackBar(
+                              const SnackBar(content: Text('Please select a location first.')),
+                            );
+                            return;
+                          }
+                          final LatLng selectedPosition = _markers.first.position;
+                          final famId = await FirestoreService().getCurrentFamilyId();
+                          if (!ctx.mounted) return;
+                          if (famId != null) {
+                            final ok = await ProGatingService().ensureCanAddSafeZone(ctx, famId);
+                            if (!ctx.mounted) return;
+                            if (!ok) return;
+                          }
+                          final uid = FirebaseAuth.instance.currentUser?.uid;
+                          if (uid == null || famId == null) {
+                            messenger.showSnackBar(
+                              const SnackBar(content: Text('Not signed in or no family found.')),
+                            );
+                            return;
+                          }
+                          try {
+                            await FirebaseFirestore.instance.collection('geofences').add({
+                              'name': name,
+                              'familyId': famId,
+                              'userId': uid,
+                              'lat': selectedPosition.latitude,
+                              'lng': selectedPosition.longitude,
+                              'radius': 200.0,
+                              'createdAt': FieldValue.serverTimestamp(),
+                            });
+                            if (!ctx.mounted) return;
+                            Navigator.of(ctx).pop(true);
+                          } catch (e) {
+                            if (!ctx.mounted) return;
+                            messenger.showSnackBar(
+                              SnackBar(content: Text('Failed to save: $e')),
+                            );
+                          }
+                        },
+                        child: const Text('Save place'),
+                      ),
                     ),
                   ),
                 ],
