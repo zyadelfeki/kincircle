@@ -22,7 +22,10 @@ class SafePlacesCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Safe Places', style: KinCircleTypography.cardTitle16()),
+            Text(
+              'Safe Places',
+              style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
+            ),
             const SizedBox(height: 10),
             Text(
               '$count',

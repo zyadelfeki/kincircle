@@ -32,7 +32,10 @@ class RecentActivityCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Recent Activity', style: KinCircleTypography.cardTitle16()),
+          Text(
+            'Recent Activity',
+            style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
+          ),
           const SizedBox(height: 8),
           if (items.isEmpty)
             Padding(
@@ -74,7 +77,10 @@ class RecentActivityCard extends StatelessWidget {
                         children: [
                           Text(
                             item.title,
-                            style: KinCircleTypography.body14(weight: FontWeight.w600),
+                            style: KinCircleTypography.body14(
+                              color: palette.textPrimary,
+                              weight: FontWeight.w600,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),

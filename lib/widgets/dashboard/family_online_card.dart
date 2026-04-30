@@ -21,7 +21,10 @@ class FamilyOnlineCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Members Online', style: KinCircleTypography.cardTitle16()),
+          Text(
+            'Members Online',
+            style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
+          ),
           const SizedBox(height: 10),
           if (totalCount == 0)
             Text(
