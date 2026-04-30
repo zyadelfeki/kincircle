@@ -16,6 +16,7 @@ class BatteryOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return DashboardCardContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,14 +26,14 @@ class BatteryOverviewCard extends StatelessWidget {
           if (member == null || percent == null)
             Text(
               'No battery telemetry available',
-              style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+              style: KinCircleTypography.caption12(color: palette.textMuted),
             )
           else ...[
             Row(
               children: [
                 Icon(
                   Icons.battery_alert_rounded,
-                  color: _colorFor(percent!),
+                  color: _colorFor(palette, percent!),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -47,7 +48,7 @@ class BatteryOverviewCard extends StatelessWidget {
                   child: Text(
                     '$percent%',
                     style: KinCircleTypography.body14(
-                      color: _colorFor(percent!),
+                      color: _colorFor(palette, percent!),
                       weight: FontWeight.w700,
                     ),
                   ),
@@ -60,8 +61,8 @@ class BatteryOverviewCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: percent! / 100,
                 minHeight: 8,
-                color: _colorFor(percent!),
-                backgroundColor: KinCirclePalette.surfaceAlt,
+                color: _colorFor(palette, percent!),
+                backgroundColor: palette.surfaceAlt,
               ),
             ),
           ],
@@ -70,9 +71,9 @@ class BatteryOverviewCard extends StatelessWidget {
     );
   }
 
-  Color _colorFor(int p) {
+  Color _colorFor(KinCirclePaletteData palette, int p) {
     if (p > 50) return const Color(0xFF22C55E);
     if (p >= 20) return const Color(0xFFF59E0B);
-    return KinCirclePalette.error;
+    return palette.error;
   }
 }

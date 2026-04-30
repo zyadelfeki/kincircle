@@ -17,6 +17,7 @@ class QuickActionsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return DashboardCardContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -29,7 +30,7 @@ class QuickActionsCard extends StatelessWidget {
                 child: _ActionButton(
                   icon: Icons.sos_rounded,
                   label: 'SOS',
-                  color: KinCirclePalette.error,
+                  color: palette.error,
                   onTap: onSosTap,
                 ),
               ),
@@ -38,7 +39,7 @@ class QuickActionsCard extends StatelessWidget {
                 child: _ActionButton(
                   icon: Icons.share_location_rounded,
                   label: 'Share Location',
-                  color: KinCirclePalette.accent,
+                  color: palette.accent,
                   onTap: onShareTap,
                 ),
               ),
@@ -47,7 +48,7 @@ class QuickActionsCard extends StatelessWidget {
                 child: _ActionButton(
                   icon: Icons.add_location_alt_rounded,
                   label: 'Add Place',
-                  color: Colors.white,
+                  color: palette.textPrimary,
                   onTap: onAddPlaceTap,
                 ),
               ),

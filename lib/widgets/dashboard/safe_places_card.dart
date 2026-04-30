@@ -15,6 +15,7 @@ class SafePlacesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return DashboardCardContainer(
       child: InkWell(
         onTap: onTap,
@@ -25,12 +26,12 @@ class SafePlacesCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               '$count',
-              style: KinCircleTypography.heading22(color: KinCirclePalette.accent),
+              style: KinCircleTypography.heading22(color: palette.accent),
             ),
             const SizedBox(height: 8),
             Text(
               count == 0 ? 'Add your first safe place' : 'Tap to manage safe places',
-              style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+              style: KinCircleTypography.caption12(color: palette.textMuted),
             ),
           ],
         ),

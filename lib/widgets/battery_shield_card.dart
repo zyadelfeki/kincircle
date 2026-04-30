@@ -43,6 +43,7 @@ class _BatteryShieldCardState extends State<BatteryShieldCard> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     if (_loading || _dismissed) {
       return const SizedBox.shrink();
     }
@@ -50,9 +51,9 @@ class _BatteryShieldCardState extends State<BatteryShieldCard> {
     return Container(
       margin: EdgeInsets.zero,
       decoration: BoxDecoration(
-        color: KinCirclePalette.surface,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: KinCirclePalette.border),
+        border: Border.all(color: palette.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.16),
@@ -74,15 +75,15 @@ class _BatteryShieldCardState extends State<BatteryShieldCard> {
                   height: 40,
                   margin: const EdgeInsets.only(top: 1, right: 10),
                   decoration: BoxDecoration(
-                    color: KinCirclePalette.accent,
+                    color: palette.accent,
                     borderRadius: KinCircleRadii.pill,
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.only(top: 2),
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
                   child: Icon(
                     Icons.shield_outlined,
-                    color: KinCirclePalette.accent,
+                    color: palette.accent,
                     size: 20,
                   ),
                 ),
@@ -91,16 +92,16 @@ class _BatteryShieldCardState extends State<BatteryShieldCard> {
                   child: Text(
                     'KinCircle uses adaptive polling - saving your battery vs. always-on GPS',
                     style: KinCircleTypography.body14(
-                      color: KinCirclePalette.textPrimary,
+                      color: palette.textPrimary,
                       weight: FontWeight.w600,
                     ),
                   ),
                 ),
                 IconButton(
                   onPressed: _dismiss,
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.close,
-                    color: KinCirclePalette.textMuted,
+                    color: palette.textMuted,
                   ),
                   splashRadius: 20,
                   tooltip: 'Dismiss',
@@ -111,7 +112,7 @@ class _BatteryShieldCardState extends State<BatteryShieldCard> {
             Text(
               'Updating every 30 seconds while moving, every 5 min when still',
               style: KinCircleTypography.caption12(
-                color: KinCirclePalette.textMuted,
+                color: palette.textMuted,
               ),
             ),
           ],

@@ -36,10 +36,11 @@ class BottomNav extends StatelessWidget {
         .handleError((_) {});
   }
 
-  Widget _buildIcon(_NavItem item, bool active) {
+  Widget _buildIcon(BuildContext context, _NavItem item, bool active) {
+    final palette = KinCirclePalette.of(context);
     final Icon baseIcon = Icon(
       item.icon,
-      color: active ? Colors.white : KinCirclePalette.textMuted,
+      color: active ? palette.textPrimary : palette.textMuted,
       size: 22,
     );
 
@@ -68,14 +69,14 @@ class BottomNav extends StatelessWidget {
                 constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF4757),
+                  color: palette.error,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   badgeText,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: palette.textPrimary,
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                     height: 1.1,
@@ -91,14 +92,15 @@ class BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return SafeArea(
       minimum: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: Container(
         height: 74,
         decoration: BoxDecoration(
-          color: KinCirclePalette.surface,
+          color: palette.surface,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: KinCirclePalette.border, width: 1),
+          border: Border.all(color: palette.border, width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.2),
@@ -126,20 +128,20 @@ class BottomNav extends StatelessWidget {
                         height: 6,
                         decoration: BoxDecoration(
                           color: active
-                              ? KinCirclePalette.accent
+                              ? palette.accent
                               : Colors.transparent,
                           borderRadius: KinCircleRadii.pill,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      _buildIcon(item, active),
+                      _buildIcon(context, item, active),
                       const SizedBox(height: 4),
                       Text(
                         item.label,
                         style: KinCircleTypography.caption12(
                           color: active
-                              ? Colors.white
-                              : KinCirclePalette.textMuted,
+                              ? palette.textPrimary
+                              : palette.textMuted,
                           weight: FontWeight.w500,
                         ),
                       ),

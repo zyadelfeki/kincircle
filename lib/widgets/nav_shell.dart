@@ -107,6 +107,7 @@ class _NavShellState extends State<NavShell> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     if (_NavShellEmbeddedScope.isInScope(context)) {
       return widget.body;
     }
@@ -114,7 +115,7 @@ class _NavShellState extends State<NavShell> {
     final String? appBarTitle = _effectiveTitle();
 
     return Scaffold(
-      backgroundColor: KinCirclePalette.background,
+      backgroundColor: palette.background,
       appBar: appBarTitle == null
           ? null
           : AppBar(
@@ -122,10 +123,10 @@ class _NavShellState extends State<NavShell> {
               title: Text(
                 appBarTitle,
                 style: KinCircleTypography.cardTitle16(
-                  color: KinCirclePalette.textPrimary,
+                  color: palette.textPrimary,
                 ),
               ),
-              backgroundColor: KinCirclePalette.background,
+              backgroundColor: palette.background,
               elevation: 0,
               actions: widget.actions,
             ),

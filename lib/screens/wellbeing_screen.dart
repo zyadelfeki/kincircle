@@ -65,22 +65,23 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
   }
 
   Widget _banner() {
+    final palette = KinCirclePalette.of(context);
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: KinCirclePalette.accent.withValues(alpha: 0.16),
+        color: palette.accent.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: KinCirclePalette.accent, width: 1),
+        border: Border.all(color: palette.accent, width: 1),
       ),
       child: Row(
         children: [
-          const Icon(Icons.lightbulb_outline_rounded, color: KinCirclePalette.accent),
+          Icon(Icons.lightbulb_outline_rounded, color: palette.accent),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               'Wellbeing insights coming soon to include richer trends and family-level summaries.',
-              style: KinCircleTypography.caption12(color: KinCirclePalette.accent),
+              style: KinCircleTypography.caption12(color: palette.accent),
             ),
           ),
         ],
@@ -89,13 +90,14 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
   }
 
   Widget _loadingView() {
+    final palette = KinCirclePalette.of(context);
     return ListView(
       children: [
         const SizedBox(height: 12),
         ...List<Widget>.generate(4, (int _) {
           return Shimmer.fromColors(
-            baseColor: KinCirclePalette.surfaceAlt,
-            highlightColor: KinCirclePalette.border,
+            baseColor: palette.surfaceAlt,
+            highlightColor: palette.border,
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               height: 110,
@@ -111,18 +113,19 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
   }
 
   Widget _errorView() {
+    final palette = KinCirclePalette.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 50, color: KinCirclePalette.error),
+            Icon(Icons.error_outline, size: 50, color: palette.error),
             const SizedBox(height: 10),
             Text(
               _error ?? 'Error',
               textAlign: TextAlign.center,
-              style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+              style: KinCircleTypography.body14(color: palette.textMuted),
             ),
             const SizedBox(height: 12),
             ElevatedButton(
@@ -137,6 +140,7 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
   }
 
   Widget _scoreCard() {
+    final palette = KinCirclePalette.of(context);
     final WellbeingMetrics metrics = _metrics!;
     final int score = metrics.overallScore.round().clamp(0, 100);
     return Container(
@@ -150,19 +154,19 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
           const SizedBox(height: 8),
           Text(
             '$score%',
-            style: KinCircleTypography.heading22(color: KinCirclePalette.accent),
+            style: KinCircleTypography.heading22(color: palette.accent),
           ),
           const SizedBox(height: 8),
           LinearProgressIndicator(
             value: score / 100,
             minHeight: 8,
-            backgroundColor: KinCirclePalette.surfaceAlt,
-            color: KinCirclePalette.accent,
+            backgroundColor: palette.surfaceAlt,
+            color: palette.accent,
           ),
           const SizedBox(height: 10),
           Text(
             'Stress: ${metrics.stressLevel.name} • Activity: ${metrics.activityLevel.toStringAsFixed(0)}%',
-            style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+            style: KinCircleTypography.caption12(color: palette.textMuted),
           ),
         ],
       ),
@@ -170,7 +174,7 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
   }
 
   Widget _recommendationsCard() {
-    // TODO: wire to WellbeingService for richer recommendation contexts.
+    final palette = KinCirclePalette.of(context);
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       padding: const EdgeInsets.all(14),
@@ -183,7 +187,7 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
           if (_recommendations.isEmpty)
             Text(
               'No recommendations yet.',
-              style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+              style: KinCircleTypography.caption12(color: palette.textMuted),
             )
           else
             ..._recommendations.take(4).map((Recommendation rec) {
@@ -191,7 +195,7 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    Icon(rec.icon, color: KinCirclePalette.accent, size: 18),
+                    Icon(rec.icon, color: palette.accent, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -202,7 +206,7 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
                     Expanded(
                       child: Text(
                         rec.estimatedTime,
-                        style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+                        style: KinCircleTypography.caption12(color: palette.textMuted),
                       ),
                     ),
                   ],
@@ -215,7 +219,7 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
   }
 
   Widget _insightsCard() {
-    // TODO: wire to WellbeingService for data-dependent insight details.
+    final palette = KinCirclePalette.of(context);
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 20),
       padding: const EdgeInsets.all(14),
@@ -228,7 +232,7 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
           if (_insights.isEmpty)
             Text(
               'No trend insights yet.',
-              style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+              style: KinCircleTypography.caption12(color: palette.textMuted),
             )
           else
             ..._insights.take(4).map((Insight insight) {
@@ -237,7 +241,7 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(insight.icon, color: KinCirclePalette.accent, size: 18),
+                    Icon(insight.icon, color: palette.accent, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
@@ -251,7 +255,7 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
                           Text(
                             insight.description,
                             style: KinCircleTypography.caption12(
-                              color: KinCirclePalette.textMuted,
+                              color: palette.textMuted,
                             ),
                           ),
                         ],

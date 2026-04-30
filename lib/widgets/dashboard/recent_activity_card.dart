@@ -27,6 +27,7 @@ class RecentActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return DashboardCardContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,12 +40,12 @@ class RecentActivityCard extends StatelessWidget {
               child: Center(
                 child: Column(
                   children: [
-                    const Icon(Icons.history_toggle_off, color: KinCirclePalette.textMuted),
+                    Icon(Icons.history_toggle_off, color: palette.textMuted),
                     const SizedBox(height: 8),
                     Text(
                       'No recent events yet',
                       style: KinCircleTypography.caption12(
-                        color: KinCirclePalette.textMuted,
+                        color: palette.textMuted,
                       ),
                     ),
                   ],
@@ -61,10 +62,10 @@ class RecentActivityCard extends StatelessWidget {
                       width: 30,
                       height: 30,
                       decoration: BoxDecoration(
-                        color: KinCirclePalette.surfaceAlt,
+                        color: palette.surfaceAlt,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(item.icon, size: 16, color: KinCirclePalette.accent),
+                      child: Icon(item.icon, size: 16, color: palette.accent),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -80,7 +81,7 @@ class RecentActivityCard extends StatelessWidget {
                           Text(
                             item.subtitle,
                             style: KinCircleTypography.caption12(
-                              color: KinCirclePalette.textMuted,
+                              color: palette.textMuted,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -93,7 +94,7 @@ class RecentActivityCard extends StatelessWidget {
                       child: Text(
                         item.timeLabel,
                         style: KinCircleTypography.caption12(
-                          color: KinCirclePalette.textMuted,
+                          color: palette.textMuted,
                         ),
                       ),
                     ),

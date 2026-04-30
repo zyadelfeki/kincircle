@@ -17,6 +17,7 @@ class ActiveAlertsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return DashboardCardContainer(
       child: InkWell(
         onTap: onTap,
@@ -25,7 +26,7 @@ class ActiveAlertsCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.warning_amber_rounded, color: KinCirclePalette.error),
+                Icon(Icons.warning_amber_rounded, color: palette.error),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text('Active Alerts', style: KinCircleTypography.cardTitle16()),
@@ -36,7 +37,7 @@ class ActiveAlertsCard extends StatelessWidget {
             Text(
               '$count',
               style: KinCircleTypography.heading22(
-                color: count > 0 ? KinCirclePalette.error : KinCirclePalette.accent,
+                color: count > 0 ? palette.error : palette.accent,
               ),
             ),
             const SizedBox(height: 6),
@@ -49,7 +50,7 @@ class ActiveAlertsCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: KinCircleTypography.caption12(
-                color: KinCirclePalette.textMuted,
+                color: palette.textMuted,
               ),
             ),
           ],

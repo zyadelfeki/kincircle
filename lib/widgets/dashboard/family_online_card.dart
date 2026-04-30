@@ -16,6 +16,7 @@ class FamilyOnlineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return DashboardCardContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,7 +26,7 @@ class FamilyOnlineCard extends StatelessWidget {
           if (totalCount == 0)
             Text(
               'No members available',
-              style: KinCircleTypography.caption12(color: KinCirclePalette.textMuted),
+              style: KinCircleTypography.caption12(color: palette.textMuted),
             )
           else ...[
             SizedBox(
@@ -39,11 +40,11 @@ class FamilyOnlineCard extends StatelessWidget {
                       left: index * 22,
                       child: CircleAvatar(
                         radius: 16,
-                        backgroundColor: KinCirclePalette.surfaceAlt,
+                        backgroundColor: palette.surfaceAlt,
                         child: Text(
                           _initials(user.displayName),
                           style: KinCircleTypography.caption12(
-                            color: Colors.white,
+                            color: palette.textPrimary,
                             weight: FontWeight.w700,
                           ),
                         ),
@@ -56,7 +57,7 @@ class FamilyOnlineCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               '${onlineMembers.length} / $totalCount online',
-              style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+              style: KinCircleTypography.body14(color: palette.textMuted),
             ),
           ],
         ],

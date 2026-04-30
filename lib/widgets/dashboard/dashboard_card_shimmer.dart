@@ -13,13 +13,14 @@ class DashboardCardShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return Shimmer.fromColors(
-      baseColor: KinCirclePalette.surfaceAlt,
-      highlightColor: KinCirclePalette.border,
+      baseColor: palette.surfaceAlt,
+      highlightColor: palette.border,
       child: Container(
         height: height,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: palette.textPrimary,
           borderRadius: KinCircleRadii.card,
         ),
       ),

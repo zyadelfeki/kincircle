@@ -137,16 +137,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String body,
     required VoidCallback onConfirmed,
   }) async {
+    final palette = KinCirclePalette.of(context);
     final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: KinCirclePalette.surface,
+          backgroundColor: palette.surface,
           title: Text(title, style: KinCircleTypography.cardTitle16()),
           content: Text(
             body,
             style:
-                KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+                KinCircleTypography.body14(color: palette.textMuted),
           ),
           actions: [
             TextButton(
@@ -155,9 +156,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
+              child: Text(
                 'Confirm',
-                style: TextStyle(color: KinCirclePalette.error),
+                style: TextStyle(color: palette.error),
               ),
             ),
           ],
@@ -170,6 +171,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _sectionLabel(String value, {Key? key, Color? color}) {
+    final palette = KinCirclePalette.of(context);
     return Padding(
       key: key,
       padding: const EdgeInsets.only(left: 16, top: 24, bottom: 8),
@@ -179,7 +181,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             value,
             style: KinCircleTypography.caption12(
-              color: color ?? KinCirclePalette.accent,
+              color: color ?? palette.accent,
               weight: FontWeight.w700,
             ),
           ),
@@ -187,7 +189,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             height: 1,
             margin: const EdgeInsets.only(right: 16),
-            color: KinCirclePalette.border,
+            color: palette.border,
           ),
         ],
       ),
@@ -195,11 +197,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _sectionSpacer() {
+    final palette = KinCirclePalette.of(context);
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       height: 6,
       decoration: BoxDecoration(
-        color: KinCirclePalette.background.withValues(alpha: 0.5),
+        color: palette.background.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(999),
       ),
     );
@@ -215,12 +218,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Color? titleColor,
     VoidCallback? onTap,
   }) {
+    final palette = KinCirclePalette.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: KinCirclePalette.surface,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: KinCirclePalette.border, width: 1),
+        border: Border.all(color: palette.border, width: 1),
       ),
       child: ListTile(
         onTap: onTap,
@@ -229,7 +233,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           title,
           style: KinCircleTypography.body14(
             weight: FontWeight.w600,
-            color: titleColor ?? KinCirclePalette.textPrimary,
+            color: titleColor ?? palette.textPrimary,
           ),
         ),
         subtitle: subtitle == null
@@ -238,12 +242,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle,
             style: subtitleStyle ??
               KinCircleTypography.caption12(
-                color: KinCirclePalette.textMuted),
+                color: palette.textMuted),
               ),
         trailing: trailing ??
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
-              color: KinCirclePalette.textMuted,
+              color: palette.textMuted,
             ),
       ),
     );
@@ -255,11 +259,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
+    final palette = KinCirclePalette.of(context);
     return _row(
       icon: icon,
       title: title,
       trailing: CupertinoSwitch(
-        activeTrackColor: KinCirclePalette.accent,
+        activeTrackColor: palette.accent,
         value: value,
         onChanged: onChanged,
       ),
@@ -268,6 +273,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     final ThemeController themeController = context.watch<ThemeController>();
     final bool isDarkMode = themeController.mode == ThemeMode.dark ||
         (themeController.mode == ThemeMode.system &&
@@ -359,9 +365,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: 'App language',
                   subtitle: _appLanguage,
                   onTap: () async {
+                    final palette = KinCirclePalette.of(context);
                     final String? selected = await showModalBottomSheet<String>(
                       context: context,
-                      backgroundColor: KinCirclePalette.surface,
+                      backgroundColor: palette.surface,
                       builder: (BuildContext context) {
                         return SafeArea(
                           child: Column(
@@ -408,8 +415,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _row(
                   icon: Icons.logout_rounded,
                   title: 'Sign Out',
-                  titleColor: KinCirclePalette.error,
-                  iconColor: KinCirclePalette.error,
+                  titleColor: palette.error,
+                  iconColor: palette.error,
                   onTap: () => _confirmDestructive(
                     title: 'Sign out?',
                     body: 'You can sign back in anytime.',
@@ -422,8 +429,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   icon: Icons.smart_toy_outlined,
                   title: 'Companion Settings',
                   subtitle: 'Your AI family companion',
-                  subtitleStyle: const TextStyle(
-                    color: Color(0xFF8A8FA8),
+                  subtitleStyle: TextStyle(
+                    color: palette.textMuted,
                     fontSize: 12,
                   ),
                   onTap: () =>
@@ -433,8 +440,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   icon: Icons.analytics_outlined,
                   title: 'Wellbeing Analytics',
                   subtitle: 'Family health insights',
-                  subtitleStyle: const TextStyle(
-                    color: Color(0xFF8A8FA8),
+                  subtitleStyle: TextStyle(
+                    color: palette.textMuted,
                     fontSize: 12,
                   ),
                   onTap: () =>
@@ -447,10 +454,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Navigator.of(context).pushNamed('/privacy/dashboard'),
                 ),
                 _sectionSpacer(),
-                _sectionLabel('Danger zone', color: KinCirclePalette.error),
+                _sectionLabel('Danger zone', color: palette.error),
                 _row(
                   icon: Icons.exit_to_app_rounded,
-                  iconColor: KinCirclePalette.textMuted,
+                  iconColor: palette.textMuted,
                   title: 'Leave Family',
                   onTap: () => _confirmDestructive(
                     title: 'Leave Family?',
@@ -460,9 +467,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 _row(
                   icon: Icons.delete_forever_outlined,
-                  iconColor: KinCirclePalette.error,
+                  iconColor: palette.error,
                   title: 'Delete Account',
-                  titleColor: KinCirclePalette.error,
+                  titleColor: palette.error,
                   onTap: () => _confirmDestructive(
                     title: 'Delete Account?',
                     body: 'This action is permanent.',
@@ -475,9 +482,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildLoadingState() {
+    final palette = KinCirclePalette.of(context);
     return Shimmer.fromColors(
-      baseColor: KinCirclePalette.surfaceAlt,
-      highlightColor: KinCirclePalette.border,
+      baseColor: palette.surfaceAlt,
+      highlightColor: palette.border,
       child: ListView.builder(
         itemCount: 9,
         itemBuilder: (_, int index) {
