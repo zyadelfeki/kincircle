@@ -21,11 +21,14 @@ class BatteryOverviewCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-Text('Battery Overview', style: KinCircleTypography.cardTitle16(color: palette.textPrimary)),
+          Text(
+            'Battery overview',
+            style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
+          ),
           const SizedBox(height: 10),
           if (member == null || percent == null)
             Text(
-              'No battery telemetry available',
+              'No battery data yet',
               style: KinCircleTypography.caption12(color: palette.textMuted),
             )
           else ...[
@@ -34,23 +37,26 @@ Text('Battery Overview', style: KinCircleTypography.cardTitle16(color: palette.t
                 Icon(
                   Icons.battery_alert_rounded,
                   color: _colorFor(palette, percent!),
+                  size: 18,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     member!.displayName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-style: KinCircleTypography.body14(color: palette.textPrimary, weight: FontWeight.w600),
+                    style: KinCircleTypography.body14(
+                      color: palette.textPrimary,
+                      weight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                Expanded(
-                  child: Text(
-                    '$percent%',
-                    style: KinCircleTypography.body14(
-                      color: _colorFor(palette, percent!),
-                      weight: FontWeight.w700,
-                    ),
+                const SizedBox(width: 6),
+                Text(
+                  '$percent%',
+                  style: KinCircleTypography.body14(
+                    color: _colorFor(palette, percent!),
+                    weight: FontWeight.w700,
                   ),
                 ),
               ],

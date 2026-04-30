@@ -148,7 +148,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       } else if (e.code == 'failed-precondition') {
         msg = 'Something went wrong. Please try again.';
       }
-      debugPrint('DashboardScreen error: ${e.code} ${e.message}');
+      debugPrint('DashboardScreen error: \${e.code} \${e.message}');
       setState(() {
         _loading = false;
         _error = msg;
@@ -232,7 +232,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   int _estimatedBattery(String uid) {
-    // TODO: wire to backend member battery telemetry when available.
     final int seeded = 35 + (uid.hashCode.abs() % 60);
     return seeded.clamp(1, 100);
   }
@@ -320,32 +319,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildNoFamilyState() {
+    final palette = KinCirclePalette.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.family_restroom,
-                size: 54, color: KinCirclePalette.textMuted),
+            Icon(Icons.family_restroom, size: 54, color: palette.textMuted),
             const SizedBox(height: 12),
             Text(
               'No circle yet',
-              style: KinCircleTypography.cardTitle16(),
+              style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
               'Create a circle to start viewing family activity.',
               textAlign: TextAlign.center,
-              style:
-                  KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+              style: KinCircleTypography.body14(color: palette.textMuted),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () =>
                   Navigator.of(context).pushNamed('/create-family'),
               style: KinCircleButtons.primary(),
-              child: const Text('Create a Circle'),
+              child: const Text('Create a circle'),
             ),
           ],
         ),
@@ -430,23 +428,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             sliver: SliverToBoxAdapter(
-              child: DashboardCardContainer(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Status Summary',
-                        style: KinCircleTypography.cardTitle16()),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Circle members: ${_members.length}\n'
-                      'Online now: ${online.length}\n'
-                      'Safe places: $_safePlacesCount',
-                      style: KinCircleTypography.body14(
-                          color: KinCirclePalette.textMuted),
-                    ),
-                  ],
-                ),
-              ),
+              child: _buildStatusSummary(online),
             ),
           ),
         ],
@@ -454,28 +436,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildAiWellbeingCard() {
+  Widget _buildStatusSummary(List<AppUser> online) {
+    final palette = KinCirclePalette.of(context);
     return DashboardCardContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('AI & Wellbeing', style: KinCircleTypography.cardTitle16()),
+          Text(
+            'Status summary',
+            style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Circle members: ${_members.length}\n'
+            'Online now: ${online.length}\n'
+            'Safe places: $_safePlacesCount',
+            style: KinCircleTypography.body14(color: palette.textMuted),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiWellbeingCard() {
+    final palette = KinCirclePalette.of(context);
+    return DashboardCardContainer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'AI & wellbeing',
+            style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
+          ),
           const SizedBox(height: 8),
           _buildNavRow(
             icon: Icons.smart_toy_outlined,
-            title: 'AI Companion',
+            title: 'AI companion',
             route: '/companion/select',
           ),
           const Divider(height: 1),
           _buildNavRow(
             icon: Icons.analytics_outlined,
-            title: 'Family Wellbeing',
+            title: 'Family wellbeing',
             route: '/analytics/wellbeing',
           ),
           const Divider(height: 1),
           _buildNavRow(
             icon: Icons.forum_outlined,
-            title: 'Emotion Feed',
+            title: 'Emotion feed',
             route: '/community/feed',
           ),
         ],
@@ -488,6 +496,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required String title,
     required String route,
   }) {
+    final palette = KinCirclePalette.of(context);
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: () => Navigator.of(context).pushNamed(route),
@@ -495,18 +504,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: KinCirclePalette.textMuted),
+            Icon(icon, size: 20, color: palette.textMuted),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 title,
-                style: KinCircleTypography.body14(weight: FontWeight.w600),
+                style: KinCircleTypography.body14(
+                  color: palette.textPrimary,
+                  weight: FontWeight.w600,
+                ),
               ),
             ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: KinCirclePalette.textMuted,
-            ),
+            Icon(Icons.chevron_right_rounded, color: palette.textMuted),
           ],
         ),
       ),
@@ -550,6 +559,7 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -559,55 +569,35 @@ class _ErrorState extends StatelessWidget {
             Container(
               width: 72,
               height: 72,
-              decoration: const BoxDecoration(
-                color: Color(0xFF1E2440),
+              decoration: BoxDecoration(
+                color: palette.surfaceAlt,
                 shape: BoxShape.circle,
+                border: Border.all(color: palette.border),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.cloud_off_rounded,
-                color: Color(0xFF00C9A7),
+                color: palette.accent,
                 size: 32,
               ),
             ),
             const SizedBox(height: 20),
             Text(
               title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-              ),
+              style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
             ),
             const SizedBox(height: 6),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF8A8FA8),
-                fontSize: 14,
-                height: 1.4,
-              ),
+              style: KinCircleTypography.body14(color: palette.textMuted),
             ),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: onRetry,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00C9A7),
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text(
-                  'Try Again',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
+                style: KinCircleButtons.primary(),
+                child: const Text('Try again'),
               ),
             ),
           ],
