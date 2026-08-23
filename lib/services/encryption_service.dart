@@ -8,12 +8,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Provides per-user end-to-end encryption facilities for sensitive data.
+/// Provides local encryption facilities for sensitive user data (e.g. data export).
 ///
-/// The service lazily provisions an AES-256 key for each authenticated user and
-/// stores it inside the device's secure enclave via [FlutterSecureStorage]. All
-/// encryption operations happen locally; only ciphertext and hashed user
-/// metadata leave the device.
+/// Encryption operations happen locally for local-only backups and exports.
+/// Shared circle data (locations, family docs, profiles) is not locked with
+/// single-device keys.
 class EncryptionService {
   EncryptionService._();
 
@@ -62,51 +61,48 @@ class EncryptionService {
     return encrypter.decrypt(encrypted, iv: iv);
   }
 
-  /// Encrypts location payloads prior to persisting to Firestore.
+  /// Prepares location payload for Firestore.
+  /// Circle-shared data is stored unencrypted so circle members can read it.
   static Future<Map<String, dynamic>> encryptLocation({
     required double latitude,
     required double longitude,
     required DateTime timestamp,
   }) async {
-    final Map<String, dynamic> locationData = <String, dynamic>{
+    return <String, dynamic>{
       'lat': latitude,
       'lng': longitude,
       'timestamp': timestamp.toIso8601String(),
-    };
-
-    final String encrypted = await encryptData(json.encode(locationData));
-
-    return <String, dynamic>{
-      'encrypted_location': encrypted,
       'user_id_hash': await _hashUserId(),
       'encrypted_at': FieldValue.serverTimestamp(),
     };
   }
 
-  /// Decrypts a location blob retrieved from Firestore.
+  /// Decrypts/parses a location blob retrieved from Firestore.
   static Future<Map<String, dynamic>> decryptLocation(
-    String encryptedLocation,
+    dynamic locationPayload,
   ) async {
-    final String decrypted = await decryptData(encryptedLocation);
-    return json.decode(decrypted) as Map<String, dynamic>;
+    if (locationPayload is Map<String, dynamic>) {
+      return locationPayload;
+    }
+    if (locationPayload is String) {
+      try {
+        if (locationPayload.startsWith('{')) {
+          return json.decode(locationPayload) as Map<String, dynamic>;
+        }
+        final String decrypted = await decryptData(locationPayload);
+        return json.decode(decrypted) as Map<String, dynamic>;
+      } catch (_) {
+        return <String, dynamic>{};
+      }
+    }
+    return <String, dynamic>{};
   }
 
-  /// Encrypts a set of known sensitive profile fields.
+  /// Profile data shared with circles is stored in plaintext.
   static Future<Map<String, dynamic>> encryptProfileData(
     Map<String, dynamic> profileData,
   ) async {
-    final List<String> sensitiveFields =
-        <String>['phone', 'email', 'address', 'medical_info'];
-    final Map<String, dynamic> encrypted = <String, dynamic>{};
-
-    for (final MapEntry<String, dynamic> entry in profileData.entries) {
-      if (sensitiveFields.contains(entry.key) && entry.value != null) {
-        encrypted[entry.key] = await encryptData(entry.value.toString());
-      } else {
-        encrypted[entry.key] = entry.value;
-      }
-    }
-    return encrypted;
+    return Map<String, dynamic>.from(profileData);
   }
 
   /// Decrypts the values previously encrypted via [encryptProfileData].
@@ -115,17 +111,18 @@ class EncryptionService {
   ) async {
     final List<String> sensitiveFields =
         <String>['phone', 'email', 'address', 'medical_info'];
-    final Map<String, dynamic> decrypted = <String, dynamic>{};
+    final Map<String, dynamic> decrypted = Map<String, dynamic>.from(profileData);
 
     for (final MapEntry<String, dynamic> entry in profileData.entries) {
       if (sensitiveFields.contains(entry.key) && entry.value is String) {
-        try {
-          decrypted[entry.key] = await decryptData(entry.value as String);
-        } catch (_) {
-          decrypted[entry.key] = entry.value;
+        final String val = entry.value as String;
+        if (val.contains(':')) {
+          try {
+            decrypted[entry.key] = await decryptData(val);
+          } catch (_) {
+            decrypted[entry.key] = entry.value;
+          }
         }
-      } else {
-        decrypted[entry.key] = entry.value;
       }
     }
     return decrypted;
@@ -156,20 +153,13 @@ class EncryptionService {
     return newKey;
   }
 
-  /// Encrypts and stores a document snapshot in Firestore with metadata.
+  /// Stores a document snapshot in Firestore without device-local key locking.
   static Future<void> persistEncryptedDocument({
     required DocumentReference<Map<String, dynamic>> ref,
     required Map<String, dynamic> payload,
     Set<String> encryptedFields = const <String>{},
   }) async {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    for (final MapEntry<String, dynamic> entry in payload.entries) {
-      if (encryptedFields.contains(entry.key) && entry.value != null) {
-        data[entry.key] = await encryptData(entry.value.toString());
-      } else {
-        data[entry.key] = entry.value;
-      }
-    }
+    final Map<String, dynamic> data = Map<String, dynamic>.from(payload);
     data['encrypted_at'] = FieldValue.serverTimestamp();
     data['user_id_hash'] = await _hashUserId();
     await ref.set(data, SetOptions(merge: true));
@@ -183,7 +173,7 @@ class EncryptionService {
     final Map<String, dynamic> data = Map<String, dynamic>.from(payload);
     for (final String field in encryptedFields) {
       final dynamic value = data[field];
-      if (value is String) {
+      if (value is String && value.contains(':')) {
         try {
           data[field] = await decryptData(value);
         } catch (error) {

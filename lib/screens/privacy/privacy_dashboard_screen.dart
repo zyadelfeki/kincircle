@@ -617,7 +617,7 @@ class _PrivacyDashboardScreenState extends State<PrivacyDashboardScreen> {
                 ),
                 SizedBox(height: 12),
                 Text(
-                  'KinCircle encrypts sensitive data end-to-end and minimizes '
+                  'KinCircle securely protects sensitive data and minimizes '
                   'retention to honor GDPR and HIPAA requirements.',
                 ),
                 SizedBox(height: 12),
