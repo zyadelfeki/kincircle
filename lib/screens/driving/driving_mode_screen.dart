@@ -24,21 +24,21 @@ class _DrivingModeScreenState extends State<DrivingModeScreen> {
   }
 
   Future<void> _start() async {
-    await _ensureHive();
-    setState(() => _status = 'Starting…');
-    // Preflight: ensure the TFLite model is bundled; otherwise show guidance and bail early.
-    final exists = await _assetExists(_modelPath);
-    if (!exists) {
-      if (!mounted) return;
-      setState(() => _status = 'Model not found');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text(
-                'Driver Safety model missing. See assets/models/README.txt')),
-      );
-      return;
-    }
     try {
+      await _ensureHive();
+      setState(() => _status = 'Starting…');
+      // Preflight: ensure the TFLite model is bundled; otherwise show coming soon and bail early.
+      final exists = await _assetExists(_modelPath);
+      if (!exists) {
+        if (!mounted) return;
+        setState(() => _status = 'Driving mode is coming soon');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Driving mode is coming soon'),
+          ),
+        );
+        return;
+      }
       final service = DriverSafetyService(
         interpreterFactory: (asset) => TfliteDriverInterpreter.fromAsset(asset),
       );
@@ -49,11 +49,13 @@ class _DrivingModeScreenState extends State<DrivingModeScreen> {
         _running = true;
         _status = 'Driving… collecting data';
       });
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
-      setState(() => _status = 'Failed to start');
+      setState(() => _status = 'Driving mode is coming soon');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Driver Safety unavailable: $e')),
+        const SnackBar(
+          content: Text('Driving mode is coming soon'),
+        ),
       );
     }
   }

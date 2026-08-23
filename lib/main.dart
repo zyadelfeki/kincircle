@@ -32,7 +32,6 @@ import 'screens/geofencing/add_geofence_screen.dart';
 import 'screens/join_family_screen.dart';
 import 'screens/circle_detail_screen.dart';
 import 'screens/driving/driver_safety_hub_screen.dart';
-import 'services/driver_safety/driver_safety_service.dart';
 import 'services/trip_service_manager.dart';
 import 'services/auth_service.dart';
 import 'services/remote_config_service.dart';
@@ -421,9 +420,6 @@ class _KinCircleAppState extends State<KinCircleApp> {
         ),
         ChangeNotifierProvider<PendingInviteStore>.value(value: _pending),
         ChangeNotifierProvider<ThemeController>.value(value: _themeController),
-        ChangeNotifierProvider<DriverSafetyService>(
-          create: (_) => DriverSafetyService(),
-        ),
         ChangeNotifierProvider<AgeDetectionService>(
           create: (_) => AgeDetectionService(),
         ),
