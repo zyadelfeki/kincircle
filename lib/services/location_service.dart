@@ -5,12 +5,24 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/widgets.dart';
 
 class LocationService with WidgetsBindingObserver {
-  LocationService._internal();
-  factory LocationService() => _instance;
+  LocationService._internal({FirebaseFirestore? firestore, FirebaseAuth? auth})
+      : _firestoreInstance = firestore,
+        _authInstance = auth;
+
+  factory LocationService({FirebaseFirestore? firestore, FirebaseAuth? auth}) {
+    if (firestore != null || auth != null) {
+      return LocationService._internal(firestore: firestore, auth: auth);
+    }
+    return _instance;
+  }
+
   static final LocationService _instance = LocationService._internal();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseFirestore? _firestoreInstance;
+  FirebaseAuth? _authInstance;
+
+  FirebaseFirestore get _firestore => _firestoreInstance ??= FirebaseFirestore.instance;
+  FirebaseAuth get _auth => _authInstance ??= FirebaseAuth.instance;
   bool? _canShareLocationCache;
   DateTime? _canShareLocationCacheAt;
   static const Duration _locationShareCacheTtl = Duration(seconds: 20);
@@ -174,6 +186,18 @@ class LocationService with WidgetsBindingObserver {
 
   DateTime? get lastWriteTime => _lastWriteTime;
   Position? get lastWrittenPosition => _lastWrittenPosition;
+
+  @visibleForTesting
+  void resetThrottleStateForTesting() {
+    _lastWriteTime = null;
+    _lastWrittenPosition = null;
+  }
+
+  @visibleForTesting
+  void recordWrittenPositionForTesting(Position position, DateTime time) {
+    _lastWriteTime = time;
+    _lastWrittenPosition = position;
+  }
 
   bool shouldWriteLocation(Position position, {DateTime? now}) {
     if (_lastWriteTime == null || _lastWrittenPosition == null) {
