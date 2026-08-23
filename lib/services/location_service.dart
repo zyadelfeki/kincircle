@@ -1,14 +1,27 @@
+import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 class LocationService {
+  LocationService._internal();
+  factory LocationService() => _instance;
+  static final LocationService _instance = LocationService._internal();
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   bool? _canShareLocationCache;
   DateTime? _canShareLocationCacheAt;
   static const Duration _locationShareCacheTtl = Duration(seconds: 20);
+
+  final StreamController<Position> _positionStreamController = StreamController<Position>.broadcast();
+  StreamSubscription<Position>? _geolocatorSub;
+
+  Stream<Position> get positionStream {
+    _ensureStreamRunning();
+    return _positionStreamController.stream;
+  }
 
   Future<bool> requestPermission() async {
     bool serviceEnabled;
@@ -36,12 +49,22 @@ class LocationService {
   }
 
   Stream<Position> startLocationUpdates() {
-    return Geolocator.getPositionStream(
+    _ensureStreamRunning();
+    return _positionStreamController.stream;
+  }
+
+  void _ensureStreamRunning() {
+    if (_geolocatorSub != null) return;
+    _geolocatorSub = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: 10, // Update every 10 meters
       ),
-    );
+    ).listen((position) {
+      _positionStreamController.add(position);
+    }, onError: (Object error) {
+      debugPrint('Location stream error: $error');
+    });
   }
 
   static const Duration minWriteInterval = Duration(seconds: 30);

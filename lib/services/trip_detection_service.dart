@@ -6,6 +6,7 @@ import 'package:activity_recognition_flutter/activity_recognition_flutter.dart' 
 import 'package:geolocator/geolocator.dart';
 
 import 'crash_detection_service.dart';
+import 'location_service.dart';
 
 class TripDetectionService {
   TripDetectionService._internal();
@@ -64,12 +65,9 @@ class TripDetectionService {
     _tripLocations.clear();
     unawaited(CrashDetectionService.instance.start());
     _locationSub?.cancel();
-    _locationSub = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
-      ),
-    ).listen((pos) => _tripLocations.add(pos));
+    _locationSub = LocationService()
+        .positionStream
+        .listen((pos) => _tripLocations.add(pos));
     if (kDebugMode) print('Trip started');
   }
 
