@@ -14,8 +14,27 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPolicyPage() {
+  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.GA_MEASUREMENT_ID;
+
   return (
     <div style={{ minHeight: '100vh', background: '#0B132B', color: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
+      {/* Optional GA4 tracking for marketing pages */}
+      {gaId && (
+        <>
+          <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${gaId}');
+              `,
+            }}
+          />
+        </>
+      )}
+
       {/* Header / Nav */}
       <header style={{ borderBottom: '1px solid #1E293B', padding: '16px 24px', background: '#0F172A' }}>
         <div style={{ maxWidth: 860, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
