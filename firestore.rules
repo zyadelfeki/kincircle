@@ -85,20 +85,39 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
+    function isAddingSelfToMembers() {
+      return isSignedIn() &&
+             resource.data.members != null &&
+             request.resource.data.members != null &&
+             !resource.data.members.hasAll([request.auth.uid]) &&
+             request.resource.data.members.hasAll([request.auth.uid]) &&
+             request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']);
+    }
+
     // Families collection
     match /families/{familyId} {
-      allow read, update: if isOwner(resource.data);
+      allow read: if isSignedIn() && (isOwner(resource.data) || (resource.data.members != null && request.auth.uid in resource.data.members));
+      allow update: if isSignedIn() && (isOwner(resource.data) || isAddingSelfToMembers() || isRemovingSelfFromMembers(familyId));
       allow create: if isSignedIn();
       allow delete: if false; // Families cannot be deleted via client
     }
 
     // Invites collection
     match /invites/{inviteId} {
-      allow read: if isSignedIn() && (isOwnerUser(resource.data.inviterId) || isOwnerUser(resource.data.inviteeId));
-      allow create: if isSignedIn() && isOwnerUser(request.resource.data.inviterId);
-      allow update: if isSignedIn() && isOwnerUser(resource.data.inviteeId) &&
+      allow read: if isSignedIn() && 
+                     (resource.data.senderUid == request.auth.uid || 
+                      (resource.data.recipientEmail != null && request.auth.token.email != null && resource.data.recipientEmail == request.auth.token.email) ||
+                      !('recipientEmail' in resource.data));
+      allow create: if isSignedIn() && request.resource.data.senderUid == request.auth.uid;
+      allow update: if isSignedIn() && 
+                     ((resource.data.recipientEmail != null && request.auth.token.email != null && resource.data.recipientEmail == request.auth.token.email) ||
+                      !('recipientEmail' in resource.data) ||
+                      resource.data.senderUid == request.auth.uid) &&
                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
-      allow delete: if isSignedIn() && (isOwnerUser(resource.data.inviterId) || isOwnerUser(resource.data.inviteeId));
+      allow delete: if isSignedIn() && 
+                     (resource.data.senderUid == request.auth.uid || 
+                      (resource.data.recipientEmail != null && request.auth.token.email != null && resource.data.recipientEmail == request.auth.token.email) ||
+                      !('recipientEmail' in resource.data));
     }
 
     // Alerts collection
