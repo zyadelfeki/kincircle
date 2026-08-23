@@ -650,7 +650,7 @@ class _ErrorState extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: Text(
+                child: const Text(
                   'Try Again',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,

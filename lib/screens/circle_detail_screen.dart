@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../design/kincircle_screen_tokens.dart';
-import '../../services/firestore_service.dart';
 import '../../widgets/nav_shell.dart';
-import 'family/manage_family_screen.dart';
 
 class CircleDetailScreen extends StatefulWidget {
   const CircleDetailScreen({super.key});
@@ -16,8 +13,6 @@ class CircleDetailScreen extends StatefulWidget {
 
 class _CircleDetailScreenState extends State<CircleDetailScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirestoreService _firestoreService = FirestoreService();
   
   late Stream<QuerySnapshot<Map<String, dynamic>>> _membersStream;
   bool _isLoading = true;
@@ -203,8 +198,7 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                         separatorBuilder: (_, __) => const Divider(height: 12),
                         itemCount: members.length,
                         itemBuilder: (context, index) {
-                          final memberData = members[index].data() as Map<String, dynamic>;
-                          final String memberId = members[index].id;
+                          final memberData = members[index].data();
                           final String displayName = memberData['displayName'] ?? 'Unknown';
                           final String email = memberData['email'] ?? '';
                           final bool isOwner = memberData['isOwner'] ?? false;

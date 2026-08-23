@@ -4,9 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../design/kincircle_screen_tokens.dart';
 import '../services/firestore_service.dart';
-import '../utils/link_builder.dart';
 import '../widgets/nav_shell.dart';
-import 'package:clipboard/clipboard.dart';
 
 class JoinFamilyScreen extends StatefulWidget {
   const JoinFamilyScreen({super.key});
