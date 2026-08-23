@@ -44,9 +44,55 @@ class LocationService {
     );
   }
 
+  static const Duration minWriteInterval = Duration(seconds: 30);
+  static const double minDistanceMeters = 100.0;
+  static const Duration heartbeatInterval = Duration(minutes: 5);
+  static const double significantDistanceMeters = 500.0;
+
+  DateTime? _lastWriteTime;
+  Position? _lastWrittenPosition;
+
+  DateTime? get lastWriteTime => _lastWriteTime;
+  Position? get lastWrittenPosition => _lastWrittenPosition;
+
+  bool shouldWriteLocation(Position position, {DateTime? now}) {
+    if (_lastWriteTime == null || _lastWrittenPosition == null) {
+      return true;
+    }
+    final currentTime = now ?? DateTime.now();
+    final elapsed = currentTime.difference(_lastWriteTime!);
+    final distance = Geolocator.distanceBetween(
+      _lastWrittenPosition!.latitude,
+      _lastWrittenPosition!.longitude,
+      position.latitude,
+      position.longitude,
+    );
+
+    // Always write if 5+ minutes (heartbeat) OR moved 500+ meters
+    if (elapsed >= heartbeatInterval || distance >= significantDistanceMeters) {
+      return true;
+    }
+
+    // Skip if less than 30 seconds since last write AND moved less than 100 meters
+    if (elapsed < minWriteInterval && distance < minDistanceMeters) {
+      return false;
+    }
+
+    // Write if moved >= 100 meters (after minWriteInterval has elapsed)
+    if (distance >= minDistanceMeters) {
+      return true;
+    }
+
+    return false;
+  }
+
   Future<void> updateUserLocation(Position position) async {
     final user = _auth.currentUser;
     if (user == null) return;
+
+    if (!shouldWriteLocation(position)) {
+      return;
+    }
 
     try {
       final bool canShare = await _canShareLocation(user.uid);
@@ -56,6 +102,8 @@ class LocationService {
         'lastKnownLocation': GeoPoint(position.latitude, position.longitude),
         'lastUpdated': FieldValue.serverTimestamp(),
       });
+      _lastWriteTime = DateTime.now();
+      _lastWrittenPosition = position;
     } on FirebaseException catch (e) {
       // Log Firebase-specific errors with context
       debugPrint('Firebase error updating location: ${e.code} - ${e.message}');
@@ -67,6 +115,8 @@ class LocationService {
             'lastKnownLocation': GeoPoint(position.latitude, position.longitude),
             'lastUpdated': FieldValue.serverTimestamp(),
           });
+          _lastWriteTime = DateTime.now();
+          _lastWrittenPosition = position;
         } catch (_) {
           // Silent fail on retry - location will update on next position change
         }
