@@ -2,25 +2,23 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
-import 'dart:math';
 
-/// Social contagion service for spreading positivity and creating FOMO
-/// Research: Facebook study (689,003 users) showed emotional states spread digitally
-/// Positive content exposure increases user positivity by 15%
+/// Social contagion service for sharing positivity across real family circles
 class SocialContagionService extends ChangeNotifier {
   static final SocialContagionService _instance = SocialContagionService._internal();
   factory SocialContagionService() => _instance;
   SocialContagionService._internal();
 
-  Timer? _fomoTimer;
   StreamSubscription<User?>? _authStateSub;
   bool _initialized = false;
   int _communityActiveCount = 0;
   int _todayCheckIns = 0;
+  int _circleMemberCount = 0;
 
   // Getters
   int get communityActiveCount => _communityActiveCount;
   int get todayCheckIns => _todayCheckIns;
+  int get circleMemberCount => _circleMemberCount;
 
   /// Initialize the service
   Future<void> initialize() async {
@@ -33,10 +31,12 @@ class SocialContagionService extends ChangeNotifier {
           if (user == null) {
             _communityActiveCount = 0;
             _todayCheckIns = 0;
+            _circleMemberCount = 0;
             notifyListeners();
             return;
           }
           await _loadCommunityStats();
+          await _loadCircleStats();
         },
         onError: (Object error) {
           if (kDebugMode) {
@@ -44,7 +44,6 @@ class SocialContagionService extends ChangeNotifier {
           }
         },
       );
-      _startFOMOLoop();
 
       if (kDebugMode) {
         debugPrint('SocialContagionService initialized');
@@ -56,7 +55,7 @@ class SocialContagionService extends ChangeNotifier {
     }
   }
 
-  /// Load community statistics
+  /// Load community statistics from Firestore
   Future<void> _loadCommunityStats() async {
     try {
       final stats = await FirebaseFirestore.instance
@@ -77,43 +76,51 @@ class SocialContagionService extends ChangeNotifier {
     }
   }
 
-  /// Spread positivity after a family event
+  /// Load circle statistics for current authenticated user
+  Future<void> _loadCircleStats() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      final familyId = userDoc.data()?['currentFamilyId'] as String?;
+      if (familyId != null && familyId.isNotEmpty) {
+        final famDoc = await FirebaseFirestore.instance
+            .collection('families')
+            .doc(familyId)
+            .get();
+        final members = famDoc.data()?['members'] as List<dynamic>?;
+        _circleMemberCount = members?.length ?? 0;
+        notifyListeners();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error loading circle stats: $e');
+      }
+    }
+  }
+
+  /// Spread positivity after a family event with real circle count
   Future<Map<String, dynamic>> spreadPositivity(String eventType) async {
-    final message = _generateContagiousMessage(eventType);
-    final impactCount = _generateImpactCount();
-    
+    await _loadCircleStats();
+    await _loadCommunityStats();
+
     // Record the positive event
-    await _recordPositiveEvent(eventType, impactCount);
+    await _recordPositiveEvent(eventType, _circleMemberCount);
+
+    final message = _circleMemberCount > 0
+        ? 'Moment shared with your family circle'
+        : 'Positive moment shared';
 
     return {
       'message': message,
-      'impactCount': impactCount,
+      'impactCount': _circleMemberCount,
       'communityCount': _communityActiveCount,
     };
-  }
-
-  /// Generate contagious message
-  String _generateContagiousMessage(String eventType) {
-    final random = Random();
-    final impactCount = _generateImpactCount();
-
-    final templates = [
-      'Your $eventType inspired $impactCount nearby families!',
-      'Family love is contagious - you started $impactCount connections!',
-      'Your check-in created a ripple of $impactCount family moments!',
-      '$impactCount families felt your positive energy!',
-      'Amazing! Your $eventType spread joy to $impactCount families!',
-      'You sparked $impactCount family interactions today!',
-      'Your care reached $impactCount families nearby!',
-    ];
-
-    return templates[random.nextInt(templates.length)];
-  }
-
-  /// Generate realistic impact count (12-89 range)
-  int _generateImpactCount() {
-    final random = Random();
-    return 12 + random.nextInt(78); // 12-89
   }
 
   /// Record positive event in Firestore
@@ -148,103 +155,27 @@ class SocialContagionService extends ChangeNotifier {
     }
   }
 
-  /// Start FOMO loop with variable reward timing
-  void _startFOMOLoop() {
-    _scheduleFOMONotification();
-  }
-
-  void _scheduleFOMONotification() {
-    _fomoTimer?.cancel();
-
-    final interval = _getRandomInterval();
-    _fomoTimer = Timer(interval, () {
-      _triggerFOMONotification();
-      _scheduleFOMONotification(); // Schedule next
-    });
-  }
-
-  /// Get random interval (1-8 hours)
-  Duration _getRandomInterval() {
-    final random = Random();
-    final hours = 1 + random.nextInt(8); // 1-8 hours
-    final minutes = random.nextInt(60);
-    return Duration(hours: hours, minutes: minutes);
-  }
-
-  /// Trigger FOMO notification
-  void _triggerFOMONotification() {
-    // This would integrate with notification system
-    final messages = [
-      'Sarah just shared a family moment',
-      '23 families are celebrating together!',
-      'Your family circle is active right now',
-      '15 families checked in nearby',
-      'The Johnson family hit their milestone!',
-    ];
-
-    final message = messages[Random().nextInt(messages.length)];
-    
-    if (kDebugMode) {
-      debugPrint('🔔 FOMO Notification: $message');
-    }
-
-    // Store notification for display in app UI (in-app notification system)
-    _storeInAppNotification(message);
-  }
-  
-  /// Store in-app notification for display
-  Future<void> _storeInAppNotification(String message) async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
-      
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('in_app_notifications')
-          .add({
-        'message': message,
-        'type': 'fomo',
-        'read': false,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Error storing in-app notification: $e');
-      }
-    }
-  }
-
-  /// Generate community milestone message
+  /// Real community milestone message based on Firestore metrics
   String getCommunityMilestone() {
-    final milestones = [
-      '10,000 families connected today!',
-      '50,000 check-ins this week!',
-      '1 million moments shared!',
-      '100,000 families stronger together!',
-      'Community growing by 1,000 families daily!',
-    ];
-
-    return milestones[Random().nextInt(milestones.length)];
-  }
-
-  /// Generate social proof message
-  String generateSocialProof(int count) {
-    if (count < 10) {
-      return 'families like yours';
-    } else if (count < 50) {
-      return 'families in your area';
-    } else if (count < 100) {
-      return 'families celebrating nearby';
-    } else {
-      return 'families across the community';
+    if (_todayCheckIns > 0) {
+      return '$_todayCheckIns moments shared today!';
     }
+    return '';
   }
 
-  /// Get nearby activity summary
+  /// Generate social proof message based on real count
+  String generateSocialProof(int count) {
+    if (count <= 0) return '';
+    if (count == 1) return '1 family member in your circle';
+    return '$count family members in your circle';
+  }
+
+  /// Get nearby activity summary from real data
   Future<String> getNearbyActivity() async {
-    final count = 5 + Random().nextInt(20); // 5-24
-    return '$count families checked in nearby';
+    if (_communityActiveCount > 0) {
+      return '$_communityActiveCount active today';
+    }
+    return '';
   }
 
   /// Record user influenced by social contagion
@@ -271,72 +202,9 @@ class SocialContagionService extends ChangeNotifier {
 
   @override
   void dispose() {
-    _fomoTimer?.cancel();
     _authStateSub?.cancel();
     _authStateSub = null;
     _initialized = false;
     super.dispose();
-  }
-}
-
-/// FOMO Engine for creating variable reward loops
-class FOMOEngine {
-  static Timer? _timer;
-
-  /// Create FOMO loop with unpredictable timing
-  static void createFOMOLoop(Function(String, String) onNotification) {
-    _timer?.cancel();
-    _scheduleNext(onNotification);
-  }
-
-  static void _scheduleNext(Function(String, String) onNotification) {
-    final interval = _getRandomInterval();
-    
-    _timer = Timer(interval, () {
-      final notification = _generateFOMONotification();
-      onNotification(notification['title']!, notification['body']!);
-      _scheduleNext(onNotification); // Reschedule
-    });
-  }
-
-  static Duration _getRandomInterval() {
-    final random = Random();
-    final hours = 1 + random.nextInt(8); // 1-8 hours
-    final minutes = random.nextInt(60);
-    return Duration(hours: hours, minutes: minutes);
-  }
-
-  static Map<String, String> _generateFOMONotification() {
-    final random = Random();
-    final count = 5 + random.nextInt(20);
-
-    final notifications = [
-      {
-        'title': 'Family Activity Alert',
-        'body': '$count families are celebrating together!'
-      },
-      {
-        'title': 'Your Circle is Active',
-        'body': 'Sarah just shared a special moment'
-      },
-      {
-        'title': 'Community Milestone',
-        'body': '1,000 families reached today\'s goal!'
-      },
-      {
-        'title': 'Nearby Families',
-        'body': '$count families checked in nearby'
-      },
-      {
-        'title': 'Family Streak Alert',
-        'body': 'The Martinez family hit 30 days!'
-      },
-    ];
-
-    return notifications[random.nextInt(notifications.length)];
-  }
-
-  static void stop() {
-    _timer?.cancel();
   }
 }
