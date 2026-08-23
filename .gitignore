@@ -50,5 +50,6 @@ app.*.map.json
 android/key.properties
 node_modules
 .next/
+.firebase/
 *.env.local
 tool/generate_hosting_pages.py
