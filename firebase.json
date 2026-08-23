@@ -1,1 +1,26 @@
-{"firestore":{"rules":"firestore.rules"},"functions":{"source":"functions"}}
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "functions": {
+    "source": "functions"
+  },
+  "hosting": {
+    "public": "links_hosting",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/invite/**",
+        "destination": "/invite/index.html"
+      },
+      {
+        "source": "/invite",
+        "destination": "/invite/index.html"
+      }
+    ]
+  }
+}

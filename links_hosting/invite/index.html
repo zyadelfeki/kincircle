@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>You're invited to a KinCircle family circle</title>
+  <meta name="description" content="Join your family circle on KinCircle to share real-time locations, safe zone arrivals, and calm family coordination." />
+  
+  <!-- OpenGraph Meta Tags for Chat Crawlers -->
+  <meta property="og:title" content="You're invited to a KinCircle family circle" />
+  <meta property="og:description" content="Join your family circle on KinCircle to share real-time locations, safe zone arrivals, and calm family coordination." />
+  <meta property="og:image" content="https://kincircle-live.web.app/icons/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="KinCircle Family Invitation" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="KinCircle" />
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="You're invited to a KinCircle family circle" />
+  <meta name="twitter:description" content="Join your family circle on KinCircle to share real-time locations, safe zone arrivals, and calm family coordination." />
+  <meta name="twitter:image" content="https://kincircle-live.web.app/icons/og-image.png" />
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0B132B;
+      color: #F8FAFC;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: #1E293B;
+      border: 1px solid #334155;
+      border-radius: 20px;
+      max-width: 460px;
+      width: 100%;
+      padding: 36px 28px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    .logo {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 20px;
+      border-radius: 20px;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+    p.lead {
+      color: #94A3B8;
+      font-size: 15px;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    .invite-box {
+      background: #0F172A;
+      border: 1px dashed #475569;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 24px;
+    }
+    .invite-label {
+      font-size: 12px;
+      color: #64748B;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .invite-code {
+      font-family: monospace;
+      font-size: 18px;
+      font-weight: 600;
+      color: #38BDF8;
+      word-break: break-all;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s ease;
+      margin-bottom: 12px;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn-primary {
+      background: #2E86AB;
+      color: #FFFFFF;
+    }
+    .btn-secondary {
+      background: transparent;
+      color: #94A3B8;
+      border: 1px solid #475569;
+    }
+    .btn-secondary:hover {
+      background: #334155;
+      color: #FFFFFF;
+    }
+    .footnote {
+      font-size: 12px;
+      color: #64748B;
+      margin-top: 18px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img src="/icons/icon-192.png" alt="KinCircle Logo" class="logo" onerror="this.style.display='none'" />
+    <h1>You're invited to join a KinCircle</h1>
+    <p class="lead">A family member invited you to coordinate and stay safely connected with private location sharing and safe zone notifications.</p>
+    
+    <div class="invite-box">
+      <div class="invite-label">Invite Code</div>
+      <div class="invite-code" id="invite-code-display">Loading...</div>
+    </div>
+
+    <a href="#" id="open-app-btn" class="btn btn-primary">Open in KinCircle App</a>
+    <a href="/invite-accepted" id="open-web-btn" class="btn btn-secondary">Accept on Web</a>
+
+    <p class="footnote">Calm family safety. Private by design — data is only shared with accepted circle members.</p>
+  </div>
+
+  <script>
+    (function() {
+      var path = window.location.pathname;
+      var match = path.match(/\/invite\/([^\/]+)/);
+      var params = new URLSearchParams(window.location.search);
+      var code = (match && match[1]) || params.get('id') || params.get('code') || 'INVITE';
+      
+      var display = document.getElementById('invite-code-display');
+      if (display) display.textContent = code;
+
+      var appBtn = document.getElementById('open-app-btn');
+      if (appBtn) {
+        var deepLink = 'kincircle://invite/' + encodeURIComponent(code);
+        appBtn.href = deepLink;
+      }
+
+      var webBtn = document.getElementById('open-web-btn');
+      if (webBtn) {
+        webBtn.href = '/invite-accepted?id=' + encodeURIComponent(code);
+      }
+    })();
+  </script>
+</body>
+</html>

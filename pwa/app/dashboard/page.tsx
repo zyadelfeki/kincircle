@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import DashboardClient from './DashboardClient';
 
+export const dynamic = 'force-dynamic';
+
 export type Family = { id: string; name: string };
 export type Invite = { id: string; family_id: string; recipient_email: string; status: string; created_at: string };
 

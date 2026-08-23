@@ -49,3 +49,6 @@ app.*.map.json
 # Android signing secrets
 android/key.properties
 node_modules
+.next/
+*.env.local
+tool/generate_hosting_pages.py
