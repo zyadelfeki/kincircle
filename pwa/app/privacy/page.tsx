@@ -128,7 +128,7 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: '#38BDF8', marginBottom: 12 }}>7. Contact Us</h2>
           <p style={{ color: '#CBD5E1', lineHeight: 1.7, fontSize: 15 }}>
-            If you have questions regarding this Privacy Policy or your data, please contact the KinCircle team at <a href="mailto:support@kincircle-live.web.app" style={{ color: '#38BDF8', textDecoration: 'underline' }}>support@kincircle-live.web.app</a>.
+            If you have questions regarding this Privacy Policy or your data, please contact the KinCircle team at <a href="mailto:PUT_YOUR_REAL_EMAIL_HERE" style={{ color: '#38BDF8', textDecoration: 'underline' }}>PUT_YOUR_REAL_EMAIL_HERE</a>.
           </p>
         </section>
       </main>
