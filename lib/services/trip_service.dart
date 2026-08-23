@@ -195,8 +195,12 @@ class TripService {
     }
   }
 
-  /// Create a test trip for development/testing purposes
+  /// Create a test trip for development/testing purposes (debug mode only)
   Future<void> createTestTrip() async {
+    if (!kDebugMode) {
+      debugPrint('createTestTrip is disabled in release mode');
+      return;
+    }
     final user = _auth.currentUser;
     if (user == null) throw 'User not authenticated';
 

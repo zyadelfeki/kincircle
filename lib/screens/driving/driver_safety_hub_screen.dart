@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../services/trip_service.dart';
 import '../../services/trip_service_manager.dart';
@@ -25,6 +26,7 @@ class _DriverSafetyHubScreenState extends State<DriverSafetyHubScreen> {
   }
 
   Future<void> _startTestTrip() async {
+    if (!kDebugMode) return;
     try {
       // Create a test trip for development/testing
       await _tripService.createTestTrip();
@@ -113,14 +115,16 @@ class _DriverSafetyHubScreenState extends State<DriverSafetyHubScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.summarize_rounded),
-                        label: const Text('Test Trip'),
-                        onPressed: () => _startTestTrip(),
+                    if (kDebugMode) ...[
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.summarize_rounded),
+                          label: const Text('Test Trip'),
+                          onPressed: () => _startTestTrip(),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 8),
