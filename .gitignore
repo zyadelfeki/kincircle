@@ -48,8 +48,15 @@ app.*.map.json
 
 # Android signing secrets
 android/key.properties
+key.properties
+*.jks
+*.keystore
+
+# Web env and build
 node_modules
 .next/
 .firebase/
 *.env.local
+.env.local
+**/.env.local
 tool/generate_hosting_pages.py

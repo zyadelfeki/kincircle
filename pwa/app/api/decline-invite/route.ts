@@ -1,31 +1,53 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import * as admin from 'firebase-admin';
+import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
 
 export async function POST(request: Request) {
   const { searchParams } = new URL(request.url);
   const inviteId = searchParams.get('invite_id');
-  if (!inviteId) return NextResponse.json({ error: 'invite_id required' }, { status: 400 });
+  if (!inviteId) {
+    return NextResponse.json({ error: 'invite_id required' }, { status: 400 });
+  }
 
-  const supabase = createRouteHandlerClient({ cookies });
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const authHeader = request.headers.get('Authorization') || request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return NextResponse.json({ error: 'unauthorized: missing bearer token' }, { status: 401 });
+  }
 
-  // Fetch invite and verify recipient
-  const { data: invite, error: invErr } = await supabase
-    .from('invites')
-    .select('id,recipient_email')
-    .eq('id', inviteId)
-    .single();
-  if (invErr || !invite) return NextResponse.json({ error: 'invite not found' }, { status: 404 });
+  const token = authHeader.split('Bearer ')[1]?.trim();
+  let decodedToken;
+  try {
+    decodedToken = await adminAuth.verifyIdToken(token);
+  } catch (err: any) {
+    return NextResponse.json({ error: 'unauthorized: invalid token', details: err.message }, { status: 401 });
+  }
 
-  if (invite.recipient_email !== user.email) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  const userEmail = decodedToken.email?.trim().toLowerCase();
 
-  // Delete invite (decline)
-  const { error: delErr } = await supabase.from('invites').delete().eq('id', inviteId);
-  if (delErr) return NextResponse.json({ error: delErr.message }, { status: 400 });
+  // Fetch invite document
+  const inviteRef = adminDb.collection('invites').doc(inviteId);
+  const inviteSnap = await inviteRef.get();
+  if (!inviteSnap.exists) {
+    return NextResponse.json({ error: 'invite not found' }, { status: 404 });
+  }
 
-  return NextResponse.json({ ok: true });
+  const inviteData = inviteSnap.data() || {};
+  const recipientEmail = inviteData.recipientEmail?.trim().toLowerCase();
+
+  if (recipientEmail && userEmail && recipientEmail !== userEmail) {
+    return NextResponse.json({ error: 'forbidden: invite recipient mismatch' }, { status: 403 });
+  }
+
+  try {
+    // Update ONLY the invite's status field
+    await inviteRef.update({
+      status: 'declined',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (err: any) {
+    console.error('Error declining invite:', err);
+    return NextResponse.json({ error: 'failed to decline invite', details: err.message }, { status: 500 });
+  }
 }

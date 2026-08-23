@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { createClient } from '@/lib/supabaseClient';
+import { sendSignInLinkToEmail } from 'firebase/auth';
+import { auth } from '@/lib/firebaseClient';
 
 export default function Home() {
   const [email, setEmail] = useState('');
@@ -14,13 +15,13 @@ export default function Home() {
     if (!email) return;
     setLoading(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: `${window.location.origin}/dashboard` },
-      });
-      if (error) alert(error.message);
-      else setSent(true);
+      const actionCodeSettings = {
+        url: `${window.location.origin}/dashboard`,
+        handleCodeInApp: true,
+      };
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      window.localStorage.setItem('emailForSignIn', email);
+      setSent(true);
     } catch (err: any) {
       alert(err.message || 'An error occurred during sign in');
     } finally {
