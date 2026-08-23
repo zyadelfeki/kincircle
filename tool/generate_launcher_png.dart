@@ -52,7 +52,7 @@ void main(List<String> args) async {
   fillCircle(cx, cy, (outerRingR + ringStroke / 2).round(), trustBlue);
   fillCircle(cx, cy, (outerRingR - ringStroke / 2).round(), white);
 
-  // 3) Kin Arc arcs (nearly full circle, leave small gap for rounded feel)
+  // 3) KinCircle arcs (nearly full circle, leave small gap for rounded feel)
   // Use -90° start (top). Image Y grows downward; sin/cos mapping is fine.
   const gapFactor = 0.03; // 3% gap
   final sweep = 2 * math.pi * (1 - gapFactor);

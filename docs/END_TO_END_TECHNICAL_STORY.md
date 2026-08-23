@@ -1,4 +1,4 @@
-# Kin Arc (KinCircle) – End-to-End Technical Story
+# KinCircle – End-to-End Technical Story
 
 This document narrates the project from initial concept to the current feature-complete milestone. It details system architecture, design decisions, feature implementations, file locations, tooling, configuration, and operational considerations. It contains no source code—only descriptions of approaches and files involved.
 

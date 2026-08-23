@@ -137,7 +137,7 @@ Models:
 
 ## Appendix – Q&A (living FAQ)
 
-Q: What is Kin Arc and who is it for?
+Q: What is KinCircle and who is it for?
 
 - A calm, family-first safety and coordination app. Focused on low-noise alerts, shared presence, and respectful privacy.
 

@@ -75,11 +75,11 @@ exports.sendInviteEmail = functions.runWith({ secrets: [SENDGRID_API_KEY] }).htt
         await mail_1.default.send({
             to,
             from: FROM_EMAIL,
-            subject: 'You\'re invited to join Kin Arc',
+            subject: 'You\'re invited to join KinCircle',
             html: `
         <div style="font-family:Inter,Segoe UI,Arial,sans-serif;color:#0F172A">
-          <h2 style="color:#2E86AB;margin:0 0 16px">Kin Arc Invitation</h2>
-          <p><strong>${senderUid}</strong> invited you to join their family on Kin Arc.</p>
+          <h2 style="color:#2E86AB;margin:0 0 16px">KinCircle Invitation</h2>
+          <p><strong>${senderUid}</strong> invited you to join their family on KinCircle.</p>
           <p>Tap the button below to accept the invitation.</p>
           <p style="margin:24px 0">
             <a href="${deepLink}" style="background:#2E86AB;color:#fff;padding:12px 16px;border-radius:8px;text-decoration:none">Accept Invite</a>

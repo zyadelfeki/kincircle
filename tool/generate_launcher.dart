@@ -15,7 +15,7 @@ Future<void> main() async {
     ..isAntiAlias = true;
   canvas.drawCircle(const Offset(size / 2, size / 2), size / 2.0, bgPaint);
 
-  // Draw a simple arc mark resembling the Kin arc without SVG dependency
+  // Draw a simple arc mark resembling the KinCircle logo without SVG dependency
   final arcPaint = Paint()
     ..color = const Color(0xFF1976D2)
     ..style = PaintingStyle.stroke

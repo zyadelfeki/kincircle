@@ -460,7 +460,7 @@ final bool isDark = Theme.of(context).brightness == Brightness.dark;
           return KinCirclePalette(
               data: isDark ? KinCirclePaletteData.dark : KinCirclePaletteData.light,
               child: MaterialApp(
-                title: 'Kin Arc',
+                title: 'KinCircle',
                 theme: light,
                 darkTheme: dark,
                 themeMode: context.watch<ThemeController>().mode,
