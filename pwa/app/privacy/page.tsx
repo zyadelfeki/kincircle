@@ -2,11 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — KinCircle',
+  title: 'KinCircle — Privacy Policy',
   description:
     'KinCircle privacy policy: how we collect, use, and protect your location, circle membership, sensor, and account data.',
   openGraph: {
-    title: 'Privacy Policy — KinCircle',
+    title: 'KinCircle — Privacy Policy',
     description:
       'KinCircle privacy policy: how we collect, use, and protect your location, circle membership, sensor, and account data.',
     url: 'https://kincircle.com/privacy',
