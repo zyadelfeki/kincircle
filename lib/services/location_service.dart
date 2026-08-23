@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
-class LocationService {
+class LocationService with WidgetsBindingObserver {
   LocationService._internal();
   factory LocationService() => _instance;
   static final LocationService _instance = LocationService._internal();
@@ -15,8 +15,22 @@ class LocationService {
   DateTime? _canShareLocationCacheAt;
   static const Duration _locationShareCacheTtl = Duration(seconds: 20);
 
+  static const double movementThresholdMeters = 50.0;
+  static const Duration stationaryTimeout = Duration(minutes: 5);
+
   final StreamController<Position> _positionStreamController = StreamController<Position>.broadcast();
   StreamSubscription<Position>? _geolocatorSub;
+  Timer? _stationaryCheckTimer;
+
+  bool _isBackgrounded = false;
+  LocationAccuracy _currentAccuracy = LocationAccuracy.high;
+  int _currentDistanceFilter = 10;
+  DateTime? _lastMovedTime;
+  Position? _lastObservedPosition;
+
+  bool get isBackgrounded => _isBackgrounded;
+  LocationAccuracy get currentAccuracy => _currentAccuracy;
+  int get currentDistanceFilter => _currentDistanceFilter;
 
   Stream<Position> get positionStream {
     _ensureStreamRunning();
@@ -53,18 +67,101 @@ class LocationService {
     return _positionStreamController.stream;
   }
 
-  void _ensureStreamRunning() {
-    if (_geolocatorSub != null) return;
+  void setAppBackgrounded(bool isBackgrounded) {
+    if (_isBackgrounded == isBackgrounded) return;
+    _isBackgrounded = isBackgrounded;
+    _evaluateAdaptiveAccuracy();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached ||
+        state == AppLifecycleState.hidden) {
+      setAppBackgrounded(true);
+    } else if (state == AppLifecycleState.resumed) {
+      setAppBackgrounded(false);
+    }
+  }
+
+  void _onPositionReceived(Position position) {
+    final now = DateTime.now();
+    if (_lastObservedPosition == null) {
+      _lastObservedPosition = position;
+      _lastMovedTime = now;
+    } else {
+      final double distance = Geolocator.distanceBetween(
+        _lastObservedPosition!.latitude,
+        _lastObservedPosition!.longitude,
+        position.latitude,
+        position.longitude,
+      );
+
+      if (distance >= movementThresholdMeters) {
+        _lastObservedPosition = position;
+        _lastMovedTime = now;
+        if (!_isBackgrounded &&
+            (_currentAccuracy != LocationAccuracy.high || _currentDistanceFilter != 10)) {
+          _switchStreamAccuracy(LocationAccuracy.high, 10);
+        }
+      }
+    }
+
+    if (_lastMovedTime != null && now.difference(_lastMovedTime!) >= stationaryTimeout) {
+      if (_currentAccuracy != LocationAccuracy.medium || _currentDistanceFilter != 50) {
+        _switchStreamAccuracy(LocationAccuracy.medium, 50);
+      }
+    }
+
+    _positionStreamController.add(position);
+  }
+
+  void _evaluateAdaptiveAccuracy() {
+    final now = DateTime.now();
+    if (_isBackgrounded) {
+      _switchStreamAccuracy(LocationAccuracy.medium, 50);
+    } else if (_lastMovedTime != null && now.difference(_lastMovedTime!) >= stationaryTimeout) {
+      _switchStreamAccuracy(LocationAccuracy.medium, 50);
+    } else {
+      _switchStreamAccuracy(LocationAccuracy.high, 10);
+    }
+  }
+
+  void _switchStreamAccuracy(LocationAccuracy accuracy, int distanceFilter) {
+    if (_currentAccuracy == accuracy &&
+        _currentDistanceFilter == distanceFilter &&
+        _geolocatorSub != null) {
+      return;
+    }
+
+    _currentAccuracy = accuracy;
+    _currentDistanceFilter = distanceFilter;
+    _geolocatorSub?.cancel();
     _geolocatorSub = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10, // Update every 10 meters
+      locationSettings: LocationSettings(
+        accuracy: accuracy,
+        distanceFilter: distanceFilter,
       ),
-    ).listen((position) {
-      _positionStreamController.add(position);
-    }, onError: (Object error) {
+    ).listen(_onPositionReceived, onError: (Object error) {
       debugPrint('Location stream error: $error');
     });
+  }
+
+  void _ensureStreamRunning() {
+    if (_geolocatorSub != null) return;
+    try {
+      WidgetsBinding.instance.addObserver(this);
+    } catch (_) {
+      // In non-UI unit tests WidgetsBinding might not be initialized
+    }
+    _stationaryCheckTimer ??= Timer.periodic(
+      const Duration(minutes: 1),
+      (_) => _evaluateAdaptiveAccuracy(),
+    );
+    _switchStreamAccuracy(
+      _isBackgrounded ? LocationAccuracy.medium : LocationAccuracy.high,
+      _isBackgrounded ? 50 : 10,
+    );
   }
 
   static const Duration minWriteInterval = Duration(seconds: 30);
