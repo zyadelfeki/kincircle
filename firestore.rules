@@ -21,14 +21,7 @@ service cloud.firestore {
              request.auth.uid in get(/databases/$(database)/documents/families/$(familyId)).data.members;
     }
 
-    function isFamilyOwner(familyId) {
-      return isSignedIn() && 
-             exists(/databases/$(database)/documents/families/$(familyId)) &&
-             get(/databases/$(database)/documents/families/$(familyId)).data.members.size() > 0 &&
-             request.auth.uid == get(/databases/$(database)/documents/families/$(familyId)).data.members[0];
-    }
-
-    function isRemovingSelfFromMembers(familyId) {
+    function isRemovingSelfFromMembers() {
       return isSignedIn() &&
              resource.data.members != null &&
              request.resource.data.members != null &&
@@ -97,7 +90,7 @@ service cloud.firestore {
     // Families collection
     match /families/{familyId} {
       allow read: if isSignedIn() && (isOwner(resource.data) || (resource.data.members != null && request.auth.uid in resource.data.members));
-      allow update: if isSignedIn() && (isOwner(resource.data) || isAddingSelfToMembers() || isRemovingSelfFromMembers(familyId));
+      allow update: if isSignedIn() && (isOwner(resource.data) || isAddingSelfToMembers() || isRemovingSelfFromMembers());
       allow create: if isSignedIn();
       allow delete: if false; // Families cannot be deleted via client
     }

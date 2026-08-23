@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: 'KinCircle — Privacy Policy',
     description:
       'KinCircle privacy policy: how we collect, use, and protect your location, circle membership, sensor, and account data.',
-    url: 'https://kincircle.com/privacy',
+    url: 'https://kincircle-live.web.app/privacy',
   },
 };
 
@@ -128,7 +128,7 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: '#38BDF8', marginBottom: 12 }}>7. Contact Us</h2>
           <p style={{ color: '#CBD5E1', lineHeight: 1.7, fontSize: 15 }}>
-            If you have questions regarding this Privacy Policy or your data, please contact the KinCircle team at <a href="mailto:support@kincircle.com" style={{ color: '#38BDF8', textDecoration: 'underline' }}>support@kincircle.com</a>.
+            If you have questions regarding this Privacy Policy or your data, please contact the KinCircle team at <a href="mailto:support@kincircle-live.web.app" style={{ color: '#38BDF8', textDecoration: 'underline' }}>support@kincircle-live.web.app</a>.
           </p>
         </section>
       </main>

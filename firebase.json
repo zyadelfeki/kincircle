@@ -24,6 +24,14 @@
       {
         "source": "/invite-accepted",
         "destination": "/invite-accepted.html"
+      },
+      {
+        "source": "/privacy/**",
+        "destination": "/privacy/index.html"
+      },
+      {
+        "source": "/privacy",
+        "destination": "/privacy/index.html"
       }
     ]
   }

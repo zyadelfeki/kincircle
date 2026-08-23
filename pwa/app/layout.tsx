@@ -2,7 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://kincircle.com'),
+  metadataBase: new URL('https://kincircle-live.web.app'),
   title: 'KinCircle — Family Safety, Calm by Design',
   description:
     'A calm, family-first safety and coordination app with real-time circle location sharing, safe zone alerts, and one-tap SOS.',
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     title: 'KinCircle — Family Safety, Calm by Design',
     description:
       'A calm, family-first safety and coordination app with real-time circle location sharing, safe zone alerts, and one-tap SOS.',
-    url: 'https://kincircle.com',
+    url: 'https://kincircle-live.web.app',
     siteName: 'KinCircle',
     images: [
       {
