@@ -182,13 +182,6 @@ export const onUserLocationChange = functions.firestore
     }
 
     const userId = context.params.userId as string;
-  const location = afterData.lastKnownLocation as any;
-
-    const docRef = await db.collection('location_events').add({
-      userId,
-      location,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    });
 
     // Check feature-flag to decide whether to perform ML anomaly detection
     let mlEnabled = false;
@@ -197,7 +190,7 @@ export const onUserLocationChange = functions.firestore
       mlEnabled = flagDoc.data()?.ml_alerts_enabled === true;
     } catch (_) {/* ignore errors, default false */}
 
-  if (mlEnabled) {
+    if (mlEnabled) {
       if (!ENDPOINT_ID || ENDPOINT_ID === 'REPLACE_WITH_ENDPOINT_ID') {
         console.warn('ML alerts enabled but MODEL_ENDPOINT_ID is not configured; skipping prediction');
         return null;
@@ -216,7 +209,7 @@ export const onUserLocationChange = functions.firestore
         const [prediction] = await endpoint.predict({instances: [instance]});
         const pred = prediction?.predictions?.[0] ?? {};
         const threshold = await fetchThreshold();
-  if (pred['predicted_label'] === 'anomalous' && (pred['confidence'] ?? 0) > threshold) {
+        if (pred['predicted_label'] === 'anomalous' && (pred['confidence'] ?? 0) > threshold) {
           await db.collection('alerts').add({
             userId,
             familyId: identity.familyId ?? null,
@@ -240,10 +233,20 @@ export const onUserLocationChange = functions.firestore
 
 // --- Rule-Based Smart Alert Cloud Function ---
 export const checkRuleBasedAlerts = functions.firestore
-  .document('location_events/{eventId}')
-  .onCreate(async (snap: any, context: any) => {
-    const data = snap.data();
-    if (!data) return null;
+  .document('users/{userId}')
+  .onUpdate(async (change: any, context: any) => {
+    const beforeData = change.before.data();
+    const afterData = change.after.data();
+
+    // Proceed only if lastKnownLocation has changed
+    if (
+      !beforeData?.lastKnownLocation ||
+      !afterData?.lastKnownLocation ||
+      (beforeData.lastKnownLocation.latitude === afterData.lastKnownLocation.latitude &&
+        beforeData.lastKnownLocation.longitude === afterData.lastKnownLocation.longitude)
+    ) {
+      return null;
+    }
 
     // If ML alerts are enabled, skip rule-based alerts to avoid duplicates
     try {
@@ -255,40 +258,18 @@ export const checkRuleBasedAlerts = functions.firestore
       // ignore and proceed with rule-based if flag cannot be read
     }
 
-    const userId: string = data.userId;
-  const location = data.location as any;
-  const timestamp = data.timestamp as any;
-    if (!location || !timestamp) return null;
+    const userId = context.params.userId as string;
+    const location = afterData.lastKnownLocation as any;
+    if (!location) return null;
+
     const identity = await resolveAlertIdentity(userId);
-    const eventDate = timestamp.toDate();
+    const eventDate = new Date();
     const day = eventDate.getDay();
     const hour = eventDate.getHours();
 
-  // Retrieve all geofences from Firestore
-  const geofencesSnap = await db.collection('geofences').get();
+    // Retrieve all geofences from Firestore
+    const geofencesSnap = await db.collection('geofences').get();
 
-    // --- Hard-coded School check (200m radius, weekdays 08-16h) ---
-    const SCHOOL_COORD = {lat: 37.7596, lng: -122.4269};
-    const distanceToSchool = haversineDistanceMeters(
-      location.latitude,
-      location.longitude,
-      SCHOOL_COORD.lat,
-      SCHOOL_COORD.lng,
-    );
-    const isWeekday = day >= 1 && day <= 5;
-    if (distanceToSchool <= 200 && isWeekday && (hour < 8 || hour >= 16)) {
-      await db.collection('alerts').add({
-        userId,
-        familyId: identity.familyId ?? null,
-        triggeredByUid: identity.triggeredByUid,
-        triggeredByName: identity.triggeredByName,
-        title: `${identity.triggeredByName} activity outside expected hours`,
-        message: 'Unusual activity detected at School.',
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        type: 'geofence',
-        seen: false,
-      });
-    }
     for (const doc of geofencesSnap.docs) {
       const gf = doc.data();
       const name = gf.name ?? doc.id;
