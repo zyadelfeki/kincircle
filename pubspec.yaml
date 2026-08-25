@@ -1,7 +1,7 @@
 name: kincircle
 description: A Flutter application for connecting with family and friends.
 publish_to: 'none'
-version: 1.0.0+2
+version: 1.0.0+1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
