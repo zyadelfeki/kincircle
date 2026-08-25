@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sageWeeklyRecap = exports.backfillFamilyOwnerIds = exports.dataRetentionCleanup = exports.calculateDriverSafetyScore = exports.retrainAnomalyModel = exports.onAlertFeedbackCreate = exports.joinBetaProgram = exports.checkRuleBasedAlerts = exports.onUserLocationChange = exports.getAnomalyScore = exports.generatePasswordResetLink = exports.sendInviteEmail = void 0;
+exports.sageWeeklyRecap = exports.backfillFamilyOwnerIds = exports.dataRetentionCleanup = exports.calculateDriverSafetyScore = exports.onAlertFeedbackCreate = exports.joinBetaProgram = exports.checkRuleBasedAlerts = exports.onUserLocationChange = exports.getAnomalyScore = exports.generatePasswordResetLink = exports.sendInviteEmail = void 0;
 const functions = __importStar(require("firebase-functions"));
 const params_1 = require("firebase-functions/params");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
@@ -394,33 +394,6 @@ exports.onAlertFeedbackCreate = functions.firestore
         }
     }
     return null;
-});
-// --- Weekly retrain Cloud Function (triggered via Pub/Sub) ---
-exports.retrainAnomalyModel = functions.pubsub
-    .topic('weekly-model-retrain')
-    .onPublish(async () => {
-    console.log('Starting Vertex AI AutoML retraining job');
-    try {
-        const jobDisplayName = `location_anomaly_retrain_${Date.now()}`;
-        const [operation] = await vertexAI.autoML().createTrainingPipeline({
-            parent: vertexAI.locationPath(PROJECT_ID, LOCATION),
-            trainingPipeline: {
-                displayName: jobDisplayName,
-                inputDataConfig: {
-                    datasetId: process.env.AUTO_ML_DATASET_ID,
-                },
-                trainingTaskDefinition: 'gs://google-cloud-aiplatform/schema/trainingjob/definition/automl_tables_1.3.0.yaml',
-                trainingTaskInputs: {
-                    optimizationObjective: 'MAXIMIZE_AU_ROC',
-                },
-                modelToUpload: { displayName: `anomaly_model_${Date.now()}` },
-            },
-        });
-        console.log('Training job started:', operation.name);
-    }
-    catch (err) {
-        console.error('Retraining failed', err);
-    }
 });
 // --- Weekly Driver Safety Score Calculation ---
 // This scheduled function computes a simple 0-100 score based on anonymized weekly

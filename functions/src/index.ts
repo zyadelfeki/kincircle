@@ -400,34 +400,6 @@ export const onAlertFeedbackCreate = functions.firestore
     return null;
   });
 
-// --- Weekly retrain Cloud Function (triggered via Pub/Sub) ---
-export const retrainAnomalyModel = functions.pubsub
-  .topic('weekly-model-retrain')
-  .onPublish(async () => {
-    console.log('Starting Vertex AI AutoML retraining job');
-    try {
-      const jobDisplayName = `location_anomaly_retrain_${Date.now()}`;
-      const [operation] = await vertexAI.autoML().createTrainingPipeline({
-        parent: vertexAI.locationPath(PROJECT_ID, LOCATION),
-        trainingPipeline: {
-          displayName: jobDisplayName,
-          inputDataConfig: {
-            datasetId: process.env.AUTO_ML_DATASET_ID,
-          },
-          trainingTaskDefinition:
-            'gs://google-cloud-aiplatform/schema/trainingjob/definition/automl_tables_1.3.0.yaml',
-          trainingTaskInputs: {
-            optimizationObjective: 'MAXIMIZE_AU_ROC',
-          },
-          modelToUpload: {displayName: `anomaly_model_${Date.now()}`},
-        },
-      });
-      console.log('Training job started:', operation.name);
-    } catch (err) {
-      console.error('Retraining failed', err);
-    }
-  }); 
-
 // --- Weekly Driver Safety Score Calculation ---
 // This scheduled function computes a simple 0-100 score based on anonymized weekly
 // summaries uploaded by the mobile app. It does NOT read raw sensor data.
