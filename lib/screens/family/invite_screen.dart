@@ -99,11 +99,13 @@ class _InviteScreenState extends State<InviteScreen> {
                   const SizedBox(height: 14),
                   _sheetAction(
                     icon: Icons.share_rounded,
-                    title: 'Share invite link',
+                    title: 'Share invite',
                     onTap: () async {
                       Navigator.of(context).pop();
                       await SharePlus.instance.share(
-                        ShareParams(text: link),
+                        ShareParams(
+                          text: 'Join my family circle on KinCircle: https://kincircle-live.web.app/invite/$code',
+                        ),
                       );
                     },
                   ),
@@ -305,10 +307,43 @@ class _InviteScreenState extends State<InviteScreen> {
         const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: ElevatedButton(
-            style: KinCircleButtons.primary(),
-            onPressed: _openInviteOptions,
-            child: const Text('Invite Member'),
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  style: KinCircleButtons.primary(),
+                  onPressed: _openInviteOptions,
+                  child: const Text('Invite Member'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: KinCircleButtons.secondary(),
+                  onPressed: () async {
+                    try {
+                      final String code =
+                          _inviteCode ?? await _firestoreService.generateInviteId();
+                      if (!mounted) return;
+                      setState(() => _inviteCode = code);
+                      await SharePlus.instance.share(
+                        ShareParams(
+                          text:
+                              'Join my family circle on KinCircle: https://kincircle-live.web.app/invite/$code',
+                        ),
+                      );
+                    } catch (_) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Unable to generate invite now')),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.share_rounded, size: 18),
+                  label: const Text('Share invite'),
+                ),
+              ),
+            ],
           ),
         ),
       ],

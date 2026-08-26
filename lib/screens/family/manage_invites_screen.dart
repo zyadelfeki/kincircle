@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'accept_invite_screen.dart';
 import '../../utils/constants.dart';
 
@@ -94,6 +95,13 @@ class ManageInvitesScreen extends StatelessWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Invite ID copied')),
                           );
+                        } else if (value == 'share') {
+                          SharePlus.instance.share(
+                            ShareParams(
+                              text:
+                                  'Join my family circle on KinCircle: https://kincircle-live.web.app/invite/$inviteId',
+                            ),
+                          );
                         } else if (value == 'copylink') {
                           final url = '${AppConstants.inviteLinkBase}$inviteId';
                           Clipboard.setData(ClipboardData(text: url));
@@ -105,6 +113,8 @@ class ManageInvitesScreen extends StatelessWidget {
                       itemBuilder: (context) => const [
                         PopupMenuItem(
                             value: 'open', child: Text('Open invite')),
+                        PopupMenuItem(
+                            value: 'share', child: Text('Share invite')),
                         PopupMenuItem(value: 'copy', child: Text('Copy ID')),
                         PopupMenuItem(
                             value: 'copylink', child: Text('Copy link')),

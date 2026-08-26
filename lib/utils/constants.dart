@@ -29,7 +29,7 @@ class AppConstants {
   static const String signOutSuccess = 'Successfully signed out!';
 
   // Deep Link base
-  static const String inviteLinkBase = 'https://links.kincircle.app/invite/';
+  static const String inviteLinkBase = 'https://kincircle-live.web.app/invite/';
 
   // Branding
   static const String brandLogoAsset = 'assets/icon/kin_arc_final.svg';

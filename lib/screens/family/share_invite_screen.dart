@@ -30,9 +30,14 @@ class ShareInviteScreen extends StatelessWidget {
             Text(url, textAlign: TextAlign.center),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: () => SharePlus.instance.share(ShareParams(text: url)),
+              onPressed: () => SharePlus.instance.share(
+                ShareParams(
+                  text:
+                      'Join my family circle on KinCircle: https://kincircle-live.web.app/invite/$inviteId',
+                ),
+              ),
               icon: const Icon(Icons.ios_share),
-              label: const Text('Share link'),
+              label: const Text('Share invite'),
             ),
           ],
         ),
