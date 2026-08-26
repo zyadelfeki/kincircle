@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -74,15 +73,12 @@ class _MapScreenState extends State<MapScreen> {
   LatLng _cameraTarget = const LatLng(30.0444, 31.2357);
   Set<Marker> _markers = <Marker>{};
   Set<Circle> _circles = <Circle>{};
-  Set<Circle> _helpCircles = <Circle>{};
   List<_MemberRowData> _members = <_MemberRowData>[];
   String? _currentCircleId;
   List<CircleMemberStatusEntry> _circleStatuses =
       <CircleMemberStatusEntry>[];
   int _currentBatteryLevel = 0;
   double _currentUserSpeedKmh = 0.0;
-  double _pulsePhase = 0;
-  Timer? _pulseTimer;
 
   static const String _privacyBubblePrefsKey = 'map.privacyBubble';
 
@@ -125,7 +121,6 @@ class _MapScreenState extends State<MapScreen> {
     _familySub?.cancel();
     _positionSub?.cancel();
     _statusSub?.cancel();
-    _pulseTimer?.cancel();
     _mapController?.dispose();
     super.dispose();
   }
@@ -183,7 +178,6 @@ class _MapScreenState extends State<MapScreen> {
           _members = <_MemberRowData>[];
           _markers = <Marker>{};
           _circles = <Circle>{};
-          _helpCircles = <Circle>{};
           _state = _MapState.ready;
         });
         return;
@@ -368,7 +362,6 @@ class _MapScreenState extends State<MapScreen> {
           _members = rows;
           _markers = markers;
           _circles = circles;
-          _helpCircles = _buildNeedsHelpCircles(markers);
           _cameraTarget = nextTarget;
         });
       },
@@ -390,54 +383,10 @@ class _MapScreenState extends State<MapScreen> {
       if (!mounted) return;
       setState(() {
         _circleStatuses = statuses;
-        _helpCircles = _buildNeedsHelpCircles(_markers);
       });
-      _ensurePulseTimer();
     }, onError: (Object error) {
       debugPrint('MapScreen status stream error: $error');
     });
-  }
-
-  void _ensurePulseTimer() {
-    final bool hasHelp =
-        _circleStatuses.any((s) => s.status == CircleMemberStatus.needsHelp);
-    if (!hasHelp) {
-      _pulseTimer?.cancel();
-      _pulseTimer = null;
-      return;
-    }
-    _pulseTimer ??= Timer.periodic(const Duration(milliseconds: 700), (_) {
-      if (!mounted) return;
-      setState(() {
-        _pulsePhase += 0.35;
-        _helpCircles = _buildNeedsHelpCircles(_markers);
-      });
-    });
-  }
-
-  Set<Circle> _buildNeedsHelpCircles(Set<Marker> markers) {
-    final Map<String, LatLng> markerPositions = <String, LatLng>{
-      for (final Marker marker in markers) marker.markerId.value: marker.position,
-    };
-
-    final double pulse = (sin(_pulsePhase) + 1) / 2;
-    final double radius = 180 + (110 * pulse);
-
-    return _circleStatuses
-        .where((CircleMemberStatusEntry status) =>
-            status.status == CircleMemberStatus.needsHelp)
-        .map((CircleMemberStatusEntry status) {
-      final LatLng? position = markerPositions[status.uid];
-      if (position == null) return null;
-      return Circle(
-        circleId: CircleId('needs_help_${status.uid}'),
-        center: position,
-        radius: radius,
-        fillColor: Colors.red.withValues(alpha: 0.16 + (0.12 * pulse)),
-        strokeColor: Colors.red.withValues(alpha: 0.45 + (0.35 * pulse)),
-        strokeWidth: 2,
-      );
-    }).whereType<Circle>().toSet();
   }
 
   Future<void> _broadcastCircleStatus(
@@ -808,21 +757,15 @@ class _MapScreenState extends State<MapScreen> {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Stack(
       children: [
-        GoogleMap(
-          initialCameraPosition: CameraPosition(target: _cameraTarget, zoom: 13),
-          style: isDark ? _darkMapStyle : null,
+        _PulseMapCanvas(
+          cameraTarget: _cameraTarget,
+          isDark: isDark,
+          markers: _markers,
+          circles: _circles,
+          circleStatuses: _circleStatuses,
           onMapCreated: (GoogleMapController controller) {
             _mapController = controller;
           },
-          markers: _markers,
-          circles: <Circle>{..._circles, ..._helpCircles},
-          myLocationEnabled: true,
-          myLocationButtonEnabled: false,
-          zoomControlsEnabled: false,
-          zoomGesturesEnabled: true,
-          scrollGesturesEnabled: true,
-          rotateGesturesEnabled: true,
-          tiltGesturesEnabled: true,
         ),
         Positioned(
           left: 16,
@@ -1136,6 +1079,127 @@ class _MapScreenState extends State<MapScreen> {
       currentIndex: 0,
       title: 'Live Map',
       body: _buildBody(),
+    );
+  }
+}
+
+class _PulseMapCanvas extends StatefulWidget {
+  const _PulseMapCanvas({
+    required this.cameraTarget,
+    required this.isDark,
+    required this.markers,
+    required this.circles,
+    required this.circleStatuses,
+    required this.onMapCreated,
+  });
+
+  final LatLng cameraTarget;
+  final bool isDark;
+  final Set<Marker> markers;
+  final Set<Circle> circles;
+  final List<CircleMemberStatusEntry> circleStatuses;
+  final void Function(GoogleMapController controller) onMapCreated;
+
+  @override
+  State<_PulseMapCanvas> createState() => _PulseMapCanvasState();
+}
+
+class _PulseMapCanvasState extends State<_PulseMapCanvas>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _updateAnimation();
+  }
+
+  @override
+  void didUpdateWidget(covariant _PulseMapCanvas oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _updateAnimation();
+  }
+
+  void _updateAnimation() {
+    final bool hasHelp = widget.circleStatuses.any(
+      (CircleMemberStatusEntry s) =>
+          s.status == CircleMemberStatus.needsHelp,
+    );
+    if (hasHelp) {
+      if (!_pulseController.isAnimating) {
+        _pulseController.repeat(reverse: true);
+      }
+    } else {
+      if (_pulseController.isAnimating) {
+        _pulseController.stop();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  Set<Circle> _buildNeedsHelpCircles(double pulse) {
+    final bool hasHelp = widget.circleStatuses.any(
+      (CircleMemberStatusEntry s) =>
+          s.status == CircleMemberStatus.needsHelp,
+    );
+    if (!hasHelp) return const <Circle>{};
+
+    final Map<String, LatLng> markerPositions = <String, LatLng>{
+      for (final Marker marker in widget.markers)
+        marker.markerId.value: marker.position,
+    };
+
+    final double radius = 180 + (110 * pulse);
+
+    return widget.circleStatuses
+        .where((CircleMemberStatusEntry status) =>
+            status.status == CircleMemberStatus.needsHelp)
+        .map((CircleMemberStatusEntry status) {
+      final LatLng? position = markerPositions[status.uid];
+      if (position == null) return null;
+      return Circle(
+        circleId: CircleId('needs_help_${status.uid}'),
+        center: position,
+        radius: radius,
+        fillColor: Colors.red.withValues(alpha: 0.16 + (0.12 * pulse)),
+        strokeColor: Colors.red.withValues(alpha: 0.45 + (0.35 * pulse)),
+        strokeWidth: 2,
+      );
+    }).whereType<Circle>().toSet();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pulseController,
+      builder: (BuildContext context, _) {
+        final Set<Circle> helpCircles =
+            _buildNeedsHelpCircles(_pulseController.value);
+        return GoogleMap(
+          initialCameraPosition:
+              CameraPosition(target: widget.cameraTarget, zoom: 13),
+          style: widget.isDark ? _MapScreenState._darkMapStyle : null,
+          onMapCreated: widget.onMapCreated,
+          markers: widget.markers,
+          circles: <Circle>{...widget.circles, ...helpCircles},
+          myLocationEnabled: true,
+          myLocationButtonEnabled: false,
+          zoomControlsEnabled: false,
+          zoomGesturesEnabled: true,
+          scrollGesturesEnabled: true,
+          rotateGesturesEnabled: true,
+          tiltGesturesEnabled: true,
+        );
+      },
     );
   }
 }
