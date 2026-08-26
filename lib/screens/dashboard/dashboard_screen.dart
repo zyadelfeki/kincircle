@@ -97,25 +97,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       _familyId = familyId;
 
-      final QuerySnapshot<Map<String, dynamic>> memberSnap = await _firestore
-          .collection('users')
-          .where('currentFamilyId', isEqualTo: familyId)
-          .get();
+      final results = await Future.wait([
+        _firestore
+            .collection('users')
+            .where('currentFamilyId', isEqualTo: familyId)
+            .get(),
+        _firestore
+            .collection('geofences')
+            .where('familyId', isEqualTo: familyId)
+            .get(),
+        _firestore
+            .collection('alerts')
+            .where('userId', isEqualTo: user.uid)
+            .orderBy('timestamp', descending: true)
+            .limit(5)
+            .get(),
+      ]);
+
+      final QuerySnapshot<Map<String, dynamic>> memberSnap = results[0];
+      final QuerySnapshot<Map<String, dynamic>> geofenceSnap = results[1];
+      final QuerySnapshot<Map<String, dynamic>> activitySnap = results[2];
+
       final List<AppUser> members =
           memberSnap.docs.map(AppUser.fromFirestore).toList();
-
-      final QuerySnapshot<Map<String, dynamic>> geofenceSnap = await _firestore
-          .collection('geofences')
-          .where('familyId', isEqualTo: familyId)
-          .get();
-
-      final QuerySnapshot<Map<String, dynamic>> activitySnap = await _firestore
-          .collection('alerts')
-          .where('userId', isEqualTo: user.uid)
-          .orderBy('timestamp', descending: true)
-          .limit(5)
-          .get();
-
       final List<RecentActivityItem> activity =
           activitySnap.docs.map(_toActivityItem).toList();
 
