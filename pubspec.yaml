@@ -67,13 +67,11 @@ flutter:
   assets:
   - assets/models/
   - docs/FAQ.md
-  - assets/logo/Gemini_Generated_Image_7egx8i7egx8i7egx.png
-  - assets/sq-google-g-logo-update_dezeen_2364_col_0.jpg
 
 flutter_launcher_icons:
   android: true
   ios: true
   remove_alpha_ios: true
-  image_path: assets/logo/Gemini_Generated_Image_7egx8i7egx8i7egx.png
+  image_path: assets/icon/kin_arc_launcher_icon.png
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: assets/logo/Gemini_Generated_Image_7egx8i7egx8i7egx.png
+  adaptive_icon_foreground: assets/icon/kin_arc_launcher_icon.png

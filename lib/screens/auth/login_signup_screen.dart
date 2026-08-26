@@ -288,19 +288,12 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                           const SizedBox(height: 12),
                           _buildSocialButton(
                             label: 'Continue with Google',
-                            icon: Image.asset(
-                              'assets/sq-google-g-logo-update_dezeen_2364_col_0.jpg',
-                              width: 24,
-                              height: 24,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                   const Text(
-                                'G',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  color: KinCirclePalette.accent,
-                                ),
+                            icon: const Text(
+                              'G',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: KinCirclePalette.accent,
                               ),
                             ),
                             onPressed: _isLoading
