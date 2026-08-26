@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/foundation.dart';
 import '../utils/constants.dart';
+import 'geofence_monitor_service.dart';
 
 class AuthService extends ChangeNotifier {
   AuthService(
@@ -227,6 +228,7 @@ class AuthService extends ChangeNotifier {
       } else {
         await _auth.signOut();
       }
+      GeofenceMonitorService().cancel();
       _user = null;
       notifyListeners();
     } catch (e) {

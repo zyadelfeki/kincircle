@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'trip_detection_service.dart';
+import 'geofence_monitor_service.dart';
 
 /// Manages the lifecycle of TripDetectionService based on user authentication state
 class TripServiceManager {
@@ -47,10 +48,12 @@ class TripServiceManager {
     }
     
     if (user != null) {
-      // User logged in - start trip detection service
+      // User logged in - start trip detection service & geofence monitor
+      GeofenceMonitorService().startMonitoring();
       await _startTripDetection();
     } else {
-      // User logged out - stop trip detection service
+      // User logged out - stop trip detection service & geofence monitor
+      GeofenceMonitorService().cancel();
       await _stopTripDetection();
     }
   }

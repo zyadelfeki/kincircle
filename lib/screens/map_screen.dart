@@ -19,6 +19,7 @@ import '../models/user_model.dart';
 import '../services/circle_status_service.dart';
 import '../services/anomaly_alert_service.dart';
 import '../services/location_service.dart';
+import '../services/geofence_monitor_service.dart';
 import '../services/theme_controller.dart';
 import '../widgets/nav_shell.dart';
 
@@ -194,6 +195,7 @@ class _MapScreenState extends State<MapScreen> {
           : familyId;
       _subscribeToFamilyMembers(familyId);
       _subscribeToCircleStatuses(_currentCircleId!);
+      GeofenceMonitorService().startMonitoring(familyId: familyId);
       if (!mounted) return;
       setState(() => _state = _MapState.ready);
     } catch (_) {
