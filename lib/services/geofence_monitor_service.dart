@@ -330,9 +330,12 @@ class GeofenceMonitorService {
               .cast<String>();
 
       final otherMembers = members.where((uid) => uid != myUid).toList();
+      if (otherMembers.isEmpty) return;
 
+      final batch = _firestore.batch();
       for (final otherUid in otherMembers) {
-        await _firestore.collection('alerts').add({
+        final docRef = _firestore.collection('alerts').doc();
+        batch.set(docRef, {
           'userId': otherUid,
           'familyId': familyId,
           'triggeredByUid': myUid,
@@ -344,6 +347,7 @@ class GeofenceMonitorService {
           'seen': false,
         });
       }
+      await batch.commit();
     } catch (e) {
       debugPrint('GeofenceMonitorService: failed to write alerts: $e');
     }
