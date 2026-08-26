@@ -2,9 +2,23 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-    maven { url = uri("https://maven.transistorsoft.com") }
-    maven { url = uri("https://repo1.maven.org/maven2/") }
-    maven { url = uri("https://jitpack.io") }
+        maven { url = uri("https://maven.transistorsoft.com") }
+        maven { url = uri("https://repo1.maven.org/maven2/") }
+        maven { url = uri("https://jitpack.io") }
+    }
+    configurations.all {
+        resolutionStrategy {
+            force("org.jetbrains.kotlin:kotlin-stdlib:2.1.20")
+            force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.20")
+            force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.20")
+            force("org.jetbrains.kotlin:kotlin-stdlib-common:2.1.20")
+            force("org.jetbrains.kotlin:kotlin-reflect:2.1.20")
+            eachDependency {
+                if (requested.group == "org.jetbrains.kotlin" && requested.name.startsWith("kotlin-stdlib")) {
+                    useVersion("2.1.20")
+                }
+            }
+        }
     }
 }
 
