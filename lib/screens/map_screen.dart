@@ -429,8 +429,8 @@ class _MapScreenState extends State<MapScreen> {
             (item['timestamp'] as DateTime).isBefore(cutoff),
       );
 
-      if (history.length > 240) {
-        history.removeRange(0, history.length - 240);
+      if (history.length > 50) {
+        history.removeRange(0, history.length - 50);
       }
     }
   }
