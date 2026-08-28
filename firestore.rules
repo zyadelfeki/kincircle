@@ -115,8 +115,8 @@ service cloud.firestore {
 
     // Alerts collection
     match /alerts/{id} {
-      allow read, list: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read, update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isFamilyMember(request.resource.data.familyId);
     }
 
     // Alert feedback collection
@@ -248,10 +248,10 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Geofences - only family members can read
+    // Geofences - only family members can read/write
     match /geofences/{geofenceId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read, update, delete: if isSignedIn() && isFamilyMember(resource.data.familyId);
+      allow create: if isSignedIn() && isFamilyMember(request.resource.data.familyId);
     }
 
     // Community stats - authenticated users can read
