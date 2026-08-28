@@ -16,6 +16,9 @@ import '../../widgets/dashboard/quick_actions_card.dart';
 import '../../widgets/dashboard/recent_activity_card.dart';
 import '../../widgets/dashboard/safe_places_card.dart';
 import '../../widgets/battery_shield_card.dart';
+import '../../services/pending_invite_store.dart';
+import '../family/accept_invite_screen.dart';
+import 'package:provider/provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -48,6 +51,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final pendingStore =
+            Provider.of<PendingInviteStore>(context, listen: false);
+        final inviteId = await pendingStore.consume();
+        if (inviteId != null && mounted) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => AcceptInviteScreen(inviteId: inviteId),
+            ),
+          );
+        }
+      } catch (_) {}
+    });
   }
 
   @override
