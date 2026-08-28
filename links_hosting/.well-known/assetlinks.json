@@ -3,8 +3,9 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-  "package_name": "com.zyad.kincircle",
+      "package_name": "com.zyad.kincircle",
       "sha256_cert_fingerprints": [
+        "57:C3:A6:BD:6D:87:48:79:C7:69:46:25:EE:37:AD:8D:68:A7:18:7C:69:D3:EF:38:FB:E6:F8:1C:20:09:A0:71",
         "2C:74:BF:89:A4:8B:C4:4B:B5:15:C6:C8:4B:13:B4:3C:B1:B9:2E:0A:B1:A1:3A:AC:7F:4F:64:EA:F4:FB:95:23"
       ]
     }
