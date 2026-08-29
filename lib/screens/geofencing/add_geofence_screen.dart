@@ -44,6 +44,8 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
 
   LatLng _mapCenter = const LatLng(30.0444, 31.2357);
   final Set<Marker> _markers = {};
+  final Set<Circle> _circles = {};
+  double _radiusMeters = 200.0;
 
   static const int _debounceMilliseconds = 350;
 
@@ -61,6 +63,36 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
     _nameController.dispose();
     _placesService.dispose();
     super.dispose();
+  }
+
+  void _updateCircleOverlay(LatLng coords, KinCirclePaletteData palette) {
+    _circles
+      ..clear()
+      ..add(
+        Circle(
+          circleId: const CircleId('geofence_radius'),
+          center: coords,
+          radius: _radiusMeters,
+          fillColor: palette.accent.withValues(alpha: 0.2),
+          strokeColor: palette.accent,
+          strokeWidth: 2,
+        ),
+      );
+  }
+
+  void _onMapTap(LatLng coords) {
+    FocusScope.of(context).unfocus();
+    final palette = KinCirclePalette.of(context);
+    setState(() {
+      _mapCenter = coords;
+      _markers
+        ..clear()
+        ..add(Marker(
+          markerId: const MarkerId('selected_pin'),
+          position: coords,
+        ));
+      _updateCircleOverlay(coords, palette);
+    });
   }
 
   void _onSearchChanged(String input) {
@@ -89,12 +121,15 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
     try {
       final placeId = prediction.placeId;
       final coords = await _placesService.getPlaceDetails(placeId);
+      if (!mounted) return;
       final desc = prediction.description;
       _nameController.text = desc;
 
+      final palette = KinCirclePalette.of(context);
       _markers
         ..clear()
         ..add(Marker(markerId: MarkerId(placeId), position: coords));
+      _updateCircleOverlay(coords, palette);
 
       setState(() {
         _mapCenter = coords;
@@ -181,9 +216,10 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                       onMapCreated: (c) => _mapController = c,
                       initialCameraPosition:
                           CameraPosition(target: _mapCenter, zoom: 12),
-                      // Map style follows app theme
                       style: isDark ? _darkMapStyle : null,
                       markers: _markers,
+                      circles: _circles,
+                      onTap: _onMapTap,
                       myLocationEnabled: true,
                       zoomGesturesEnabled: true,
                       scrollGesturesEnabled: true,
@@ -191,6 +227,39 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                       tiltGesturesEnabled: true,
                       zoomControlsEnabled: true,
                       myLocationButtonEnabled: true,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    color: palette.surface,
+                    child: Row(
+                      children: [
+                        Text(
+                          'Radius: ${_radiusMeters.round()}m',
+                          style: KinCircleTypography.body14(
+                            color: palette.textPrimary,
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: _radiusMeters,
+                            min: 50.0,
+                            max: 1000.0,
+                            divisions: 19,
+                            activeColor: palette.accent,
+                            label: '${_radiusMeters.round()}m',
+                            onChanged: (val) {
+                              setState(() {
+                                _radiusMeters = val;
+                                if (_markers.isNotEmpty) {
+                                  _updateCircleOverlay(_markers.first.position, palette);
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Padding(
@@ -233,7 +302,7 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                           }
                           if (_markers.isEmpty) {
                             messenger.showSnackBar(
-                              const SnackBar(content: Text('Please select a location first.')),
+                              const SnackBar(content: Text('Please select a location on the map first.')),
                             );
                             return;
                           }
@@ -259,7 +328,7 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                               'userId': uid,
                               'lat': selectedPosition.latitude,
                               'lng': selectedPosition.longitude,
-                              'radius': 200.0,
+                              'radius': _radiusMeters,
                               'createdAt': FieldValue.serverTimestamp(),
                             });
                             if (!ctx.mounted) return;
