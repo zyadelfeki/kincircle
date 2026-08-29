@@ -1,0 +1,11 @@
+# Auto-normalize line endings across operating systems
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.otf binary
+*.ttf binary
+*.aab binary
+*.apk binary
