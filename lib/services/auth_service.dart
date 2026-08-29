@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/foundation.dart';
 import '../utils/constants.dart';
@@ -113,13 +114,22 @@ class AuthService extends ChangeNotifier {
   Future<User?> signInWithGoogle() async {
     try {
       _isLoading = true;
-      // Use FirebaseAuth's provider-based sign-in (works across platforms)
-      final googleProvider = GoogleAuthProvider();
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        return null;
+      }
+      final auth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: auth.accessToken,
+        idToken: auth.idToken,
+      );
       final UserCredential userCredential =
-          await _auth.signInWithProvider(googleProvider);
-      await ensureUserDocument(userCredential.user!);
-      _user = userCredential.user;
-      notifyListeners();
+          await _auth.signInWithCredential(credential);
+      if (userCredential.user != null) {
+        await ensureUserDocument(userCredential.user!);
+        _user = userCredential.user;
+        notifyListeners();
+      }
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
       throw Exception(_friendlyAuthMessage(e, isSignUp: false));
