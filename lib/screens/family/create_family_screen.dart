@@ -16,6 +16,46 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
   bool _loading = false;
 
   Future<void> _createCircle() async {
+    final existingFamilyId = await _firestoreService.getCurrentFamilyId();
+    if (!mounted) return;
+
+    if (existingFamilyId != null && existingFamilyId.isNotEmpty) {
+      final palette = KinCirclePalette.of(context);
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: palette.surface,
+          title: Text(
+            'Create a new circle?',
+            style: KinCircleTypography.cardTitle16(
+              color: palette.textPrimary,
+              weight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            "You're already in a circle. Create a new one anyway? You'll stop seeing your current circle's map.",
+            style: KinCircleTypography.body14(color: palette.textMuted),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(
+                'Cancel',
+                style: KinCircleTypography.body14(color: palette.textMuted),
+              ),
+            ),
+            ElevatedButton(
+              style: KinCircleButtons.primary(),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Create anyway'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+    }
+
     setState(() => _loading = true);
     try {
       await _firestoreService.createFamily(name: 'My Circle');
