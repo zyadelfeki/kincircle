@@ -249,8 +249,7 @@ class LocationService with WidgetsBindingObserver {
       _lastWriteTime = DateTime.now();
       _lastWrittenPosition = position;
     } on FirebaseException catch (e) {
-      // Log Firebase-specific errors with context
-      debugPrint('Firebase error updating location: ${e.code} - ${e.message}');
+      debugPrint('LocationService.updateUserLocation Firebase error: ${e.code} - ${e.message}');
       // Retry logic for transient failures
       if (e.code == 'unavailable' || e.code == 'deadline-exceeded') {
         await Future.delayed(const Duration(seconds: 2));
@@ -261,12 +260,12 @@ class LocationService with WidgetsBindingObserver {
           });
           _lastWriteTime = DateTime.now();
           _lastWrittenPosition = position;
-        } catch (_) {
-          // Silent fail on retry - location will update on next position change
+        } catch (retryError) {
+          debugPrint('LocationService.updateUserLocation retry FAILED: $retryError');
         }
       }
-    } catch (e) {
-      debugPrint('Error updating location: $e');
+    } catch (e, st) {
+      debugPrint('LocationService.updateUserLocation FAILED: $e\n$st');
     }
   }
 

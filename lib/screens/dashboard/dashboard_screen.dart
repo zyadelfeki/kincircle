@@ -20,6 +20,7 @@ import '../../widgets/dashboard/safe_places_card.dart';
 import '../../widgets/battery_shield_card.dart';
 import '../../services/pending_invite_store.dart';
 import '../../services/theme_controller.dart';
+import '../../widgets/location_permission_banner.dart';
 import '../family/accept_invite_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -575,10 +576,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildBody() {
-    if (_loading) return _buildShimmerLayout();
-    if (_error != null) return _buildErrorState();
-    if (_familyId == null) return _buildNoFamilyState();
-    return _buildDashboard();
+    Widget content;
+    if (_loading) {
+      content = _buildShimmerLayout();
+    } else if (_error != null) {
+      content = _buildErrorState();
+    } else if (_familyId == null) {
+      content = _buildNoFamilyState();
+    } else {
+      content = _buildDashboard();
+    }
+
+    return Column(
+      children: [
+        LocationPermissionBanner(
+          onPermissionGranted: () {
+            _load();
+          },
+        ),
+        Expanded(child: content),
+      ],
+    );
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../design/kincircle_screen_tokens.dart';
 import '../../models/user_model.dart';
 import '../../services/rhythm/rhythm_store.dart';
+import '../../utils/time_utils.dart';
 import 'dashboard_card_container.dart';
 
 /// Card on the dashboard visible to everyone showing real-time rhythm baseline learning progress per member.
@@ -105,8 +106,7 @@ class FamilyRhythmsCard extends StatelessWidget {
               final DateTime? lastUpdated = member.lastUpdated;
               final bool isStale = lastUpdated != null &&
                   DateTime.now().difference(lastUpdated).inHours >= 3;
-              final int staleHours =
-                  isStale ? DateTime.now().difference(lastUpdated).inHours : 0;
+              final String relativeTime = formatRelativeTime(lastUpdated);
 
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
@@ -161,7 +161,7 @@ class FamilyRhythmsCard extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  'Signal lost · ${staleHours}h ago',
+                                  'Signal lost · $relativeTime',
                                   style: KinCircleTypography.caption12(
                                     color: palette.textMuted,
                                   ),

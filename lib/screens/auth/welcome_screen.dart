@@ -101,31 +101,3 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 }
-
-class _InterlockingRingsPainter extends CustomPainter {
-  const _InterlockingRingsPainter({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 9
-      ..isAntiAlias = true;
-
-    const radius = 40.0;
-    final centerY = size.height / 2;
-    final leftCenter = Offset(size.width * 0.42, centerY);
-    final rightCenter = Offset(size.width * 0.58, centerY);
-
-    canvas.drawCircle(leftCenter, radius, paint);
-    canvas.drawCircle(rightCenter, radius, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _InterlockingRingsPainter oldDelegate) {
-    return oldDelegate.color != color;
-  }
-}

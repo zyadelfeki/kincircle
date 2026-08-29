@@ -22,6 +22,8 @@ import '../services/anomaly_alert_service.dart';
 import '../services/location_service.dart';
 import '../services/geofence_monitor_service.dart';
 import '../services/theme_controller.dart';
+import '../utils/time_utils.dart';
+import '../widgets/location_permission_banner.dart';
 import '../widgets/nav_shell.dart';
 
 class MapScreen extends StatefulWidget {
@@ -635,14 +637,12 @@ class _MapScreenState extends State<MapScreen> {
 
   String _formatRelative(DateTime? value) {
     if (value == null) return 'Last seen unknown';
+    final String timeStr = formatRelativeTime(value);
     final Duration diff = DateTime.now().difference(value);
     if (diff.inHours >= 3) {
-      final int hours = diff.inHours;
-      return 'Signal lost · ${hours}h ago';
+      return 'Signal lost · $timeStr';
     }
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
-    return '${diff.inHours} h ago';
+    return timeStr;
   }
 
   Color _batteryColor(int value) {
@@ -1139,16 +1139,27 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildBody() {
+    Widget content;
     switch (_state) {
       case _MapState.loading:
-        return _buildLoading();
+        content = _buildLoading();
       case _MapState.permissionDenied:
-        return _buildPermissionDenied();
+        content = _buildPermissionDenied();
       case _MapState.error:
-        return _buildError();
+        content = _buildError();
       case _MapState.ready:
-        return _buildReady();
+        content = _buildReady();
     }
+    return Column(
+      children: [
+        LocationPermissionBanner(
+          onPermissionGranted: () {
+            _initialize();
+          },
+        ),
+        Expanded(child: content),
+      ],
+    );
   }
 
   @override
