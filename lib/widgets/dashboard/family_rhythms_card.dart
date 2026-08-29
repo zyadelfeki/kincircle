@@ -102,6 +102,12 @@ class FamilyRhythmsCard extends StatelessWidget {
 
               final double progress = (maxSamples / 5.0).clamp(0.0, 1.0);
 
+              final DateTime? lastUpdated = member.lastUpdated;
+              final bool isStale = lastUpdated != null &&
+                  DateTime.now().difference(lastUpdated).inHours >= 3;
+              final int staleHours =
+                  isStale ? DateTime.now().difference(lastUpdated).inHours : 0;
+
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Row(
@@ -132,15 +138,36 @@ class FamilyRhythmsCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          Text(
-                            statusLabel,
-                            style: KinCircleTypography.caption12(
-                              color: isActive
-                                  ? palette.accent
-                                  : palette.textMuted,
-                              weight:
-                                  isActive ? FontWeight.w600 : FontWeight.w500,
-                            ),
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 4,
+                            children: [
+                              Text(
+                                statusLabel,
+                                style: KinCircleTypography.caption12(
+                                  color: isActive
+                                      ? palette.accent
+                                      : palette.textMuted,
+                                  weight: isActive
+                                      ? FontWeight.w600
+                                      : FontWeight.w500,
+                                ),
+                              ),
+                              if (isStale) ...[
+                                Text(
+                                  '·',
+                                  style: KinCircleTypography.caption12(
+                                    color: palette.textMuted,
+                                  ),
+                                ),
+                                Text(
+                                  'Signal lost · ${staleHours}h ago',
+                                  style: KinCircleTypography.caption12(
+                                    color: palette.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ],
                       ),

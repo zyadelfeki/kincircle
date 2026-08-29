@@ -636,10 +636,13 @@ class _MapScreenState extends State<MapScreen> {
   String _formatRelative(DateTime? value) {
     if (value == null) return 'Last seen unknown';
     final Duration diff = DateTime.now().difference(value);
+    if (diff.inHours >= 3) {
+      final int hours = diff.inHours;
+      return 'Signal lost · ${hours}h ago';
+    }
     if (diff.inMinutes < 1) return 'Just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
-    if (diff.inHours < 24) return '${diff.inHours} h ago';
-    return '${diff.inDays} d ago';
+    return '${diff.inHours} h ago';
   }
 
   Color _batteryColor(int value) {
