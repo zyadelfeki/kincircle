@@ -225,4 +225,12 @@ class RhythmStore {
       await _box!.clear();
     }
   }
+
+  /// Closes the underlying Hive box.
+  Future<void> close() async {
+    if (_box != null && _box!.isOpen) {
+      await _box!.close();
+      _box = null;
+    }
+  }
 }

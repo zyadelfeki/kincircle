@@ -8,9 +8,11 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 // Dynamic links are accessed via a small abstraction to ease testing.
 import 'services/dynamic_link_service.dart';
 import 'services/app_links_dynamic_link_service.dart';
+import 'services/rhythm/rhythm_store.dart';
 
 // Import the new screens and theme
 import 'screens/auth/welcome_screen.dart';
@@ -151,6 +153,18 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (kDebugMode) {
     debugPrint('--- WidgetsBinding initialized ---');
+  }
+
+  try {
+    await Hive.initFlutter();
+    await RhythmStore.instance.init();
+    if (kDebugMode) {
+      debugPrint('--- Hive and RhythmStore initialized ---');
+    }
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('!!! Hive init failed: $e\n$st');
+    }
   }
   // Opt-in toggle for using the Firebase Auth Emulator in dev builds.
   // Enable with: --dart-define=USE_AUTH_EMULATOR=true
