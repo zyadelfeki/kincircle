@@ -94,10 +94,10 @@ class FirestoreService {
   const fromEmail = String.fromEnvironment('FROM_EMAIL', defaultValue: 'no-reply@kincircle.app');
     if (apiKey.isNotEmpty) {
       try {
-  final link = 'https://links.kincircle.app/invite/${ref.id}';
-  final sg = SendGridService(apiKey: apiKey, fromEmail: fromEmail, fromName: 'KinCircle');
-  const subject = "You're invited to join KinCircle";
-  final html = '<h2 style="color:#2E86AB;margin:0 0 16px">KinCircle Invitation</h2>'
+        final link = 'https://kincircle-live.web.app/invite/${ref.id}';
+        final sg = SendGridService(apiKey: apiKey, fromEmail: fromEmail, fromName: 'KinCircle');
+        const subject = "You're invited to join KinCircle";
+        final html = '<h2 style="color:#2E86AB;margin:0 0 16px">KinCircle Invitation</h2>'
             '<p>You\'ve been invited to join a family on KinCircle.</p>'
             '<p><a href="$link" style="background:#2E86AB;color:#fff;padding:12px 16px;border-radius:8px;text-decoration:none">Accept Invite</a></p>'
             '<p>Or open this link: <a href="$link">$link</a></p>';
