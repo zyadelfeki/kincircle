@@ -2,5 +2,5 @@
 <!-- Adaptive icon for splash: white background with KinCircle blue ring icon centered -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@android:color/white"/>
-    <foreground android:drawable="@drawable/kin_arc_vector"/>
+    <foreground android:drawable="@drawable/ic_launcher_foreground"/>
 </adaptive-icon>

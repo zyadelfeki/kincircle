@@ -620,109 +620,21 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
-
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen>
-    with TickerProviderStateMixin {
-  late final AnimationController _pulseController;
-  late final AnimationController _shimmerController;
-  late final Animation<double> _pulse;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-
-    _shimmerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    )..repeat();
-
-    _pulse = Tween<double>(begin: 0.96, end: 1.04).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    _shimmerController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0F1A),
-      body: AnimatedBuilder(
-        animation: Listenable.merge([_pulseController, _shimmerController]),
-        builder: (context, _) {
-          final slide = -1 + (2 * _shimmerController.value);
-          return Center(
-            child: Transform.scale(
-              scale: _pulse.value,
-              child: ShaderMask(
-                shaderCallback: (bounds) {
-                  return LinearGradient(
-                    begin: Alignment(slide, 0),
-                    end: Alignment(slide + 2, 0),
-                    colors: const [
-                      Color(0xFF009D84),
-                      Color(0xFF48F8D9),
-                      Color(0xFF009D84),
-                    ],
-                    stops: const [0.32, 0.5, 0.68],
-                  ).createShader(bounds);
-                },
-                blendMode: BlendMode.srcATop,
-                child: const SizedBox(
-                  width: 160,
-                  height: 104,
-                  child: CustomPaint(
-                    painter: _SplashInterlockingRingsPainter(),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Image.asset(
+          'assets/icon/kincircle_icon.png',
+          width: 140,
+          height: 140,
+        ),
       ),
     );
-  }
-}
-
-class _SplashInterlockingRingsPainter extends CustomPainter {
-  const _SplashInterlockingRingsPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const paint = Color(0xFF00C9A7);
-    final ringPaint = Paint()
-      ..color = paint
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 9
-      ..isAntiAlias = true;
-
-    const radius = 38.0;
-    final centerY = size.height / 2;
-    final leftCenter = Offset(size.width * 0.42, centerY);
-    final rightCenter = Offset(size.width * 0.58, centerY);
-
-    canvas.drawCircle(leftCenter, radius, ringPaint);
-    canvas.drawCircle(rightCenter, radius, ringPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _SplashInterlockingRingsPainter oldDelegate) {
-    return false;
   }
 }
 
