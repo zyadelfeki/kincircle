@@ -329,4 +329,37 @@ class FirestoreService {
     
     return familyId;
   }
+
+  /// Rename family/circle
+  Future<void> renameFamily(String familyId, String newName) async {
+    final uid = _currentUid();
+    if (uid == null) {
+      throw Exception('User not authenticated');
+    }
+    await _firestore.collection('families').doc(familyId).update({
+      'name': newName.trim(),
+    });
+  }
+
+  /// Delete family/circle (owner only)
+  Future<void> deleteFamily(String familyId) async {
+    final uid = _currentUid();
+    if (uid == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final familyDoc = await _firestore.collection('families').doc(familyId).get();
+    if (!familyDoc.exists) return;
+
+    final familyData = familyDoc.data() ?? {};
+    final members = List<String>.from(familyData['members'] ?? []);
+
+    final batch = _firestore.batch();
+    for (final mUid in members) {
+      final userRef = _firestore.collection('users').doc(mUid);
+      batch.update(userRef, {'currentFamilyId': FieldValue.delete()});
+    }
+    batch.delete(_firestore.collection('families').doc(familyId));
+    await batch.commit();
+  }
 }

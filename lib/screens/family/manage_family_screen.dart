@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../services/firestore_service.dart';
+import '../../design/kincircle_screen_tokens.dart';
 import '../../models/family.dart';
+import '../../services/firestore_service.dart';
 
 class ManageFamilyScreen extends StatefulWidget {
-  const ManageFamilyScreen({super.key});
+  const ManageFamilyScreen({super.key, this.familyId});
+
+  final String? familyId;
 
   @override
   State<ManageFamilyScreen> createState() => _ManageFamilyScreenState();
@@ -16,11 +19,19 @@ class _ManageFamilyScreenState extends State<ManageFamilyScreen> {
   bool _isLoading = true;
   String? _error;
   String? _currentUserId;
+  String? _targetFamilyId;
+  bool _initialized = false;
 
   @override
-  void initState() {
-    super.initState();
-    _loadFamilyDetails();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      final args =
+          (ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?) ?? {};
+      _targetFamilyId = widget.familyId ?? args['familyId'] as String?;
+      _loadFamilyDetails();
+    }
   }
 
   Future<void> _loadFamilyDetails() async {
@@ -30,59 +41,161 @@ class _ManageFamilyScreenState extends State<ManageFamilyScreen> {
         _error = null;
       });
 
-      final familyId = await _firestoreService.getCurrentFamilyId();
+      final familyId = _targetFamilyId ?? await _firestoreService.getCurrentFamilyId();
       if (familyId == null) {
-        setState(() {
-          _error = 'No family found';
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _error = 'No family found';
+            _isLoading = false;
+          });
+        }
         return;
       }
+      _targetFamilyId = familyId;
 
-      // Get current user ID
       _currentUserId = _firestoreService.getCurrentUid();
 
-      // Get both the detailed family info and the Family model
       final details = await _firestoreService.getFamilyDetails(familyId);
       final family = await _firestoreService.getFamily(familyId);
-      
-      setState(() {
-        _familyDetails = details;
-        _family = family;
-        _isLoading = false;
-      });
+
+      if (mounted) {
+        setState(() {
+          _familyDetails = details;
+          _family = family;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _renameCircle() async {
+    final currentName = _familyDetails?['name'] as String? ?? '';
+    final controller = TextEditingController(text: currentName);
+
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        final palette = KinCirclePalette.of(ctx);
+        return AlertDialog(
+          backgroundColor: palette.surface,
+          title: Text(
+            'Rename Circle',
+            style: KinCircleTypography.cardTitle16(
+              color: palette.textPrimary,
+              weight: FontWeight.w600,
+            ),
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            style: KinCircleTypography.body14(color: palette.textPrimary),
+            decoration: InputDecoration(
+              hintText: 'Enter new circle name',
+              hintStyle: KinCircleTypography.body14(color: palette.textMuted),
+              filled: true,
+              fillColor: palette.surfaceAlt,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: palette.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: palette.accent),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                'Cancel',
+                style: KinCircleTypography.body14(color: palette.textMuted),
+              ),
+            ),
+            ElevatedButton(
+              style: KinCircleButtons.primary(),
+              onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (newName != null && newName.isNotEmpty && newName != currentName) {
+      try {
+        final familyId = _targetFamilyId ?? await _firestoreService.getCurrentFamilyId();
+        if (familyId != null) {
+          await _firestoreService.renameFamily(familyId, newName);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Circle renamed to "$newName"')),
+            );
+            _loadFamilyDetails();
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to rename circle: $e')),
+          );
+        }
+      }
     }
   }
 
   Future<void> _removeMember(String memberUid, String memberName) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Remove Member'),
-        content: Text('Are you sure you want to remove $memberName from the family?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+      builder: (ctx) {
+        final palette = KinCirclePalette.of(ctx);
+        return AlertDialog(
+          backgroundColor: palette.surface,
+          title: Text(
+            'Remove Member',
+            style: KinCircleTypography.cardTitle16(
+              color: palette.textPrimary,
+              weight: FontWeight.w600,
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Remove'),
+          content: Text(
+            'Are you sure you want to remove $memberName from the circle?',
+            style: KinCircleTypography.body14(color: palette.textMuted),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(
+                'Cancel',
+                style: KinCircleTypography.body14(color: palette.textMuted),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(
+                'Remove',
+                style: KinCircleTypography.body14(
+                  color: palette.error,
+                  weight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmed != true) return;
 
     try {
-      final familyId = await _firestoreService.getCurrentFamilyId();
+      final familyId = _targetFamilyId ?? await _firestoreService.getCurrentFamilyId();
       if (familyId == null) {
         throw Exception('No family found');
       }
@@ -91,17 +204,16 @@ class _ManageFamilyScreenState extends State<ManageFamilyScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$memberName has been removed from the family')),
+        SnackBar(content: Text('$memberName has been removed from the circle')),
       );
 
-      // Reload the family details
       _loadFamilyDetails();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to remove member: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: KinCirclePalette.error,
         ),
       );
     }
@@ -110,29 +222,48 @@ class _ManageFamilyScreenState extends State<ManageFamilyScreen> {
   Future<void> _leaveFamily() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Leave Family'),
-        content: const Text(
-          'Are you sure you want to leave this family? You will no longer be able to see family member locations or receive alerts.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+      builder: (ctx) {
+        final palette = KinCirclePalette.of(ctx);
+        return AlertDialog(
+          backgroundColor: palette.surface,
+          title: Text(
+            'Leave Circle',
+            style: KinCircleTypography.cardTitle16(
+              color: palette.textPrimary,
+              weight: FontWeight.w600,
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Leave'),
+          content: Text(
+            'Are you sure you want to leave this circle? You will no longer be able to see circle member locations or receive alerts.',
+            style: KinCircleTypography.body14(color: palette.textMuted),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(
+                'Cancel',
+                style: KinCircleTypography.body14(color: palette.textMuted),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(
+                'Leave',
+                style: KinCircleTypography.body14(
+                  color: palette.error,
+                  weight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmed != true) return;
 
     try {
-      final familyId = await _firestoreService.getCurrentFamilyId();
+      final familyId = _targetFamilyId ?? await _firestoreService.getCurrentFamilyId();
       if (familyId == null) {
         throw Exception('No family found');
       }
@@ -141,17 +272,84 @@ class _ManageFamilyScreenState extends State<ManageFamilyScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You have left the family')),
+        const SnackBar(content: Text('You have left the circle')),
       );
 
-      // Navigate back to the main screen or dashboard
       Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to leave family: $e'),
-          backgroundColor: Colors.red,
+          content: Text('Failed to leave circle: $e'),
+          backgroundColor: KinCirclePalette.error,
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteCircle() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final palette = KinCirclePalette.of(ctx);
+        return AlertDialog(
+          backgroundColor: palette.surface,
+          title: Text(
+            'Delete Circle',
+            style: KinCircleTypography.cardTitle16(
+              color: palette.textPrimary,
+              weight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to delete this circle? All members will be removed and circle places deleted. This action cannot be undone.',
+            style: KinCircleTypography.body14(color: palette.textMuted),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(
+                'Cancel',
+                style: KinCircleTypography.body14(color: palette.textMuted),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(
+                'Delete',
+                style: KinCircleTypography.body14(
+                  color: palette.error,
+                  weight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      final familyId = _targetFamilyId ?? await _firestoreService.getCurrentFamilyId();
+      if (familyId == null) {
+        throw Exception('No family found');
+      }
+
+      await _firestoreService.deleteFamily(familyId);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Circle deleted successfully')),
+      );
+
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete circle: $e'),
+          backgroundColor: KinCirclePalette.error,
         ),
       );
     }
@@ -164,36 +362,38 @@ class _ManageFamilyScreenState extends State<ManageFamilyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return Scaffold(
+      backgroundColor: palette.background,
       appBar: AppBar(
-        title: const Text('Manage Family'),
+        backgroundColor: palette.background,
+        title: Text(
+          'Manage Circle',
+          style: KinCircleTypography.cardTitle16(
+            color: palette.textPrimary,
+            weight: FontWeight.w600,
+          ),
+        ),
         actions: [
           if (_familyDetails != null)
             IconButton(
-              icon: const Icon(Icons.person_add),
+              icon: Icon(Icons.person_add_outlined, color: palette.textPrimary),
               tooltip: 'Invite Member',
               onPressed: () => Navigator.of(context).pushNamed('/invite'),
             ),
         ],
       ),
-      floatingActionButton: _familyDetails != null
-          ? FloatingActionButton.extended(
-              onPressed: () => Navigator.of(context).pushNamed('/invite'),
-              icon: const Icon(Icons.person_add),
-              label: const Text('Invite'),
-            )
-          : null,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? _buildErrorState()
+              ? _buildErrorState(palette)
               : _familyDetails == null
-                  ? _buildNoFamilyState()
-                  : _buildFamilyContent(),
+                  ? _buildNoFamilyState(palette)
+                  : _buildFamilyContent(palette),
     );
   }
 
-  Widget _buildErrorState() {
+  Widget _buildErrorState(KinCirclePaletteData palette) {
     final isNoFamily = _error == 'No family found';
     return Center(
       child: Padding(
@@ -202,46 +402,47 @@ class _ManageFamilyScreenState extends State<ManageFamilyScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              isNoFamily ? Icons.family_restroom : Icons.error_outline,
-              size: 80,
-              color: isNoFamily ? Colors.blue : Colors.grey[400],
+              isNoFamily ? Icons.groups_2_outlined : Icons.error_outline,
+              size: 72,
+              color: isNoFamily ? palette.accent : palette.error,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Text(
-              isNoFamily ? 'No Family Yet' : 'Something went wrong',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
+              isNoFamily ? 'No Circle Yet' : 'Something went wrong',
+              style: KinCircleTypography.heading22(
+                color: palette.textPrimary,
+                weight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
-              isNoFamily 
-                  ? 'Create a family to start tracking and protecting your loved ones.'
+              isNoFamily
+                  ? 'Create a circle to start connecting and protecting your loved ones.'
                   : _error!,
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: KinCircleTypography.body14(color: palette.textMuted),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             if (isNoFamily) ...[
-              FilledButton.icon(
+              ElevatedButton.icon(
                 onPressed: () => Navigator.of(context).pushNamed('/create-family'),
                 icon: const Icon(Icons.add),
-                label: const Text('Create Family'),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(200, 56),
-                ),
+                label: const Text('Create Circle'),
+                style: KinCircleButtons.primary(),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: () => Navigator.of(context).pushNamed('/manage-invites'),
-                icon: const Icon(Icons.mail),
+                icon: const Icon(Icons.mail_outline),
                 label: const Text('Check Pending Invites'),
+                style: KinCircleButtons.secondary(),
               ),
             ] else
               ElevatedButton.icon(
                 onPressed: _loadFamilyDetails,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
+                style: KinCircleButtons.primary(),
               ),
           ],
         ),
@@ -249,35 +450,34 @@ class _ManageFamilyScreenState extends State<ManageFamilyScreen> {
     );
   }
 
-  Widget _buildNoFamilyState() {
+  Widget _buildNoFamilyState(KinCirclePaletteData palette) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.family_restroom, size: 80, color: Colors.blue),
-            const SizedBox(height: 24),
+            Icon(Icons.groups_2_outlined, size: 72, color: palette.accent),
+            const SizedBox(height: 20),
             Text(
-              'Start Your Family Circle',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
+              'Start Your Circle',
+              style: KinCircleTypography.heading22(
+                color: palette.textPrimary,
+                weight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 12),
-            const Text(
-              'Create a family to keep your loved ones safe and connected.',
+            const SizedBox(height: 10),
+            Text(
+              'Create a circle to keep your loved ones safe and connected.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
+              style: KinCircleTypography.body14(color: palette.textMuted),
             ),
-            const SizedBox(height: 32),
-            FilledButton.icon(
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
               onPressed: () => Navigator.of(context).pushNamed('/create-family'),
               icon: const Icon(Icons.add),
-              label: const Text('Create Family'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(200, 56),
-              ),
+              label: const Text('Create Circle'),
+              style: KinCircleButtons.primary(),
             ),
           ],
         ),
@@ -285,9 +485,9 @@ class _ManageFamilyScreenState extends State<ManageFamilyScreen> {
     );
   }
 
-  Widget _buildFamilyContent() {
-    final familyName = _familyDetails!['name'] as String;
-    final members = _familyDetails!['members'] as List<dynamic>;
+  Widget _buildFamilyContent(KinCirclePaletteData palette) {
+    final familyName = _familyDetails!['name'] as String? ?? 'Circle';
+    final members = (_familyDetails!['members'] as List<dynamic>?) ?? [];
     final isOwner = _isCurrentUserOwner();
 
     return Padding(
@@ -295,157 +495,188 @@ class _ManageFamilyScreenState extends State<ManageFamilyScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Family name header
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.family_restroom,
-                    size: 32,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          familyName,
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+          Container(
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: palette.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: palette.border),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: palette.accent.withValues(alpha: 0.2),
+                  child: Icon(Icons.groups_2, color: palette.accent, size: 26),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        familyName,
+                        style: KinCircleTypography.heading22(
+                          color: palette.textPrimary,
+                          weight: FontWeight.bold,
                         ),
-                        Text(
-                          '${members.length} member${members.length != 1 ? 's' : ''}',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Colors.grey[600],
-                              ),
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${members.length} member${members.length != 1 ? 's' : ''}',
+                        style: KinCircleTypography.body14(color: palette.textMuted),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.edit_outlined, color: palette.textMuted),
+                  tooltip: 'Rename Circle',
+                  onPressed: _renameCircle,
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
-
-          // Members section
           Text(
-            'Family Members',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            'Circle Members',
+            style: KinCircleTypography.cardTitle16(
+              color: palette.textPrimary,
+              weight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 12),
-
-          // Members list
           Expanded(
-            child: ListView.builder(
+            child: ListView.separated(
               itemCount: members.length,
+              separatorBuilder: (_, __) => Divider(height: 8, color: palette.border),
               itemBuilder: (context, index) {
-                final member = members[index];
-                final memberUid = member['uid'] as String;
-                final memberName = member['displayName'] as String;
-                final memberEmail = member['email'] as String;
-                final memberIsOwner = member['isOwner'] as bool;
+                final member = members[index] as Map<String, dynamic>;
+                final memberUid = member['uid'] as String? ?? '';
+                final memberName = member['displayName'] as String? ?? 'Member';
+                final memberEmail = member['email'] as String? ?? '';
+                final memberIsOwner = member['isOwner'] as bool? ?? false;
                 final isCurrentUser = memberUid == _currentUserId;
 
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: memberIsOwner
-                          ? Theme.of(context).primaryColor
-                          : Colors.grey[300],
-                      child: Icon(
-                        memberIsOwner ? Icons.star : Icons.person,
-                        color: memberIsOwner ? Colors.white : Colors.grey[600],
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: memberIsOwner
+                        ? palette.accent.withValues(alpha: 0.2)
+                        : palette.surfaceAlt,
+                    child: Text(
+                      memberName.isNotEmpty ? memberName[0].toUpperCase() : 'U',
+                      style: KinCircleTypography.body14(
+                        color: memberIsOwner ? palette.accent : palette.textPrimary,
+                        weight: FontWeight.w600,
                       ),
                     ),
-                    title: Row(
-                      children: [
-                        Expanded(child: Text(memberName)),
-                        if (memberIsOwner)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).primaryColor,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Text(
-                              'Owner',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        if (isCurrentUser)
-                          Container(
-                            margin: const EdgeInsets.only(left: 8),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.blue,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Text(
-                              'You',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    subtitle: Text(memberEmail),
-                    trailing: isOwner && !isCurrentUser
-                        ? IconButton(
-                            icon: const Icon(Icons.remove_circle_outline),
-                            color: Colors.red,
-                            onPressed: () => _removeMember(memberUid, memberName),
-                            tooltip: 'Remove member',
-                          )
-                        : null,
                   ),
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          memberName,
+                          style: KinCircleTypography.body14(
+                            color: palette.textPrimary,
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      if (memberIsOwner)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: palette.accent.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Owner',
+                            style: KinCircleTypography.caption12(
+                              color: palette.accent,
+                              weight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      if (isCurrentUser)
+                        Container(
+                          margin: const EdgeInsets.only(left: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: palette.surfaceAlt,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'You',
+                            style: KinCircleTypography.caption12(
+                              color: palette.textMuted,
+                              weight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  subtitle: memberEmail.isNotEmpty
+                      ? Text(
+                          memberEmail,
+                          style: KinCircleTypography.caption12(color: palette.textMuted),
+                        )
+                      : null,
+                  trailing: isOwner && !isCurrentUser
+                      ? IconButton(
+                          icon: Icon(Icons.remove_circle_outline, color: palette.error),
+                          onPressed: () => _removeMember(memberUid, memberName),
+                          tooltip: 'Remove member',
+                        )
+                      : null,
                 );
               },
             ),
           ),
-
-          // Leave family button (only for non-owners)
-          if (!isOwner) ...[
-            const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          if (isOwner)
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _leaveFamily,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+              child: OutlinedButton.icon(
+                onPressed: _deleteCircle,
+                icon: Icon(Icons.delete_outline, color: palette.error),
+                label: Text(
+                  'Delete Circle',
+                  style: KinCircleTypography.body14(
+                    color: palette.error,
+                    weight: FontWeight.w600,
+                  ),
                 ),
-                child: const Text(
-                  'Leave Family',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: palette.error),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _leaveFamily,
+                icon: Icon(Icons.exit_to_app, color: palette.error),
+                label: Text(
+                  'Leave Circle',
+                  style: KinCircleTypography.body14(
+                    color: palette.error,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: palette.error),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
               ),
             ),
-          ],
         ],
       ),
     );
