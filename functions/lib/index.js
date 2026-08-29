@@ -69,7 +69,7 @@ exports.sendInviteEmail = functions.runWith({ secrets: [SENDGRID_API_KEY] }).htt
     if (!to || !inviteId) {
         throw new functions.https.HttpsError('invalid-argument', 'to and inviteId are required');
     }
-    const deepLink = `https://links.kincircle.app/invite/${inviteId}`;
+    const deepLink = `https://kincircle-live.web.app/invite/${inviteId}`;
     const senderUid = context.auth.uid;
     try {
         await mail_1.default.send({
