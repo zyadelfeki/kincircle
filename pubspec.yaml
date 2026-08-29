@@ -63,9 +63,6 @@ dev_dependencies:
   mockito: ^5.5.1
   xml: ^6.5.0
 
-dependency_overrides:
-  google_maps_flutter_android: 2.19.5
-
 flutter:
   uses-material-design: true
   assets:

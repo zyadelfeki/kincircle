@@ -13,11 +13,7 @@ allprojects {
             force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.20")
             force("org.jetbrains.kotlin:kotlin-stdlib-common:2.1.20")
             force("org.jetbrains.kotlin:kotlin-reflect:2.1.20")
-            eachDependency {
-                if (requested.group == "org.jetbrains.kotlin" && requested.name.startsWith("kotlin-stdlib")) {
-                    useVersion("2.1.20")
-                }
-            }
+            force("com.google.maps.android:android-maps-utils:4.0.0")
         }
     }
 }
@@ -34,6 +30,13 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+}
+subprojects {
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        kotlinOptions {
+            freeCompilerArgs = freeCompilerArgs + listOf("-Xskip-metadata-version-check")
+        }
+    }
 }
 // Clean task block removed per project configuration cleanup
 
