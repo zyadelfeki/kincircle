@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../screens/alerts/alerts_screen.dart';
 import '../screens/circles_screen.dart';
@@ -65,6 +66,9 @@ class _NavShellState extends State<NavShell> {
   }
 
   void _onPageChanged(int index) {
+    if (index != _selectedIndex) {
+      HapticFeedback.lightImpact();
+    }
     setState(() {
       _selectedIndex = index;
     });

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../design/kincircle_screen_tokens.dart';
 
@@ -117,7 +118,10 @@ class BottomNav extends StatelessWidget {
               final _NavItem item = _items[index];
               return Expanded(
                 child: InkWell(
-                  onTap: () => onTap(index),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    onTap(index);
+                  },
                   borderRadius: BorderRadius.circular(999),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,

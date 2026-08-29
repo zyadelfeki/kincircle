@@ -1,11 +1,13 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:battery_plus/battery_plus.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
@@ -579,6 +581,37 @@ class _MapScreenState extends State<MapScreen> {
     return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
 
+  Future<void> _centerOnMyLocation() async {
+    await HapticFeedback.lightImpact();
+    Position? pos;
+    try {
+      pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          timeLimit: Duration(seconds: 5),
+        ),
+      );
+    } catch (_) {
+      pos = null;
+    }
+    pos ??= _locationService.lastWrittenPosition;
+
+    if (pos != null && _mapController != null) {
+      await _mapController!.animateCamera(
+        CameraUpdate.newLatLngZoom(
+          LatLng(pos.latitude, pos.longitude),
+          16,
+        ),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Locating… check location permission'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   Future<void> _openSettings() async {
     final Uri settingsUri = Uri.parse('app-settings:');
     if (await canLaunchUrl(settingsUri)) {
@@ -836,33 +869,63 @@ class _MapScreenState extends State<MapScreen> {
           top: 14,
           right: 14,
           child: SafeArea(
-            child: Builder(
-              builder: (ctx) {
-                final fabPalette = KinCirclePalette.of(ctx);
-                return Material(
-                  color: fabPalette.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  elevation: 6,
-                  child: Container(
-                    decoration: BoxDecoration(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Builder(
+                  builder: (ctx) {
+                    final fabPalette = KinCirclePalette.of(ctx);
+                    return Material(
+                      color: fabPalette.surface,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: fabPalette.border),
-                    ),
-                    child: IconButton(
-                      tooltip: _privacyBubbleMode
-                          ? 'Disable privacy bubbles'
-                          : 'Enable privacy bubbles',
-                      onPressed: _togglePrivacyBubbleMode,
-                      icon: Icon(
-                        _privacyBubbleMode
-                            ? Icons.blur_circular
-                            : Icons.location_on_rounded,
-                        color: fabPalette.accent,
+                      elevation: 6,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: fabPalette.border),
+                        ),
+                        child: IconButton(
+                          tooltip: _privacyBubbleMode
+                              ? 'Disable privacy bubbles'
+                              : 'Enable privacy bubbles',
+                          onPressed: _togglePrivacyBubbleMode,
+                          icon: Icon(
+                            _privacyBubbleMode
+                                ? Icons.blur_circular
+                                : Icons.location_on_rounded,
+                            color: fabPalette.accent,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                );
-              },
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+                Builder(
+                  builder: (ctx) {
+                    final fabPalette = KinCirclePalette.of(ctx);
+                    return Material(
+                      color: fabPalette.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      elevation: 6,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: fabPalette.border),
+                        ),
+                        child: IconButton(
+                          tooltip: 'My location',
+                          onPressed: _centerOnMyLocation,
+                          icon: Icon(
+                            Icons.my_location_rounded,
+                            color: fabPalette.accent,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         ),
@@ -1185,6 +1248,11 @@ class _PulseMapCanvasState extends State<_PulseMapCanvas>
         final Set<Circle> helpCircles =
             _buildNeedsHelpCircles(_pulseController.value);
         return GoogleMap(
+          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+            Factory<OneSequenceGestureRecognizer>(
+              () => EagerGestureRecognizer(),
+            ),
+          },
           initialCameraPosition:
               CameraPosition(target: widget.cameraTarget, zoom: 13),
           style: widget.isDark ? _MapScreenState._darkMapStyle : null,
