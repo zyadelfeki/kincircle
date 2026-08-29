@@ -253,7 +253,16 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 26),
+                          const SizedBox(height: 16),
+                          Center(
+                            child: Image.asset(
+                              'assets/icon/kincircle_icon.png',
+                              width: 68,
+                              height: 68,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
                           Text(
                             heading,
                             style: GoogleFonts.spaceGrotesk(

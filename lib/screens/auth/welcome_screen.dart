@@ -17,15 +17,13 @@ class WelcomeScreen extends StatelessWidget {
           child: Column(
             children: [
               const Spacer(flex: 2),
-              SizedBox(
-                width: 180,
-                height: 120,
-                child: CustomPaint(
-                  painter:
-                      _InterlockingRingsPainter(color: colorScheme.primary),
-                ),
+              Image.asset(
+                'assets/icon/kincircle_icon.png',
+                width: 130,
+                height: 130,
+                fit: BoxFit.contain,
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
               Text(
                 'KinCircle',
                 style: GoogleFonts.spaceGrotesk(

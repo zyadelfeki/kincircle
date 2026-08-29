@@ -476,6 +476,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onConfirmed: _showComingSoon,
                   ),
                 ),
+                const SizedBox(height: 28),
+                Center(
+                  child: Column(
+                    children: [
+                      Image.asset(
+                        'assets/icon/kincircle_icon.png',
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.contain,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'KinCircle',
+                        style: KinCircleTypography.body14(
+                          color: palette.textPrimary,
+                          weight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Version 1.0.0',
+                        style: KinCircleTypography.caption12(
+                          color: palette.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
               ],
             ),
     );
