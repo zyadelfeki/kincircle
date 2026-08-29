@@ -46,10 +46,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _alertsSub;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _membersSub;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _geofencesSub;
+  StreamSubscription<User?>? _authSub;
 
   @override
   void initState() {
     super.initState();
+    _authSub = _auth.authStateChanges().listen((User? user) {
+      if (user == null) {
+        _alertsSub?.cancel();
+        _alertsSub = null;
+        _membersSub?.cancel();
+        _membersSub = null;
+        _geofencesSub?.cancel();
+        _geofencesSub = null;
+      }
+    });
     _load();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
@@ -69,6 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
+    _authSub?.cancel();
     _alertsSub?.cancel();
     _membersSub?.cancel();
     _geofencesSub?.cancel();
@@ -207,7 +219,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _lowestBattery =
             batteryTuples.isNotEmpty ? batteryTuples.first.battery : null;
       });
-    });
+    }, onError: (_) {});
   }
 
   void _subscribeToSafePlaces(String familyId) {
@@ -221,7 +233,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() {
         _safePlacesCount = snapshot.size;
       });
-    });
+    }, onError: (_) {});
   }
 
   void _subscribeToActiveAlerts(String userId) {
@@ -249,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _activeAlertCount = unseen;
         _lastAlertMessage = preview;
       });
-    });
+    }, onError: (_) {});
   }
 
   int _estimatedBattery(String uid) {

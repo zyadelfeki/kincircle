@@ -224,7 +224,9 @@ class CompanionProfile {
 class CompanionService extends ChangeNotifier {
   static final CompanionService _instance = CompanionService._internal();
   factory CompanionService() => _instance;
-  CompanionService._internal();
+  CompanionService._internal() {
+    _listenAuthChanges();
+  }
 
   CompanionPersonality _personality = CompanionPersonality.sage;
   CompanionProfile? _profile;
@@ -232,6 +234,22 @@ class CompanionService extends ChangeNotifier {
   DateTime? _lastInteraction;
   final List<String> _messageHistory = [];
   StreamSubscription? _companionSubscription;
+  StreamSubscription<User?>? _authSubscription;
+
+  void _listenAuthChanges() {
+    try {
+      _authSubscription?.cancel();
+      _authSubscription =
+          FirebaseAuth.instance.authStateChanges().listen((User? user) {
+        if (user == null) {
+          _companionSubscription?.cancel();
+          _companionSubscription = null;
+        }
+      });
+    } catch (_) {
+      // Firebase not initialized in unit tests
+    }
+  }
 
   // Getters
   CompanionPersonality get personality => _personality;
@@ -292,8 +310,13 @@ class CompanionService extends ChangeNotifier {
   /// Listen to real-time companion changes
   void _listenToCompanionChanges() {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      _companionSubscription?.cancel();
+      _companionSubscription = null;
+      return;
+    }
 
+    _companionSubscription?.cancel();
     _companionSubscription = FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
@@ -311,7 +334,7 @@ class CompanionService extends ChangeNotifier {
         _profile = CompanionProfile.forPersonality(_personality);
         notifyListeners();
       }
-    });
+    }, onError: (_) {});
   }
 
   /// Select companion personality
@@ -470,6 +493,7 @@ class CompanionService extends ChangeNotifier {
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _companionSubscription?.cancel();
     super.dispose();
   }

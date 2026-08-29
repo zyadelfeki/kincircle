@@ -118,7 +118,9 @@ class LoginStreak {
 class FeatureUnlockService extends ChangeNotifier {
   static final FeatureUnlockService _instance = FeatureUnlockService._internal();
   factory FeatureUnlockService() => _instance;
-  FeatureUnlockService._internal();
+  FeatureUnlockService._internal() {
+    _listenAuthChanges();
+  }
 
   // Feature configurations
   static const Map<FeatureId, FeatureConfig> _featureConfigs = {
@@ -217,7 +219,23 @@ class FeatureUnlockService extends ChangeNotifier {
   final Map<FeatureId, FeatureUnlockState> _unlockStates = {};
   int _totalScore = 0;
   StreamSubscription? _firestoreSubscription;
+  StreamSubscription<User?>? _authSubscription;
   LoginStreak _loginStreak = const LoginStreak();
+
+  void _listenAuthChanges() {
+    try {
+      _authSubscription?.cancel();
+      _authSubscription =
+          FirebaseAuth.instance.authStateChanges().listen((User? user) {
+        if (user == null) {
+          _firestoreSubscription?.cancel();
+          _firestoreSubscription = null;
+        }
+      });
+    } catch (_) {
+      // Firebase not initialized in unit tests
+    }
+  }
 
   // Getters
   Map<FeatureId, FeatureUnlockState> get unlockStates => _unlockStates;
@@ -461,8 +479,13 @@ class FeatureUnlockService extends ChangeNotifier {
   /// Listen to real-time progress updates
   void _listenToProgress() {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      _firestoreSubscription?.cancel();
+      _firestoreSubscription = null;
+      return;
+    }
 
+    _firestoreSubscription?.cancel();
     _firestoreSubscription = FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
@@ -473,7 +496,7 @@ class FeatureUnlockService extends ChangeNotifier {
       if (snapshot.exists) {
         _loadUnlockStates(); // Reload on changes
       }
-    });
+    }, onError: (_) {});
   }
 
   /// Helper methods for recording specific conditions
@@ -596,6 +619,7 @@ class FeatureUnlockService extends ChangeNotifier {
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _firestoreSubscription?.cancel();
     super.dispose();
   }

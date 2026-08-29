@@ -7,6 +7,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Controls app ThemeMode (system/light/dark) and a reactive "Pro" accent flag.
 /// Values are persisted to SharedPreferences.
 class ThemeController extends ChangeNotifier {
+  ThemeController({FirebaseAuth? auth, bool subscribeAuthChanges = true}) : _auth = auth {
+    if (subscribeAuthChanges) {
+      _listenAuth();
+    }
+  }
+
   static const _kThemeModeKey = 'appearance.themeMode';
   static const _kProKey = 'subscription.isPro';
 
@@ -15,10 +21,34 @@ class ThemeController extends ChangeNotifier {
   bool _loaded = false;
   Stream<DocumentSnapshot<Map<String, dynamic>>>? _userStream;
   StreamSubscription? _userSub;
+  StreamSubscription<User?>? _authSub;
+  final FirebaseAuth? _auth;
 
   ThemeMode get mode => _mode;
   bool get isPro => _isPro;
   bool get isLoaded => _loaded;
+
+  void _listenAuth() {
+    try {
+      final auth = _auth ?? FirebaseAuth.instance;
+      _authSub?.cancel();
+      _authSub = auth.authStateChanges().listen((User? user) {
+        if (user == null) {
+          stopUserProSync();
+        } else {
+          startUserProSync();
+        }
+      });
+    } catch (_) {
+      // Firebase not initialized in unit tests
+    }
+  }
+
+  void stopUserProSync() {
+    _userSub?.cancel();
+    _userSub = null;
+    _userStream = null;
+  }
 
   Future<void> load() async {
     try {
@@ -71,18 +101,23 @@ class ThemeController extends ChangeNotifier {
   void startUserProSync() {
     _userSub?.cancel();
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
+    if (uid == null) {
+      _userSub = null;
+      _userStream = null;
+      return;
+    }
     _userStream = FirebaseFirestore.instance.collection('users').doc(uid).snapshots();
     _userSub = _userStream!.listen((doc) async {
       final val = doc.data()?['isPro'];
       if (val is bool && val != _isPro) {
         await setPro(val);
       }
-    });
+    }, onError: (_) {});
   }
 
   @override
   void dispose() {
+    _authSub?.cancel();
     _userSub?.cancel();
     super.dispose();
   }

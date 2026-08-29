@@ -83,7 +83,9 @@ class GeofenceMonitorService {
         _locationServiceInstance = locationService,
         _positionStreamOverride = positionStream,
         _currentUidProvider = currentUidProvider,
-        _currentDisplayNameProvider = currentDisplayNameProvider;
+        _currentDisplayNameProvider = currentDisplayNameProvider {
+    _listenAuthChanges();
+  }
 
   factory GeofenceMonitorService({
     FirebaseFirestore? firestore,
@@ -129,6 +131,20 @@ class GeofenceMonitorService {
 
   StreamSubscription<Position>? _positionSub;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _geofencesSub;
+  StreamSubscription<User?>? _authSub;
+
+  void _listenAuthChanges() {
+    try {
+      _authSub?.cancel();
+      _authSub = _auth.authStateChanges().listen((User? user) {
+        if (user == null) {
+          cancel();
+        }
+      });
+    } catch (_) {
+      // Firebase not initialized in unit tests
+    }
+  }
 
   final Map<String, _GeofenceTrackState> _stateByGeofenceId =
       <String, _GeofenceTrackState>{};

@@ -140,12 +140,32 @@ class SensoryRegulationService extends ChangeNotifier {
   static final SensoryRegulationService _instance =
       SensoryRegulationService._internal();
   factory SensoryRegulationService() => _instance;
-  SensoryRegulationService._internal();
+  SensoryRegulationService._internal() {
+    _listenAuthChanges();
+  }
 
   SensoryProfile _profile = const SensoryProfile();
   Timer? _breakReminderTimer;
   StreamSubscription? _profileSubscription;
+  StreamSubscription<User?>? _authSubscription;
   bool _calmModeActive = false;
+
+  void _listenAuthChanges() {
+    try {
+      _authSubscription?.cancel();
+      _authSubscription =
+          FirebaseAuth.instance.authStateChanges().listen((User? user) {
+        if (user == null) {
+          _profileSubscription?.cancel();
+          _profileSubscription = null;
+          _breakReminderTimer?.cancel();
+          _breakReminderTimer = null;
+        }
+      });
+    } catch (_) {
+      // Firebase not initialized in unit tests
+    }
+  }
 
   // Getters
   SensoryProfile get profile => _profile;
@@ -219,8 +239,13 @@ class SensoryRegulationService extends ChangeNotifier {
   /// Listen to real-time profile changes
   void _listenToProfileChanges() {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      _profileSubscription?.cancel();
+      _profileSubscription = null;
+      return;
+    }
 
+    _profileSubscription?.cancel();
     _profileSubscription = FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
@@ -233,7 +258,7 @@ class SensoryRegulationService extends ChangeNotifier {
         notifyListeners();
         _scheduleBreakReminders(); // Reschedule if interval changed
       }
-    });
+    }, onError: (_) {});
   }
 
   /// Save sensory profile to Firestore
@@ -394,6 +419,7 @@ class SensoryRegulationService extends ChangeNotifier {
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _breakReminderTimer?.cancel();
     _profileSubscription?.cancel();
     super.dispose();

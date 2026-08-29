@@ -59,6 +59,7 @@ class _MapScreenState extends State<MapScreen> {
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _familySub;
   StreamSubscription<Position>? _positionSub;
   StreamSubscription<List<CircleMemberStatusEntry>>? _statusSub;
+  StreamSubscription<User?>? _authSub;
   GoogleMapController? _mapController;
 
   final Map<String, BitmapDescriptor> _markerCache =
@@ -102,6 +103,16 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
+    _authSub = _auth.authStateChanges().listen((User? user) {
+      if (user == null) {
+        _familySub?.cancel();
+        _familySub = null;
+        _positionSub?.cancel();
+        _positionSub = null;
+        _statusSub?.cancel();
+        _statusSub = null;
+      }
+    });
     _refreshCurrentBatteryLevel();
     _bootstrap();
   }
@@ -120,6 +131,7 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   void dispose() {
+    _authSub?.cancel();
     _familySub?.cancel();
     _positionSub?.cancel();
     _statusSub?.cancel();
