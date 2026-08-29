@@ -387,8 +387,15 @@ class _AlertsScreenState extends State<AlertsScreen> {
     final String message = _resolveMessage(data, name);
     final bool seen = data['seen'] as bool? ?? false;
     final String timeLabel = _relativeTime(data['timestamp'] as Timestamp?);
+    final String type = (data['type'] ?? '').toString().toLowerCase();
+    final bool isPattern = type == 'pattern' || type == 'rhythm';
     final bool urgent =
         _isUrgentAlert(data: data, title: title, message: message);
+    final IconData leadingIcon = urgent
+        ? Icons.sos_rounded
+        : (isPattern
+            ? Icons.schedule_rounded
+            : Icons.notifications_none_rounded);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
@@ -417,9 +424,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
           );
         },
         leading: Icon(
-          urgent
-              ? Icons.sos_rounded
-              : Icons.notifications_none_rounded,
+          leadingIcon,
           color: urgent
               ? palette.error
               : (seen

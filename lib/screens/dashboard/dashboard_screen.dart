@@ -12,11 +12,14 @@ import '../../widgets/dashboard/battery_overview_card.dart';
 import '../../widgets/dashboard/dashboard_card_container.dart';
 import '../../widgets/dashboard/dashboard_card_shimmer.dart';
 import '../../widgets/dashboard/family_online_card.dart';
+import '../../widgets/dashboard/family_rhythms_card.dart';
 import '../../widgets/dashboard/quick_actions_card.dart';
 import '../../widgets/dashboard/recent_activity_card.dart';
+import '../../widgets/dashboard/rhythm_teaser_card.dart';
 import '../../widgets/dashboard/safe_places_card.dart';
 import '../../widgets/battery_shield_card.dart';
 import '../../services/pending_invite_store.dart';
+import '../../services/theme_controller.dart';
 import '../family/accept_invite_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -286,6 +289,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       icon = Icons.sos_rounded;
     } else if (type.contains('geofence')) {
       icon = Icons.place_outlined;
+    } else if (type.contains('pattern') || type.contains('rhythm')) {
+      icon = Icons.schedule_rounded;
     }
 
     return RecentActivityItem(
@@ -394,6 +399,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildDashboard() {
     final List<AppUser> online = _onlineMembers();
+    final bool isPro = context.watch<ThemeController>().isPro;
     return RefreshIndicator(
       onRefresh: _load,
       child: CustomScrollView(
@@ -409,6 +415,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
+          if (!isPro)
+            const SliverPadding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+              sliver: SliverToBoxAdapter(
+                child: RhythmTeaserCard(),
+              ),
+            ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             sliver: SliverGrid(
@@ -438,6 +451,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Navigator.of(context).pushNamed('/add-geofence'),
                 ),
               ]),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            sliver: SliverToBoxAdapter(
+              child: FamilyRhythmsCard(members: _members),
             ),
           ),
           const SliverPadding(
