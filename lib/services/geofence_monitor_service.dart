@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'location_service.dart';
+import 'rhythm/rhythm_service.dart';
 
 class GeofenceTarget {
   final String id;
@@ -69,6 +70,20 @@ class _GeofenceTrackState {
   DateTime? lastAlertTime;
 }
 
+class GeofenceTransitionEvent {
+  final String geofenceId;
+  final String geofenceName;
+  final bool isArrival;
+  final DateTime timestamp;
+
+  const GeofenceTransitionEvent({
+    required this.geofenceId,
+    required this.geofenceName,
+    required this.isArrival,
+    required this.timestamp,
+  });
+}
+
 /// Client-side service that tracks family geofences and creates alerts for transitions.
 class GeofenceMonitorService {
   GeofenceMonitorService._internal({
@@ -115,6 +130,7 @@ class GeofenceMonitorService {
 
   static final GeofenceMonitorService _instance =
       GeofenceMonitorService._internal();
+  static GeofenceMonitorService get instance => _instance;
 
   FirebaseFirestore? _firestoreInstance;
   FirebaseAuth? _authInstance;
@@ -132,6 +148,11 @@ class GeofenceMonitorService {
   StreamSubscription<Position>? _positionSub;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _geofencesSub;
   StreamSubscription<User?>? _authSub;
+  final StreamController<GeofenceTransitionEvent> _transitionController =
+      StreamController<GeofenceTransitionEvent>.broadcast();
+
+  Stream<GeofenceTransitionEvent> get transitions =>
+      _transitionController.stream;
 
   void _listenAuthChanges() {
     try {
@@ -154,6 +175,10 @@ class GeofenceMonitorService {
 
   bool get isMonitoring => _isMonitoring;
   List<GeofenceTarget> get geofences => List.unmodifiable(_geofences);
+
+  bool isInsideGeofence(String geofenceId) {
+    return _stateByGeofenceId[geofenceId]?.confirmedInside == true;
+  }
 
   String? _currentUid() {
     if (_currentUidProvider != null) {
@@ -228,6 +253,8 @@ class GeofenceMonitorService {
         debugPrint('GeofenceMonitorService: position stream error: $e');
       },
     );
+
+    unawaited(RhythmService.instance.start());
   }
 
   /// Stop monitoring and clear subscriptions/state.
@@ -245,6 +272,7 @@ class GeofenceMonitorService {
     _geofences.clear();
     _currentFamilyId = null;
     _isMonitoring = false;
+    RhythmService.instance.stop();
   }
 
   /// Process a position update and check for geofence transitions.
@@ -284,11 +312,18 @@ class GeofenceMonitorService {
           state.consecutiveCandidateCount >= 2) {
         final currentTime = now ?? DateTime.now();
         final lastAlert = state.lastAlertTime;
+        final bool isArrival = state.candidateInside == true;
+
+        _transitionController.add(GeofenceTransitionEvent(
+          geofenceId: geofence.id,
+          geofenceName: geofence.name,
+          isArrival: isArrival,
+          timestamp: currentTime,
+        ));
 
         // Minimum 60 seconds between alerts for the same geofence
         if (lastAlert == null ||
             currentTime.difference(lastAlert).inSeconds >= 60) {
-          final bool isArrival = state.candidateInside == true;
           state.confirmedInside = state.candidateInside;
           state.lastAlertTime = currentTime;
 
