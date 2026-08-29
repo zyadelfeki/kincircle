@@ -52,8 +52,7 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
   @override
   void initState() {
     super.initState();
-    const String apiKey = 'AIzaSyDa4_aL-jl5LpVOYSsP_vj4qBvmW4HORvs';
-    _placesService = PlacesService(apiKey: apiKey);
+    _placesService = PlacesService();
   }
 
   @override
@@ -80,7 +79,7 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
       );
   }
 
-  void _onMapTap(LatLng coords) {
+  void _onMapTap(LatLng coords) async {
     FocusScope.of(context).unfocus();
     final palette = KinCirclePalette.of(context);
     setState(() {
@@ -93,6 +92,18 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
         ));
       _updateCircleOverlay(coords, palette);
     });
+
+    if (_nameController.text.trim().isEmpty) {
+      final String? label = await _placesService.reverseGeocode(
+        coords.latitude,
+        coords.longitude,
+      );
+      if (mounted && label != null && _nameController.text.trim().isEmpty) {
+        setState(() {
+          _nameController.text = label;
+        });
+      }
+    }
   }
 
   void _onSearchChanged(String input) {
