@@ -283,9 +283,9 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                           const SizedBox(height: 28),
                           _buildSocialButton(
                             label: 'Continue with Apple',
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.apple,
-                              color: KinCirclePalette.textPrimary,
+                              color: palette.textPrimary,
                               size: 24,
                             ),
                             onPressed: _isLoading
@@ -297,12 +297,12 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                           const SizedBox(height: 12),
                           _buildSocialButton(
                             label: 'Continue with Google',
-                            icon: const Text(
+                            icon: Text(
                               'G',
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
-                                color: KinCirclePalette.accent,
+                                color: palette.accent,
                               ),
                             ),
                             onPressed: _isLoading
@@ -314,10 +314,10 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                           const SizedBox(height: 22),
                           Row(
                             children: [
-                              const Expanded(
+                              Expanded(
                                 child: Divider(
                                   thickness: 1,
-                                  color: KinCirclePalette.border,
+                                  color: palette.border,
                                 ),
                               ),
                               Padding(
@@ -331,10 +331,10 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
                                   ),
                                 ),
                               ),
-                              const Expanded(
+                              Expanded(
                                 child: Divider(
                                   thickness: 1,
-                                  color: KinCirclePalette.border,
+                                  color: palette.border,
                                 ),
                               ),
                             ],

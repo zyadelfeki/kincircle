@@ -161,28 +161,32 @@ class _CirclesEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.group_add_outlined,
-              color: KinCirclePalette.textMuted,
+              color: palette.textMuted,
               size: 52,
             ),
             const SizedBox(height: 14),
             Text(
               'No circles yet',
-              style: KinCircleTypography.cardTitle16(weight: FontWeight.w600),
+              style: KinCircleTypography.cardTitle16(
+                color: palette.textPrimary,
+                weight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               'Create or join a circle to get started.',
               textAlign: TextAlign.center,
               style:
-                  KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+                  KinCircleTypography.body14(color: palette.textMuted),
             ),
             const SizedBox(height: 20),
             _BottomActions(
@@ -220,18 +224,19 @@ class _CircleCard extends StatelessWidget {
     return memberId.substring(0, 1).toUpperCase();
   }
 
-  Color _avatarColor(int index) {
+  Color _avatarColor(int index, KinCirclePaletteData palette) {
     final List<Color> swatches = <Color>[
-      KinCirclePalette.accent.withValues(alpha: 0.24),
-      KinCirclePalette.surfaceAlt,
-      KinCirclePalette.border,
-      KinCirclePalette.accent.withValues(alpha: 0.36),
+      palette.accent.withValues(alpha: 0.24),
+      palette.surfaceAlt,
+      palette.border,
+      palette.accent.withValues(alpha: 0.36),
     ];
     return swatches[index % swatches.length];
   }
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     final Map<String, dynamic> data = circleDoc.data();
     final String name = (data['name'] as String?)?.trim().isNotEmpty == true
         ? (data['name'] as String).trim()
@@ -241,7 +246,7 @@ class _CircleCard extends StatelessWidget {
     final List<String> visibleMembers = members.take(4).toList();
 
     return Material(
-      color: KinCirclePalette.background.withValues(alpha: 0),
+      color: Colors.transparent,
       child: InkWell(
         onTap: () => Navigator.of(context).pushNamed(
           '/circle-detail',
@@ -250,10 +255,10 @@ class _CircleCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         child: Ink(
           decoration: BoxDecoration(
-            color: KinCirclePalette.surface,
+            color: palette.surface,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: KinCirclePalette.border,
+              color: palette.border,
             ),
           ),
           padding: const EdgeInsets.all(16),
@@ -267,6 +272,7 @@ class _CircleCard extends StatelessWidget {
                     Text(
                       name,
                       style: KinCircleTypography.cardTitle16(
+                        color: palette.textPrimary,
                         weight: FontWeight.w600,
                       ),
                     ),
@@ -274,7 +280,7 @@ class _CircleCard extends StatelessWidget {
                     Text(
                       '$memberCount ${memberCount == 1 ? 'member' : 'members'}',
                       style: KinCircleTypography.body14(
-                        color: KinCirclePalette.textMuted,
+                        color: palette.textMuted,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -287,11 +293,11 @@ class _CircleCard extends StatelessWidget {
                               padding: const EdgeInsets.only(right: 8),
                               child: CircleAvatar(
                                 radius: 14,
-                                backgroundColor: _avatarColor(entry.key),
+                                backgroundColor: _avatarColor(entry.key, palette),
                                 child: Text(
                                   _initialFromMember(entry.value),
                                   style: KinCircleTypography.caption12(
-                                    color: KinCirclePalette.textPrimary,
+                                    color: palette.textPrimary,
                                     weight: FontWeight.w600,
                                   ),
                                 ),
@@ -310,14 +316,14 @@ class _CircleCard extends StatelessWidget {
                   Text(
                     'Manage',
                     style: KinCircleTypography.body14(
-                      color: KinCirclePalette.textMuted,
+                      color: palette.textMuted,
                       weight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(width: 2),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right_rounded,
-                    color: KinCirclePalette.textMuted,
+                    color: palette.textMuted,
                   ),
                 ],
               ),
@@ -388,6 +394,7 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -398,27 +405,30 @@ class _ErrorState extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: KinCirclePalette.surfaceAlt,
+                color: palette.surfaceAlt,
                 shape: BoxShape.circle,
-                border: Border.all(color: KinCirclePalette.border),
+                border: Border.all(color: palette.border),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.cloud_off_rounded,
-                color: KinCirclePalette.accent,
+                color: palette.accent,
                 size: 32,
               ),
             ),
             const SizedBox(height: 20),
             Text(
               title,
-              style: KinCircleTypography.cardTitle16(weight: FontWeight.w600),
+              style: KinCircleTypography.cardTitle16(
+                color: palette.textPrimary,
+                weight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               message,
               textAlign: TextAlign.center,
               style: KinCircleTypography.body14(
-                color: KinCirclePalette.textMuted,
+                color: palette.textMuted,
               ),
             ),
             const SizedBox(height: 20),

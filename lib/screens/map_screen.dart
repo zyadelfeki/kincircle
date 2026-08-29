@@ -652,25 +652,29 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildLoading() {
+    final palette = KinCirclePalette.of(context);
     return Stack(
       children: [
-        Container(color: KinCirclePalette.surfaceAlt),
+        Container(color: palette.surfaceAlt),
         Align(
           alignment: Alignment.bottomCenter,
           child: Container(
             margin: const EdgeInsets.all(12),
             padding: const EdgeInsets.all(16),
-            decoration: KinCircleDecorations.card(),
+            decoration: KinCircleDecorations.card(
+              color: palette.cardSurface,
+              borderColor: palette.border,
+            ),
             child: Shimmer.fromColors(
-              baseColor: KinCirclePalette.surfaceAlt,
-              highlightColor: KinCirclePalette.border,
+              baseColor: palette.surfaceAlt,
+              highlightColor: palette.border,
               child: Column(
                 children: List<Widget>.generate(4, (int i) {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: palette.surface,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
@@ -802,6 +806,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildReady() {
+    final palette = KinCirclePalette.of(context);
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Stack(
       children: [
@@ -834,7 +839,7 @@ class _MapScreenState extends State<MapScreen> {
                         icon: const Icon(Icons.check_circle_outline_rounded),
                         label: const Text('I\'m safe'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: KinCirclePalette.accent,
+                          backgroundColor: palette.accent,
                           foregroundColor: Colors.black,
                           minimumSize: const Size(0, 48),
                           textStyle: KinCircleTypography.body14(
@@ -859,7 +864,7 @@ class _MapScreenState extends State<MapScreen> {
                         icon: const Icon(Icons.sos_rounded),
                         label: const Text('Need help'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: KinCirclePalette.error,
+                          backgroundColor: palette.error,
                           foregroundColor: Colors.white,
                           minimumSize: const Size(0, 48),
                           textStyle: KinCircleTypography.body14(

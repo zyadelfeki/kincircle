@@ -19,10 +19,15 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
   String? _circleName;
   String? _circleId;
 
+  bool _initialized = false;
+
   @override
-  void initState() {
-    super.initState();
-    _loadCircleDetail();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      _loadCircleDetail();
+    }
   }
 
   void _loadCircleDetail() {
@@ -72,12 +77,19 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KinCirclePalette.of(context);
     final args = (ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?) ?? {};
-    final String? circleId = args['familyId'] as String?;
+    final String? circleId = args['familyId'] as String? ?? _circleId;
     
     if (circleId == null) {
-      return const Scaffold(
-        body: Center(child: Text('Circle not found')),
+      return Scaffold(
+        backgroundColor: palette.background,
+        body: Center(
+          child: Text(
+            'Circle not found',
+            style: KinCircleTypography.body14(color: palette.textMuted),
+          ),
+        ),
       );
     }
 
@@ -96,17 +108,20 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.error_outline, color: KinCirclePalette.error, size: 50),
+                          Icon(Icons.error_outline, color: palette.error, size: 50),
                           const SizedBox(height: 8),
                           Text(
                             'Failed to load circle details',
-                            style: KinCircleTypography.cardTitle16(weight: FontWeight.w600),
+                            style: KinCircleTypography.cardTitle16(
+                              color: palette.textPrimary,
+                              weight: FontWeight.w600,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 6),
                           Text(
                             'Please check your connection and try again.',
-                            style: KinCircleTypography.body14(color: KinCirclePalette.textMuted),
+                            style: KinCircleTypography.body14(color: palette.textMuted),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 20),
@@ -133,9 +148,9 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: KinCirclePalette.surface,
+                        color: palette.surface,
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: KinCirclePalette.border),
+                        border: Border.all(color: palette.border),
                       ),
                       child: Column(
                         children: [
@@ -143,13 +158,13 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                             children: [
                               CircleAvatar(
                                 radius: 24,
-                                backgroundColor: KinCirclePalette.accent.withValues(alpha: 0.2),
+                                backgroundColor: palette.accent.withValues(alpha: 0.2),
                                 child: Text(
                                   _circleName?.isNotEmpty == true 
                                       ? _circleName![0].toUpperCase() 
                                       : 'C',
                                   style: KinCircleTypography.cardTitle16(
-                                    color: KinCirclePalette.accent,
+                                    color: palette.accent,
                                     weight: FontWeight.w600,
                                   ),
                                 ),
@@ -161,41 +176,46 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                                   children: [
                                     Text(
                                       _circleName ?? 'Circle',
-                                      style: KinCircleTypography.heading22(),
+                                      style: KinCircleTypography.heading22(
+                                        color: palette.textPrimary,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       '${members.length} ${members.length == 1 ? 'member' : 'members'}',
                                       style: KinCircleTypography.body14(
-                                        color: KinCirclePalette.textMuted,
+                                        color: palette.textMuted,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.edit_outlined),
+                                icon: Icon(Icons.edit_outlined, color: palette.textMuted),
                                 onPressed: _manageCircle,
                                 tooltip: 'Manage Circle',
                               ),
                             ],
                           ),
-                          const Divider(height: 24),
+                          Divider(height: 24, color: palette.border),
                         ],
                       ),
                     ),
                     if (members.isNotEmpty) ...[
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.only(top: 16, bottom: 16),
                         child: Text(
                           'Members',
-                          style: KinCircleTypography.cardTitle16(weight: FontWeight.w600),
+                          style: KinCircleTypography.cardTitle16(
+                            color: palette.textPrimary,
+                            weight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        separatorBuilder: (_, __) => const Divider(height: 12),
+                        separatorBuilder: (_, __) => Divider(height: 12, color: palette.border),
                         itemCount: members.length,
                         itemBuilder: (context, index) {
                           final memberData = members[index].data();
@@ -207,16 +227,16 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                             leading: CircleAvatar(
                               radius: 20,
                               backgroundColor: isOwner 
-                                  ? KinCirclePalette.accent.withValues(alpha: 0.2) 
-                                  : KinCirclePalette.surfaceAlt,
+                                  ? palette.accent.withValues(alpha: 0.2) 
+                                  : palette.surfaceAlt,
                               child: Text(
                                 displayName.isNotEmpty 
                                     ? displayName[0].toUpperCase() 
                                     : 'U',
                                 style: KinCircleTypography.body14(
                                   color: isOwner 
-                                      ? KinCirclePalette.accent 
-                                      : KinCirclePalette.textPrimary,
+                                      ? palette.accent 
+                                      : palette.textPrimary,
                                   weight: FontWeight.w600,
                                 ),
                               ),
@@ -224,6 +244,7 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                             title: Text(
                               displayName,
                               style: KinCircleTypography.body14(
+                                color: palette.textPrimary,
                                 weight: FontWeight.w600,
                               ),
                             ),
@@ -231,14 +252,14 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                                 ? Text(
                                     email,
                                     style: KinCircleTypography.caption12(
-                                      color: KinCirclePalette.textMuted,
+                                      color: palette.textMuted,
                                     ),
                                   )
                                 : null,
                             trailing: isOwner
-                                ? const Icon(
+                                ? Icon(
                                     Icons.shield,
-                                    color: KinCirclePalette.accent,
+                                    color: palette.accent,
                                     size: 20,
                                   )
                                 : null,
@@ -252,7 +273,7 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                           child: Text(
                             'No members yet',
                             style: KinCircleTypography.body14(
-                              color: KinCirclePalette.textMuted,
+                              color: palette.textMuted,
                             ),
                           ),
                         ),

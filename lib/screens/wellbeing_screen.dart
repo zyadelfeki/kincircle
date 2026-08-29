@@ -102,7 +102,7 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               height: 110,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: palette.surface,
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
@@ -146,11 +146,17 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       padding: const EdgeInsets.all(14),
-      decoration: KinCircleDecorations.card(),
+      decoration: KinCircleDecorations.card(
+        color: palette.cardSurface,
+        borderColor: palette.border,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Overall Wellbeing', style: KinCircleTypography.cardTitle16()),
+          Text(
+            'Overall Wellbeing',
+            style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
+          ),
           const SizedBox(height: 8),
           Text(
             '$score%',
@@ -178,11 +184,17 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       padding: const EdgeInsets.all(14),
-      decoration: KinCircleDecorations.card(),
+      decoration: KinCircleDecorations.card(
+        color: palette.cardSurface,
+        borderColor: palette.border,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Recommendations', style: KinCircleTypography.cardTitle16()),
+          Text(
+            'Recommendations',
+            style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
+          ),
           const SizedBox(height: 8),
           if (_recommendations.isEmpty)
             Text(
@@ -200,7 +212,10 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
                     Expanded(
                       child: Text(
                         rec.title,
-                        style: KinCircleTypography.body14(weight: FontWeight.w600),
+                        style: KinCircleTypography.body14(
+                          color: palette.textPrimary,
+                          weight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     Expanded(
@@ -223,11 +238,17 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 20),
       padding: const EdgeInsets.all(14),
-      decoration: KinCircleDecorations.card(),
+      decoration: KinCircleDecorations.card(
+        color: palette.cardSurface,
+        borderColor: palette.border,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Insights', style: KinCircleTypography.cardTitle16()),
+          Text(
+            'Insights',
+            style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
+          ),
           const SizedBox(height: 8),
           if (_insights.isEmpty)
             Text(
@@ -249,7 +270,10 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
                         children: [
                           Text(
                             insight.title,
-                            style: KinCircleTypography.body14(weight: FontWeight.w600),
+                            style: KinCircleTypography.body14(
+                              color: palette.textPrimary,
+                              weight: FontWeight.w600,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
