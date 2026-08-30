@@ -157,8 +157,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           activitySnap.docs.map(_toActivityItem).toList();
 
       final List<_BatteryTuple> batteryTuples = members
-          .map((AppUser member) =>
-              _BatteryTuple(member, _estimatedBattery(member.uid)))
+          .where((m) => m.batteryLevel != null)
+          .map((AppUser member) => _BatteryTuple(member, member.batteryLevel!))
           .toList();
       batteryTuples.sort((a, b) => a.battery.compareTo(b.battery));
 
@@ -167,8 +167,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _members = members;
         _safePlacesCount = geofenceSnap.size;
         _recentActivity = activity;
-        _lowestBatteryMember =
-            batteryTuples.isNotEmpty ? batteryTuples.first.member : null;
+        _lowestBatteryMember = batteryTuples.isNotEmpty
+            ? batteryTuples.first.member
+            : (members.isNotEmpty ? members.first : null);
         _lowestBattery =
             batteryTuples.isNotEmpty ? batteryTuples.first.battery : null;
         _loading = false;
@@ -210,16 +211,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final List<AppUser> members =
           snapshot.docs.map(AppUser.fromFirestore).toList();
       final List<_BatteryTuple> batteryTuples = members
-          .map((AppUser member) =>
-              _BatteryTuple(member, _estimatedBattery(member.uid)))
+          .where((m) => m.batteryLevel != null)
+          .map((AppUser member) => _BatteryTuple(member, member.batteryLevel!))
           .toList()
         ..sort((a, b) => a.battery.compareTo(b.battery));
 
       if (!mounted) return;
       setState(() {
         _members = members;
-        _lowestBatteryMember =
-            batteryTuples.isNotEmpty ? batteryTuples.first.member : null;
+        _lowestBatteryMember = batteryTuples.isNotEmpty
+            ? batteryTuples.first.member
+            : (members.isNotEmpty ? members.first : null);
         _lowestBattery =
             batteryTuples.isNotEmpty ? batteryTuples.first.battery : null;
       });
@@ -266,11 +268,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _lastAlertMessage = preview;
       });
     }, onError: (_) {});
-  }
-
-  int _estimatedBattery(String uid) {
-    final int seeded = 35 + (uid.hashCode.abs() % 60);
-    return seeded.clamp(1, 100);
   }
 
   RecentActivityItem _toActivityItem(

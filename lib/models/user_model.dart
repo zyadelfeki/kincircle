@@ -30,6 +30,7 @@ class AppUser {
       lastKnownLocation: location,
       lastUpdated: (data['lastUpdated'] as Timestamp?)?.toDate(),
       currentFamilyId: data['currentFamilyId'],
+      batteryLevel: (data['batteryLevel'] as num?)?.toInt(),
     );
   }
 
@@ -47,6 +48,7 @@ class AppUser {
           ? DateTime.fromMillisecondsSinceEpoch(map['lastUpdated'])
           : null,
       currentFamilyId: map['currentFamilyId'],
+      batteryLevel: (map['batteryLevel'] as num?)?.toInt(),
     );
   }
 
@@ -58,6 +60,7 @@ class AppUser {
     this.lastKnownLocation,
     this.lastUpdated,
     this.currentFamilyId,
+    this.batteryLevel,
   });
 
   final String uid;
@@ -67,6 +70,7 @@ class AppUser {
   final DateTime? lastUpdated;
   final bool isInvisible;
   final String? currentFamilyId;
+  final int? batteryLevel;
 
   // Create a copy of AppUser with some fields updated
   AppUser copyWith({
@@ -77,6 +81,7 @@ class AppUser {
     DateTime? lastUpdated,
     bool? isInvisible,
     String? currentFamilyId,
+    int? batteryLevel,
   }) {
     return AppUser(
       uid: uid ?? this.uid,
@@ -86,6 +91,7 @@ class AppUser {
       lastKnownLocation: lastKnownLocation ?? this.lastKnownLocation,
       lastUpdated: lastUpdated ?? this.lastUpdated,
       currentFamilyId: currentFamilyId ?? this.currentFamilyId,
+      batteryLevel: batteryLevel ?? this.batteryLevel,
     );
   }
 
@@ -95,6 +101,7 @@ class AppUser {
       'photoURL': photoURL,
       'invisibleMode': isInvisible,
       'currentFamilyId': currentFamilyId,
+      if (batteryLevel != null) 'batteryLevel': batteryLevel,
       if (lastKnownLocation != null)
         'lastKnownLocation': GeoPoint(
           lastKnownLocation!.latitude,

@@ -1,8 +1,9 @@
 import 'dart:async';
-import 'package:geolocator/geolocator.dart';
+import 'package:battery_plus/battery_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/widgets.dart';
+import 'package:geolocator/geolocator.dart';
 
 class LocationService with WidgetsBindingObserver {
   LocationService._internal({FirebaseFirestore? firestore, FirebaseAuth? auth})
@@ -17,6 +18,22 @@ class LocationService with WidgetsBindingObserver {
   }
 
   static final LocationService _instance = LocationService._internal();
+
+  static Future<LocationPermission> checkStartupPermission() async {
+    try {
+      final LocationPermission permission = await Geolocator.checkPermission();
+      debugPrint('Geolocator startup permission check: ${permission.name}');
+      if (permission == LocationPermission.denied) {
+        final LocationPermission requested = await Geolocator.requestPermission();
+        debugPrint('Geolocator startup requested permission result: ${requested.name}');
+        return requested;
+      }
+      return permission;
+    } catch (e) {
+      debugPrint('Geolocator startup permission check error: $e');
+      return LocationPermission.unableToDetermine;
+    }
+  }
 
   FirebaseFirestore? _firestoreInstance;
   FirebaseAuth? _authInstance;
@@ -242,10 +259,22 @@ class LocationService with WidgetsBindingObserver {
       final bool canShare = await _canShareLocation(user.uid);
       if (!canShare) return;
 
-      await _firestore.collection('users').doc(user.uid).update({
+      int? batteryLevel;
+      try {
+        batteryLevel = await Battery().batteryLevel;
+      } catch (e) {
+        debugPrint('LocationService: could not read battery level: $e');
+      }
+
+      final Map<String, dynamic> updateData = {
         'lastKnownLocation': GeoPoint(position.latitude, position.longitude),
         'lastUpdated': FieldValue.serverTimestamp(),
-      });
+      };
+      if (batteryLevel != null) {
+        updateData['batteryLevel'] = batteryLevel;
+      }
+
+      await _firestore.collection('users').doc(user.uid).update(updateData);
       _lastWriteTime = DateTime.now();
       _lastWrittenPosition = position;
     } on FirebaseException catch (e) {
@@ -254,10 +283,20 @@ class LocationService with WidgetsBindingObserver {
       if (e.code == 'unavailable' || e.code == 'deadline-exceeded') {
         await Future.delayed(const Duration(seconds: 2));
         try {
-          await _firestore.collection('users').doc(user.uid).update({
+          int? retryBattery;
+          try {
+            retryBattery = await Battery().batteryLevel;
+          } catch (_) {}
+
+          final Map<String, dynamic> retryData = {
             'lastKnownLocation': GeoPoint(position.latitude, position.longitude),
             'lastUpdated': FieldValue.serverTimestamp(),
-          });
+          };
+          if (retryBattery != null) {
+            retryData['batteryLevel'] = retryBattery;
+          }
+
+          await _firestore.collection('users').doc(user.uid).update(retryData);
           _lastWriteTime = DateTime.now();
           _lastWrittenPosition = position;
         } catch (retryError) {

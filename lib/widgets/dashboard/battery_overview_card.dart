@@ -14,9 +14,16 @@ class BatteryOverviewCard extends StatelessWidget {
   final AppUser? member;
   final int? percent;
 
+  bool get _isSignalLost {
+    if (member == null || member!.lastUpdated == null) return false;
+    return DateTime.now().difference(member!.lastUpdated!) > const Duration(hours: 3);
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = KinCirclePalette.of(context);
+    final signalLost = _isSignalLost;
+
     return DashboardCardContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -26,12 +33,47 @@ class BatteryOverviewCard extends StatelessWidget {
             style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
           ),
           const SizedBox(height: 10),
-          if (member == null || percent == null)
+          if (member == null)
             Text(
               'No battery data yet',
               style: KinCircleTypography.caption12(color: palette.textMuted),
             )
-          else ...[
+          else if (signalLost) ...[
+            Row(
+              children: [
+                Icon(
+                  Icons.signal_cellular_connected_no_internet_0_bar_rounded,
+                  color: palette.textMuted,
+                  size: 18,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    member!.displayName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: KinCircleTypography.body14(
+                      color: palette.textPrimary,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'signal lost',
+                  style: KinCircleTypography.body14(
+                    color: palette.textMuted,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ] else if (percent == null) ...[
+            Text(
+              'No battery data yet',
+              style: KinCircleTypography.caption12(color: palette.textMuted),
+            ),
+          ] else ...[
             Row(
               children: [
                 Icon(

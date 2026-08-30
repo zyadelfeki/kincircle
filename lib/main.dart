@@ -40,6 +40,7 @@ import 'services/remote_config_service.dart';
 import 'services/pending_invite_store.dart';
 import 'services/theme_controller.dart';
 import 'services/encryption_service.dart';
+import 'services/location_service.dart';
 import 'services/privacy_controls_service.dart';
 import 'utils/theme.dart';
 import 'widgets/error_handler.dart';
@@ -165,6 +166,12 @@ Future<void> main() async {
     if (kDebugMode) {
       debugPrint('!!! Hive init failed: $e\n$st');
     }
+  }
+
+  try {
+    await LocationService.checkStartupPermission();
+  } catch (e) {
+    debugPrint('Startup location check failed: $e');
   }
   // Opt-in toggle for using the Firebase Auth Emulator in dev builds.
   // Enable with: --dart-define=USE_AUTH_EMULATOR=true
