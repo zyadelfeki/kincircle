@@ -31,6 +31,27 @@ class EmergencyAlert {
 class EmergencyResponseService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  /// Manual SOS trigger from press-and-hold button
+  static Future<void> triggerManualSOS() async {
+    final String? userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null || userId.isEmpty) {
+      debugPrint('EmergencyResponseService: No user signed in for SOS');
+      return;
+    }
+
+    final EmergencyAlert alert = EmergencyAlert(
+      currentLat: 0,
+      currentLng: 0,
+      riskLevel: EmergencyRiskLevel.critical,
+      riskFactors: <String>['manual_sos_button'],
+    );
+
+    await triggerEmergencyResponse(
+      userId: userId,
+      alert: alert,
+    );
+  }
+
   Future<void> triggerCrashAlert({double? peakG}) async {
     final String? userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null || userId.isEmpty) {

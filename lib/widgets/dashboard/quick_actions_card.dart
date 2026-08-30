@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../../design/kincircle_screen_tokens.dart';
 import 'dashboard_card_container.dart';
+import 'sos_hold_button.dart';
 
 class QuickActionsCard extends StatelessWidget {
   const QuickActionsCard({
     super.key,
-    required this.onSosTap,
+    this.onSosTap,
+    this.onSosTriggered,
     required this.onShareTap,
     required this.onAddPlaceTap,
   });
 
-  final VoidCallback onSosTap;
+  final VoidCallback? onSosTap;
+  final Future<void> Function()? onSosTriggered;
   final VoidCallback onShareTap;
   final VoidCallback onAddPlaceTap;
 
@@ -29,15 +32,10 @@ class QuickActionsCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              // SOS — red fill, red border, stands out from the others
+              // SOS — Press and hold for 3 seconds with filling ring & escalating haptics
               Expanded(
-                child: _ActionButton(
-                  icon: Icons.sos_rounded,
-                  label: 'SOS',
-                  iconColor: palette.error,
-                  borderColor: palette.error,
-                  backgroundColor: palette.error.withValues(alpha: 0.12),
-                  onTap: onSosTap,
+                child: SosHoldButton(
+                  onTriggered: onSosTriggered,
                 ),
               ),
               const SizedBox(width: 8),
