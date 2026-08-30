@@ -308,5 +308,24 @@ void main() {
       expect(triggered.length, equals(1));
       expect(hookInvoked, isTrue);
     });
+
+    test('(g) Calling start multiple times is idempotent', () async {
+      const String uid = 'test_uid_idempotent';
+      final service = RhythmService(
+        rhythmStore: store,
+        transitionStreamOverride: transitionController.stream,
+        currentUidProvider: () => uid,
+      );
+
+      await service.start();
+      expect(service.isRunning, isTrue);
+
+      // Second start call must be a safe no-op
+      await service.start();
+      expect(service.isRunning, isTrue);
+
+      service.stop();
+      expect(service.isRunning, isFalse);
+    });
   });
 }

@@ -95,6 +95,8 @@ class RhythmService {
   StreamSubscription<User?>? _authSub;
   Timer? _periodicCheckTimer;
   bool _isRunning = false;
+  bool _isStarting = false;
+  String? _runningUid;
 
   final Map<String, String> _lastAnomalyFiredDateByGeofenceId = <String, String>{};
 
@@ -136,33 +138,43 @@ class RhythmService {
       return;
     }
 
-    if (_isRunning && _transitionSub != null) {
+    if (_isRunning && _runningUid == uid && _transitionSub != null) {
       return;
     }
 
-    await _store.init();
-    _isRunning = true;
+    if (_isStarting) {
+      return;
+    }
+    _isStarting = true;
 
-    _transitionSub?.cancel();
-    final stream =
-        _transitionStreamOverride ?? _geofenceMonitor.transitions;
-    _transitionSub = stream.listen(
-      _onTransitionEvent,
-      onError: (e) {
-        if (kDebugMode) {
-          debugPrint('RhythmService transition error: $e');
-        }
-      },
-    );
+    try {
+      await _store.init();
+      _isRunning = true;
+      _runningUid = uid;
 
-    _periodicCheckTimer?.cancel();
-    _periodicCheckTimer = Timer.periodic(
-      const Duration(minutes: 15),
-      (_) => evaluatePatternBreaks(),
-    );
+      _transitionSub?.cancel();
+      final stream =
+          _transitionStreamOverride ?? _geofenceMonitor.transitions;
+      _transitionSub = stream.listen(
+        _onTransitionEvent,
+        onError: (e) {
+          if (kDebugMode) {
+            debugPrint('RhythmService transition error: $e');
+          }
+        },
+      );
 
-    if (kDebugMode) {
-      debugPrint('RhythmService started for user $uid');
+      _periodicCheckTimer?.cancel();
+      _periodicCheckTimer = Timer.periodic(
+        const Duration(minutes: 15),
+        (_) => evaluatePatternBreaks(),
+      );
+
+      if (kDebugMode) {
+        debugPrint('RhythmService started for user $uid');
+      }
+    } finally {
+      _isStarting = false;
     }
   }
 
@@ -370,6 +382,8 @@ class RhythmService {
     _periodicCheckTimer?.cancel();
     _periodicCheckTimer = null;
     _isRunning = false;
+    _runningUid = null;
+    _isStarting = false;
   }
 
   /// Cancel and clean up all subscriptions (alias for stop).
