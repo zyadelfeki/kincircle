@@ -230,6 +230,13 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Checkins collection (for daily engagement & streaks)
+    match /checkins/{id} {
+      allow read: if isSignedIn() && isFamilyMember(resource.data.familyId);
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid && isFamilyMember(request.resource.data.familyId);
+      allow update, delete: if false;
+    }
+
     // Check-ins collection (for wellbeing)
     match /check_ins/{checkInId} {
       allow read: if isSignedIn();

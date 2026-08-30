@@ -18,8 +18,11 @@ import '../../widgets/dashboard/recent_activity_card.dart';
 import '../../widgets/dashboard/rhythm_teaser_card.dart';
 import '../../widgets/dashboard/safe_places_card.dart';
 import '../../widgets/battery_shield_card.dart';
+import '../../widgets/dashboard/check_in_card.dart';
 import '../../services/pending_invite_store.dart';
+import '../../services/streak_service.dart';
 import '../../services/theme_controller.dart';
+import '../../widgets/celebration_widgets.dart';
 import '../../widgets/location_permission_banner.dart';
 import '../family/accept_invite_screen.dart';
 import 'package:provider/provider.dart';
@@ -46,6 +49,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<RecentActivityItem> _recentActivity = <RecentActivityItem>[];
   AppUser? _lowestBatteryMember;
   int? _lowestBattery;
+  bool _checkedInToday = false;
+  int _currentStreak = 0;
+  bool _isCheckingIn = false;
 
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _alertsSub;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _membersSub;
@@ -178,6 +184,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _subscribeToMembers(familyId);
       _subscribeToSafePlaces(familyId);
       _subscribeToActiveAlerts(user.uid);
+      _loadCheckInStatus();
     } on FirebaseException catch (e) {
       if (!mounted) return;
       String msg = 'Something went wrong. Please try again.';
@@ -268,6 +275,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _lastAlertMessage = preview;
       });
     }, onError: (_) {});
+  }
+
+  Future<void> _loadCheckInStatus() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    try {
+      final streak = await StreakService.instance.getUserStreak(
+        uid: user.uid,
+        familyId: _familyId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _checkedInToday = streak.checkedInToday;
+        _currentStreak = streak.currentStreak;
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _handleCheckIn() async {
+    final user = _auth.currentUser;
+    if (user == null || _familyId == null) return;
+    setState(() => _isCheckingIn = true);
+
+    try {
+      final otherMemberIds = _members
+          .map((m) => m.uid)
+          .where((uid) => uid != user.uid)
+          .toList();
+
+      final result = await StreakService.instance.checkIn(
+        uid: user.uid,
+        familyId: _familyId!,
+        displayName: user.displayName?.trim().isNotEmpty == true
+            ? user.displayName!.trim()
+            : 'Family Member',
+        otherFamilyMemberIds: otherMemberIds,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _checkedInToday = true;
+        _currentStreak = result.newStreak;
+        _isCheckingIn = false;
+      });
+
+      if (result.celebratedMilestone != null && mounted) {
+        _showMilestoneCelebration(result.celebratedMilestone!);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isCheckingIn = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to check in: $e')),
+        );
+      }
+    }
+  }
+
+  void _showMilestoneCelebration(int milestone) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => CommunityCelebrationDialog(
+        achievement: '$milestone-Day Check-in Streak! 🔥',
+        communityCount: milestone,
+        socialProof: 'Your circle is celebrating your consistency!',
+        companionMessage:
+            'Incredible dedication! You have kept your family updated for $milestone consecutive days.',
+      ),
+    );
   }
 
   RecentActivityItem _toActivityItem(
@@ -410,6 +486,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 count: _activeAlertCount,
                 lastPreview: _lastAlertMessage,
                 onTap: () => Navigator.of(context).pushNamed('/alerts'),
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            sliver: SliverToBoxAdapter(
+              child: CheckInCard(
+                checkedInToday: _checkedInToday,
+                currentStreak: _currentStreak,
+                onCheckIn: _handleCheckIn,
+                isLoading: _isCheckingIn,
               ),
             ),
           ),
