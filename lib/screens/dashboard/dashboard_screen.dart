@@ -23,6 +23,7 @@ import '../../services/pending_invite_store.dart';
 import '../../services/streak_service.dart';
 import '../../services/theme_controller.dart';
 import '../../widgets/celebration_widgets.dart';
+import '../../widgets/dashboard/family_briefing_row.dart';
 import '../../widgets/location_permission_banner.dart';
 import '../family/accept_invite_screen.dart';
 import 'package:provider/provider.dart';
@@ -497,6 +498,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 currentStreak: _currentStreak,
                 onCheckIn: _handleCheckIn,
                 isLoading: _isCheckingIn,
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            sliver: SliverToBoxAdapter(
+              child: FamilyBriefingRow(
+                familyId: _familyId ?? '',
+                members: _members,
+                onSeeAll: () => Navigator.of(context).pushNamed('/circles'),
+                onCheckIn: _handleCheckIn,
               ),
             ),
           ),
