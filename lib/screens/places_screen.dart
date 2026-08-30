@@ -75,11 +75,11 @@ class _PlacesScreenState extends State<PlacesScreen> {
           baseColor: palette.surfaceAlt,
           highlightColor: palette.border,
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            height: 74,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            height: 72,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
+              color: palette.surface,
+              borderRadius: KinCircleRadii.card,
             ),
           ),
         );
@@ -102,24 +102,24 @@ class _PlacesScreenState extends State<PlacesScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.place_outlined, color: palette.textMuted, size: 48),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   Text(
                     'No safe places yet',
                     style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
                     'Create your first safe place so your circle gets arrival and departure updates.',
                     textAlign: TextAlign.center,
                     style: KinCircleTypography.body14(color: palette.textMuted),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Text(
                     'Examples: Home · School · Work',
                     textAlign: TextAlign.center,
                     style: KinCircleTypography.caption12(color: palette.textMuted),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
                   SizedBox(
                     width: 220,
                     child: ElevatedButton(

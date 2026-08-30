@@ -105,13 +105,13 @@ class _CirclesLoadingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      padding: const EdgeInsets.all(16),
       children: const [
-        DashboardCardShimmer(height: 132),
-        SizedBox(height: 12),
-        DashboardCardShimmer(height: 132),
-        SizedBox(height: 12),
-        DashboardCardShimmer(height: 132),
+        DashboardCardShimmer(height: 128),
+        SizedBox(height: 8),
+        DashboardCardShimmer(height: 128),
+        SizedBox(height: 8),
+        DashboardCardShimmer(height: 128),
       ],
     );
   }
@@ -137,14 +137,14 @@ class _CirclesListState extends StatelessWidget {
       children: [
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             children: [
               FamilyLeaderboardWidget(
                 familyId: activeFamilyId,
                 circleName: circleName,
               ),
               ...circles.map((doc) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.only(bottom: 8),
                     child: _CircleCard(circleDoc: doc),
                   )),
             ],
@@ -173,16 +173,16 @@ class _CirclesEmptyState extends StatelessWidget {
     final palette = KinCirclePalette.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.group_add_outlined,
               color: palette.textMuted,
-              size: 52,
+              size: 48,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             Text(
               'No circles yet',
               style: KinCircleTypography.cardTitle16(
@@ -197,7 +197,7 @@ class _CirclesEmptyState extends StatelessWidget {
               style:
                   KinCircleTypography.body14(color: palette.textMuted),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             _BottomActions(
               onCreateCircle: onCreateCircle,
               onJoinCircle: onJoinCircle,

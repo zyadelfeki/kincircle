@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../design/kincircle_screen_tokens.dart';
 import '../../models/user_model.dart';
 import 'dashboard_card_container.dart';
+import 'two_row_skeleton.dart';
 
 class FamilyOnlineCard extends StatelessWidget {
   const FamilyOnlineCard({
@@ -11,8 +12,8 @@ class FamilyOnlineCard extends StatelessWidget {
     required this.totalCount,
   });
 
-  final List<AppUser> onlineMembers;
-  final int totalCount;
+  final List<AppUser>? onlineMembers;
+  final int? totalCount;
 
   @override
   Widget build(BuildContext context) {
@@ -21,23 +22,39 @@ class FamilyOnlineCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-Text('Members Online', style: KinCircleTypography.cardTitle16(color: palette.textPrimary)),
-          const SizedBox(height: 10),
-          if (totalCount == 0)
-            Text(
-              'No members available',
-              style: KinCircleTypography.caption12(color: palette.textMuted),
+          Text(
+            'Members Online',
+            style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
+          ),
+          const SizedBox(height: 8),
+          if (onlineMembers == null || totalCount == null)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: TwoRowSkeleton(),
             )
-          else ...[
+          else if (onlineMembers!.isEmpty || totalCount == 0) ...[
+            Text(
+              'No one online',
+              style: KinCircleTypography.body14(
+                color: palette.textPrimary,
+                weight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Family members will appear here when they open the app',
+              style: KinCircleTypography.caption12(color: palette.textMuted),
+            ),
+          ] else ...[
             SizedBox(
-              height: 34,
+              height: 32,
               child: Stack(
                 children: List<Widget>.generate(
-                  onlineMembers.take(5).length,
+                  onlineMembers!.take(5).length,
                   (int index) {
-                    final AppUser user = onlineMembers[index];
+                    final AppUser user = onlineMembers![index];
                     return Positioned(
-                      left: index * 22,
+                      left: index * 24,
                       child: CircleAvatar(
                         radius: 16,
                         backgroundColor: palette.surfaceAlt,
@@ -56,7 +73,7 @@ Text('Members Online', style: KinCircleTypography.cardTitle16(color: palette.tex
             ),
             const SizedBox(height: 8),
             Text(
-              '${onlineMembers.length} / $totalCount online',
+              ' /  online',
               style: KinCircleTypography.body14(color: palette.textSecondary),
             ),
           ],
@@ -73,6 +90,6 @@ Text('Members Online', style: KinCircleTypography.cardTitle16(color: palette.tex
         .toList();
     if (parts.isEmpty) return 'U';
     if (parts.length == 1) return parts.first[0].toUpperCase();
-    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+    return ''.toUpperCase();
   }
 }

@@ -21,6 +21,7 @@ class ActiveAlertsCard extends StatelessWidget {
     return DashboardCardContainer(
       child: InkWell(
         onTap: onTap,
+        borderRadius: KinCircleRadii.card,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -29,18 +30,23 @@ class ActiveAlertsCard extends StatelessWidget {
                 Icon(Icons.warning_amber_rounded, color: palette.error),
                 const SizedBox(width: 8),
                 Expanded(
-child: Text('Active Alerts', style: KinCircleTypography.cardTitle16(color: palette.textPrimary)),
+                  child: Text(
+                    'Active Alerts',
+                    style: KinCircleTypography.cardTitle16(
+                      color: palette.textPrimary,
+                    ),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
-              '$count',
+              '',
               style: KinCircleTypography.heading22(
                 color: count > 0 ? palette.error : palette.accent,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               count == 0
                   ? 'No active alerts'

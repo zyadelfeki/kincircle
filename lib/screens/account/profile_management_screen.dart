@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../design/kincircle_screen_tokens.dart';
+
 class ProfileManagementScreen extends StatefulWidget {
   const ProfileManagementScreen({super.key});
 
@@ -108,20 +110,22 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
         }, SetOptions(merge: true));
         
         if (mounted) {
+          final palette = KinCirclePalette.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile updated successfully'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: const Text('Profile updated successfully'),
+              backgroundColor: palette.success,
             ),
           );
         }
       }
     } catch (e) {
       if (mounted) {
+        final palette = KinCirclePalette.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to update: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: palette.error,
           ),
         );
       }
@@ -361,10 +365,10 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
                           ),
                           const Divider(height: 1),
                           ListTile(
-                            leading: Icon(Icons.delete_forever, color: Colors.red.shade400),
+                            leading: Icon(Icons.delete_forever, color: KinCirclePalette.of(context).error),
                             title: Text(
                               'Delete Account',
-                              style: TextStyle(color: Colors.red.shade400),
+                              style: TextStyle(color: KinCirclePalette.of(context).error),
                             ),
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () => _showDeleteAccountDialog(),
@@ -474,12 +478,13 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
   }
 
   void _showDeleteAccountDialog() {
+    final palette = KinCirclePalette.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.warning, color: Colors.red.shade400),
+            Icon(Icons.warning, color: palette.error),
             const SizedBox(width: 8),
             const Expanded(child: Text('Delete Account')),
           ],
@@ -506,7 +511,7 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: palette.error,
             ),
             onPressed: () async {
               Navigator.pop(context);
@@ -521,6 +526,7 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
   }
 
   void _confirmAccountDeletion() {
+    final palette = KinCirclePalette.of(context);
     final passwordController = TextEditingController();
     
     showDialog(
@@ -548,7 +554,7 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: palette.error),
             onPressed: () async {
               final nav = Navigator.of(context);
               final messenger = ScaffoldMessenger.of(context);

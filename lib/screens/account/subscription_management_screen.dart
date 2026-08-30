@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../design/kincircle_screen_tokens.dart';
 import '../../services/theme_controller.dart';
 
 class SubscriptionManagementScreen extends StatefulWidget {
@@ -23,10 +24,11 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
     });
     await context.read<ThemeController>().setPro(plan == 'Sage Pro');
     if (!mounted) return;
+    final palette = KinCirclePalette.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('🎉 Switched to $plan plan'),
-        backgroundColor: plan == 'Sage Pro' ? Colors.green : null,
+        backgroundColor: plan == 'Sage Pro' ? palette.success : null,
       ),
     );
   }
@@ -196,18 +198,18 @@ class _SubscriptionManagementScreenState extends State<SubscriptionManagementScr
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.1),
+                  color: KinCirclePalette.of(context).success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                  border: Border.all(color: KinCirclePalette.of(context).success.withValues(alpha: 0.3)),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.verified_user, color: Colors.green),
-                    SizedBox(width: 12),
+                    Icon(Icons.verified_user, color: KinCirclePalette.of(context).success),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         '30-day money-back guarantee. Cancel anytime.',
-                        style: TextStyle(color: Colors.green, fontWeight: FontWeight.w500),
+                        style: TextStyle(color: KinCirclePalette.of(context).success, fontWeight: FontWeight.w500),
                       ),
                     ),
                   ],

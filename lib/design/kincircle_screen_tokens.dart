@@ -164,6 +164,17 @@ class KinCircleTypography {
       color: color,
     );
   }
+
+  static TextStyle caption10({
+    Color color = const Color(0xFF7A8899),
+    FontWeight weight = FontWeight.w400,
+  }) {
+    return GoogleFonts.inter(
+      fontSize: 10,
+      fontWeight: weight,
+      color: color,
+    );
+  }
 }
 
 class KinCircleDecorations {

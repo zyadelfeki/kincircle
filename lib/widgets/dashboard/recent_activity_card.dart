@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../design/kincircle_screen_tokens.dart';
 import 'dashboard_card_container.dart';
+import 'two_row_skeleton.dart';
 
 class RecentActivityItem {
   const RecentActivityItem({
@@ -23,7 +24,7 @@ class RecentActivityCard extends StatelessWidget {
     required this.items,
   });
 
-  final List<RecentActivityItem> items;
+  final List<RecentActivityItem>? items;
 
   @override
   Widget build(BuildContext context) {
@@ -32,42 +33,63 @@ class RecentActivityCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-Text('Recent Activity', style: KinCircleTypography.cardTitle16(color: palette.textPrimary)),
+          Text(
+            'Recent Activity',
+            style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
+          ),
           const SizedBox(height: 8),
-          if (items.isEmpty)
+          if (items == null)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: TwoRowSkeleton(),
+            )
+          else if (items!.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.history_toggle_off, color: palette.textMuted),
+                    Icon(
+                      Icons.history_toggle_off_rounded,
+                      color: palette.textMuted,
+                      size: 24,
+                    ),
                     const SizedBox(height: 8),
                     Text(
-                      'No recent events yet',
+                      'No recent activity',
+                      style: KinCircleTypography.body14(
+                        color: palette.textPrimary,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Activity will appear here as your family moves and checks in',
                       style: KinCircleTypography.caption12(
                         color: palette.textMuted,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               ),
             )
           else
-            ...items.take(5).map((RecentActivityItem item) {
+            ...items!.take(5).map((RecentActivityItem item) {
               return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Row(
                   children: [
                     Container(
-                      width: 30,
-                      height: 30,
+                      width: 32,
+                      height: 32,
                       decoration: BoxDecoration(
                         color: palette.surfaceAlt,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(item.icon, size: 16, color: palette.accent),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,12 +115,10 @@ Text('Recent Activity', style: KinCircleTypography.cardTitle16(color: palette.te
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        item.timeLabel,
-                        style: KinCircleTypography.caption12(
-                          color: palette.textMuted,
-                        ),
+                    Text(
+                      item.timeLabel,
+                      style: KinCircleTypography.caption12(
+                        color: palette.textMuted,
                       ),
                     ),
                   ],

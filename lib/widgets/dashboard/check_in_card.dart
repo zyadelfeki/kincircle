@@ -32,7 +32,7 @@ class CheckInCard extends StatelessWidget {
                     ? Icons.check_circle_rounded
                     : Icons.health_and_safety_outlined,
                 color: checkedInToday ? palette.success : palette.accent,
-                size: 22,
+                size: 20,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -47,24 +47,24 @@ class CheckInCard extends StatelessWidget {
               if (currentStreak > 0)
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.15),
+                    color: palette.warning.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: Colors.orange.withValues(alpha: 0.4),
+                      color: palette.warning.withValues(alpha: 0.4),
                       width: 1,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('🔥', style: TextStyle(fontSize: 12)),
+                      Text('🔥', style: KinCircleTypography.caption12()),
                       const SizedBox(width: 4),
                       Text(
-                        ' day',
+                        '-day',
                         style: KinCircleTypography.caption12(
-                          color: Colors.orange.shade700,
+                          color: palette.warning,
                           weight: FontWeight.bold,
                         ),
                       ),
@@ -73,11 +73,11 @@ class CheckInCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           if (checkedInToday) ...[
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: palette.success.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
@@ -89,7 +89,7 @@ class CheckInCard extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(Icons.done_all_rounded, color: palette.success, size: 20),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,7 +101,7 @@ class CheckInCard extends StatelessWidget {
                             weight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 4),
                         Text(
                           'Your circle knows you are safe and sound.',
                           style: KinCircleTypography.caption12(
@@ -119,7 +119,7 @@ class CheckInCard extends StatelessWidget {
               'Let your circle know you are safe with a single tap.',
               style: KinCircleTypography.body14(color: palette.textMuted),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -135,8 +135,8 @@ class CheckInCard extends StatelessWidget {
                 ),
                 icon: isLoading
                     ? const SizedBox(
-                        width: 18,
-                        height: 18,
+                        width: 16,
+                        height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           color: Colors.white,

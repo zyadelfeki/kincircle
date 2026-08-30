@@ -70,7 +70,7 @@ class FamilyRhythmsCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           if (members.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -109,7 +109,7 @@ class FamilyRhythmsCard extends StatelessWidget {
               final String relativeTime = formatRelativeTime(lastUpdated);
 
               return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Row(
                   children: [
                     CircleAvatar(
@@ -123,7 +123,7 @@ class FamilyRhythmsCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

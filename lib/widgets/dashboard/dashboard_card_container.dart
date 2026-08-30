@@ -6,7 +6,7 @@ class DashboardCardContainer extends StatelessWidget {
   const DashboardCardContainer({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(14),
+    this.padding = const EdgeInsets.all(16),
   });
 
   final Widget child;

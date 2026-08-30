@@ -300,9 +300,9 @@ class _FamilyBriefingRowState extends State<FamilyBriefingRow> {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: KinCircleTypography.caption12(
+                  style: KinCircleTypography.caption10(
                     color: palette.textMuted,
-                  ).copyWith(fontSize: 10),
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

@@ -309,11 +309,11 @@ class _AlertsScreenState extends State<AlertsScreen> {
           baseColor: palette.surfaceAlt,
           highlightColor: palette.border,
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            height: 70,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            height: 72,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
+              color: palette.surface,
+              borderRadius: KinCircleRadii.card,
             ),
           ),
         );
@@ -344,17 +344,18 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.notifications_off_outlined, color: palette.textMuted, size: 48),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Text(
                     _showUnreadOnly ? 'No unread alerts' : 'No alerts yet',
-                    style: KinCircleTypography.cardTitle16(),
+                    style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
                     _showUnreadOnly
                         ? 'All alerts are already marked as read.'
                         : 'No alerts yet. New family safety alerts will appear here.',
                     style: KinCircleTypography.body14(color: palette.textMuted),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),

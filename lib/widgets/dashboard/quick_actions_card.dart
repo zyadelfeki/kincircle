@@ -29,7 +29,7 @@ class QuickActionsCard extends StatelessWidget {
             'Quick actions',
             style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Row(
             children: [
               // SOS — Press and hold for 3 seconds with filling ring & escalating haptics

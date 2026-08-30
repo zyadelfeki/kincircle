@@ -524,8 +524,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             sliver: SliverGrid(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
                 childAspectRatio: 1.2,
               ),
               delegate: SliverChildListDelegate.fixed([
@@ -551,25 +551,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             sliver: SliverToBoxAdapter(
               child: FamilyRhythmsCard(members: _members),
             ),
           ),
           const SliverPadding(
-            padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
             sliver: SliverToBoxAdapter(
               child: BatteryShieldCard(),
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             sliver: SliverToBoxAdapter(
               child: RecentActivityCard(items: _recentActivity),
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             sliver: SliverToBoxAdapter(
               child: _buildAiWellbeingCard(),
             ),
@@ -647,14 +647,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }) {
     final palette = KinCirclePalette.of(context);
     return InkWell(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(8),
       onTap: () => Navigator.of(context).pushNamed(route),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
             Icon(icon, size: 20, color: palette.textMuted),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 title,
@@ -746,18 +746,18 @@ class _ErrorState extends StatelessWidget {
                 size: 32,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Text(
               title,
               style: KinCircleTypography.cardTitle16(color: palette.textPrimary),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               message,
               textAlign: TextAlign.center,
               style: KinCircleTypography.body14(color: palette.textMuted),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
