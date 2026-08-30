@@ -92,7 +92,12 @@ service cloud.firestore {
       allow read: if isSignedIn() && (isOwner(resource.data) || (resource.data.members != null && request.auth.uid in resource.data.members));
       allow update: if isSignedIn() && (isOwner(resource.data) || isAddingSelfToMembers() || isRemovingSelfFromMembers());
       allow create: if isSignedIn();
-      allow delete: if false; // Families cannot be deleted via client
+      allow delete: if isSignedIn() && isOwner(resource.data);
+
+      match /members/{memberId} {
+        allow read: if isFamilyMember(familyId);
+        allow write: if isSignedIn() && (isOwner(get(/databases/$(database)/documents/families/$(familyId)).data) || request.auth.uid == memberId);
+      }
     }
 
     // Invites collection
