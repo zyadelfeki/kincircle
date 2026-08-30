@@ -31,6 +31,7 @@ class AppUser {
       lastUpdated: (data['lastUpdated'] as Timestamp?)?.toDate(),
       currentFamilyId: data['currentFamilyId'],
       batteryLevel: (data['batteryLevel'] as num?)?.toInt(),
+      needsHelp: data['needsHelp'] ?? false,
     );
   }
 
@@ -49,18 +50,20 @@ class AppUser {
           : null,
       currentFamilyId: map['currentFamilyId'],
       batteryLevel: (map['batteryLevel'] as num?)?.toInt(),
+      needsHelp: map['needsHelp'] ?? false,
     );
   }
 
   AppUser({
     required this.uid,
     required this.displayName,
-    required this.photoURL,
-    required this.isInvisible,
+    this.photoURL = '',
+    this.isInvisible = false,
     this.lastKnownLocation,
     this.lastUpdated,
     this.currentFamilyId,
     this.batteryLevel,
+    this.needsHelp = false,
   });
 
   final String uid;
@@ -71,6 +74,7 @@ class AppUser {
   final bool isInvisible;
   final String? currentFamilyId;
   final int? batteryLevel;
+  final bool needsHelp;
 
   // Create a copy of AppUser with some fields updated
   AppUser copyWith({
@@ -82,6 +86,7 @@ class AppUser {
     bool? isInvisible,
     String? currentFamilyId,
     int? batteryLevel,
+    bool? needsHelp,
   }) {
     return AppUser(
       uid: uid ?? this.uid,
@@ -92,6 +97,7 @@ class AppUser {
       lastUpdated: lastUpdated ?? this.lastUpdated,
       currentFamilyId: currentFamilyId ?? this.currentFamilyId,
       batteryLevel: batteryLevel ?? this.batteryLevel,
+      needsHelp: needsHelp ?? this.needsHelp,
     );
   }
 

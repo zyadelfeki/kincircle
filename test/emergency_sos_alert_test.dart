@@ -125,4 +125,71 @@ void main() {
       expect(data['seen'], isFalse);
     }
   });
+
+  test(
+      'SOS message with 0,0 coords contains no maps link, with real coords contains the link',
+      () async {
+    // 1. With 0,0 coords
+    final zeroAlert = EmergencyAlert(
+      currentLat: 0,
+      currentLng: 0,
+      riskLevel: EmergencyRiskLevel.critical,
+      riskFactors: <String>['manual_sos_button'],
+    );
+    await EmergencyResponseService.triggerEmergencyResponse(
+      userId: myUid,
+      alert: zeroAlert,
+      firestore: store,
+    );
+
+    var alertsSnap = await store.collection('alerts').get();
+    expect(alertsSnap.docs.isNotEmpty, isTrue);
+    for (final doc in alertsSnap.docs) {
+      expect(doc.data()['message'], isNot(contains('https://maps.google.com')));
+      expect(doc.data()['message'], equals('🚨 SOS — Alice needs help now'));
+    }
+
+    // Clear alerts for next check
+    for (final doc in alertsSnap.docs) {
+      await doc.reference.delete();
+    }
+
+    // 2. With real coords
+    final realAlert = EmergencyAlert(
+      currentLat: 30.0444,
+      currentLng: 31.2357,
+      riskLevel: EmergencyRiskLevel.critical,
+      riskFactors: <String>['manual_sos_button'],
+    );
+    await EmergencyResponseService.triggerEmergencyResponse(
+      userId: myUid,
+      alert: realAlert,
+      firestore: store,
+    );
+
+    alertsSnap = await store.collection('alerts').get();
+    for (final doc in alertsSnap.docs) {
+      expect(doc.data()['message'], contains('https://maps.google.com/?q=30.0444,31.2357'));
+    }
+  });
+
+  test('crash-source alert title says "Possible crash", manual says "SOS"', () {
+    final manualTitle = EmergencyResponseService.pickAlertTitle(
+      name: 'Alice',
+      riskFactors: <String>['manual_sos_button'],
+    );
+    expect(manualTitle, equals('🚨 SOS — Alice needs help now'));
+
+    final crashTitle = EmergencyResponseService.pickAlertTitle(
+      name: 'Alice',
+      riskFactors: <String>['crash_detected'],
+    );
+    expect(crashTitle, equals('🚨 Possible crash — Alice needs help'));
+
+    final genericTitle = EmergencyResponseService.pickAlertTitle(
+      name: 'Alice',
+      riskFactors: <String>['fall_detected'],
+    );
+    expect(genericTitle, equals('⚠️ Alice needs help'));
+  });
 }

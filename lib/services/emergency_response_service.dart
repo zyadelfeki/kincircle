@@ -168,6 +168,20 @@ class EmergencyResponseService {
     return response;
   }
 
+  /// Extracts the source-aware alert title based on risk factors and member name.
+  static String pickAlertTitle({
+    required String name,
+    required List<String> riskFactors,
+  }) {
+    if (riskFactors.contains('manual_sos_button')) {
+      return '🚨 SOS — $name needs help now';
+    }
+    if (riskFactors.contains('crash_detected')) {
+      return '🚨 Possible crash — $name needs help';
+    }
+    return '⚠️ $name needs help';
+  }
+
   /// Dispatches one SOS alert document per other family member into the alerts collection via WriteBatch.
   static Future<void> _broadcastSosAlerts({
     required FirebaseFirestore firestore,
@@ -238,9 +252,15 @@ class EmergencyResponseService {
       if (otherMembers.isEmpty) return;
 
       // 4. Build title and message
-      final String title = '🚨 SOS — $triggeredByName needs help now';
-      final String message =
-          'https://maps.google.com/?q=${alert.currentLat},${alert.currentLng}';
+      final String title = pickAlertTitle(
+        name: triggeredByName,
+        riskFactors: alert.riskFactors,
+      );
+      String message = title;
+      if (alert.currentLat != 0 || alert.currentLng != 0) {
+        message =
+            '$title: https://maps.google.com/?q=${alert.currentLat},${alert.currentLng}';
+      }
 
       // 5. Write one doc per other member via WriteBatch
       final WriteBatch batch = firestore.batch();

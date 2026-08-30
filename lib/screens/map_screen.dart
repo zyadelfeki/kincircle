@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -325,12 +326,28 @@ class _MapScreenState extends State<MapScreen> {
           AnomalyAlertService.checkForAnomalies(familyId, history);
         }
 
+        if (!mounted) return;
+        final KinCirclePaletteData palette = KinCirclePalette.of(context);
+        final String currentUid = _auth.currentUser?.uid ?? '';
+
         final Set<Marker> markers = <Marker>{};
         final Set<Circle> circles = <Circle>{};
         for (final _MemberRowData row in rows) {
           final String memberName = _safeDisplayName(row.user.displayName);
-          final BitmapDescriptor icon =
-              await _markerForMember(row.user.uid, memberName);
+          final bool isCurrent = row.user.uid == currentUid;
+          final bool isNeedsHelp = _circleStatuses.any(
+            (CircleMemberStatusEntry s) =>
+                s.uid == row.user.uid &&
+                s.status == CircleMemberStatus.needsHelp,
+          );
+          final BitmapDescriptor icon = await _markerForMember(
+            user: row.user,
+            memberName: memberName,
+            isCurrentUser: isCurrent,
+            hasActiveSos: isNeedsHelp,
+            batteryLevel: row.batteryPercent,
+            palette: palette,
+          );
           final LatLng exactPosition = row.user.lastKnownLocation!;
           final LatLng position = bubbleMode
               ? _markerPositionForMode(row.user.uid, exactPosition)
@@ -494,16 +511,48 @@ class _MapScreenState extends State<MapScreen> {
     return 0;
   }
 
-  Future<BitmapDescriptor> _markerForMember(String uid, String displayName) async {
-    final String key = '$uid-$displayName';
+  Future<BitmapDescriptor> _markerForMember({
+    required AppUser user,
+    required String memberName,
+    required bool isCurrentUser,
+    required bool hasActiveSos,
+    required int? batteryLevel,
+    required KinCirclePaletteData palette,
+    DateTime? now,
+  }) async {
+    final DateTime currentNow = now ?? DateTime.now();
+    final Color statusColor = statusColorFor(
+      user,
+      currentNow,
+      isCurrentUser: isCurrentUser,
+      hasActiveSos: hasActiveSos,
+      palette: palette,
+    );
+    final String key = markerCacheKey(
+      uid: user.uid,
+      displayName: memberName,
+      statusColor: statusColor,
+      batteryLevel: batteryLevel,
+    );
     final BitmapDescriptor? cached = _markerCache[key];
     if (cached != null) return cached;
-    final BitmapDescriptor marker = await _buildInitialsMarker(displayName);
+
+    final BitmapDescriptor marker = await _buildAvatarMarker(
+      displayName: memberName,
+      statusColor: statusColor,
+      batteryLevel: batteryLevel,
+      palette: palette,
+    );
     _markerCache[key] = marker;
     return marker;
   }
 
-  Future<BitmapDescriptor> _buildInitialsMarker(String displayName) async {
+  Future<BitmapDescriptor> _buildAvatarMarker({
+    required String displayName,
+    required Color statusColor,
+    required int? batteryLevel,
+    required KinCirclePaletteData palette,
+  }) async {
     const double width = 128;
     const double height = 158;
     const double avatarSize = 88;
@@ -512,35 +561,59 @@ class _MapScreenState extends State<MapScreen> {
     const Offset center = Offset(width / 2, avatarSize / 2 + 4);
     final String memberName = _markerLabel(displayName);
 
-    final Paint ring = Paint()..color = KinCirclePalette.accent;
-    final Paint fill = Paint()..color = KinCirclePalette.surfaceAlt;
+    // 1. Outer status ring
+    final Paint ring = Paint()..color = statusColor;
     canvas.drawCircle(center, avatarSize / 2, ring);
-    canvas.drawCircle(center, avatarSize / 2 - 7, fill);
 
+    // 2. Battery arc around the ring (0-100)
+    if (batteryLevel != null) {
+      final double sweepAngle =
+          (2 * math.pi) * (batteryLevel.clamp(0, 100) / 100);
+      final Color arcColor = batteryColorFor(batteryLevel, palette: palette);
+      final Paint arcPaint = Paint()
+        ..color = arcColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4.5
+        ..strokeCap = StrokeCap.round;
+      final Rect arcRect =
+          Rect.fromCircle(center: center, radius: (avatarSize / 2) + 2.5);
+      canvas.drawArc(arcRect, -math.pi / 2, sweepAngle, false, arcPaint);
+    }
+
+    // 3. Inner circle filled with palette surface color
+    final Paint fill = Paint()..color = palette.surface;
+    canvas.drawCircle(center, avatarSize / 2 - 6, fill);
+
+    // 4. Centered initials
     final TextPainter painter = TextPainter(
       textDirection: TextDirection.ltr,
       text: TextSpan(
-        text: _initials(memberName),
+        text: initialsFor(displayName),
         style: KinCircleTypography.cardTitle16(
-          color: KinCirclePalette.textPrimary,
+          color: palette.textPrimary,
           weight: FontWeight.w700,
-        ),
+        ).copyWith(fontSize: 22),
       ),
     )..layout();
     painter.paint(
       canvas,
-      Offset((width - painter.width) / 2, (avatarSize - painter.height) / 2 + 4),
+      Offset(
+        (width - painter.width) / 2,
+        (avatarSize - painter.height) / 2 + 4,
+      ),
     );
 
+    // 5. Name label badge
     const double labelTop = 106;
     const double labelHorizontalPadding = 10;
     const Rect labelRect = Rect.fromLTWH(10, labelTop, width - 20, 32);
-    final RRect labelRRect = RRect.fromRectAndRadius(labelRect, const Radius.circular(12));
-    canvas.drawRRect(labelRRect, Paint()..color = KinCirclePalette.surface);
+    final RRect labelRRect =
+        RRect.fromRectAndRadius(labelRect, const Radius.circular(12));
+    canvas.drawRRect(labelRRect, Paint()..color = palette.surface);
     canvas.drawRRect(
       labelRRect,
       Paint()
-        ..color = KinCirclePalette.border
+        ..color = palette.border
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1,
     );
@@ -552,7 +625,7 @@ class _MapScreenState extends State<MapScreen> {
       text: TextSpan(
         text: memberName,
         style: KinCircleTypography.caption12(
-          color: KinCirclePalette.textPrimary,
+          color: palette.textPrimary,
           weight: FontWeight.w600,
         ),
       ),
@@ -564,7 +637,8 @@ class _MapScreenState extends State<MapScreen> {
 
     final ui.Image image =
         await recorder.endRecording().toImage(width.toInt(), height.toInt());
-    final ByteData? data = await image.toByteData(format: ui.ImageByteFormat.png);
+    final ByteData? data =
+        await image.toByteData(format: ui.ImageByteFormat.png);
     if (data == null) return BitmapDescriptor.defaultMarker;
     return BitmapDescriptor.bytes(Uint8List.view(data.buffer));
   }
@@ -582,17 +656,6 @@ class _MapScreenState extends State<MapScreen> {
     if (firstToken.isEmpty) return safe;
     if (firstToken.length <= 12) return firstToken;
     return '${firstToken.substring(0, 12)}…';
-  }
-
-  String _initials(String displayName) {
-    final List<String> parts = displayName
-        .trim()
-        .split(' ')
-        .where((String part) => part.trim().isNotEmpty)
-        .toList();
-    if (parts.isEmpty) return 'U';
-    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
-    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
 
   Future<void> _centerOnMyLocation() async {
@@ -1057,7 +1120,7 @@ class _MapScreenState extends State<MapScreen> {
                                         backgroundColor:
                                             palette.accent.withValues(alpha: 0.2),
                                         child: Text(
-                                          _initials(_safeDisplayName(
+                                          initialsFor(_safeDisplayName(
                                               row.user.displayName)),
                                           style: KinCircleTypography.caption12(
                                             color: palette.textPrimary,
@@ -1302,3 +1365,69 @@ class _PulseMapCanvasState extends State<_PulseMapCanvas>
     );
   }
 }
+
+/// Pure function determining the status color for a member marker
+Color statusColorFor(
+  AppUser member,
+  DateTime now, {
+  bool isCurrentUser = false,
+  bool hasActiveSos = false,
+  KinCirclePaletteData palette = KinCirclePaletteData.dark,
+}) {
+  if (member.needsHelp == true || hasActiveSos) {
+    return palette.error;
+  }
+  if (member.lastUpdated == null ||
+      now.difference(member.lastUpdated!).inHours >= 3) {
+    return palette.textMuted;
+  }
+  if (isCurrentUser) {
+    return palette.accent;
+  }
+  return palette.success;
+}
+
+/// Pure function converting battery level (0-100) into 10%-step buckets (0..10)
+int? batteryBucket(int? level) {
+  if (level == null) return null;
+  final int clamped = level.clamp(0, 100);
+  if (clamped >= 90) return 10;
+  return clamped ~/ 10;
+}
+
+/// Pure function determining battery arc color based on level
+Color batteryColorFor(
+  int level, {
+  KinCirclePaletteData palette = KinCirclePaletteData.dark,
+}) {
+  if (level > 50) return palette.success;
+  if (level >= 20) return palette.warning;
+  return palette.error;
+}
+
+/// Extracts member initials (first letters of first + last name parts, uppercased)
+String initialsFor(String displayName) {
+  final List<String> parts = displayName
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((String part) => part.trim().isNotEmpty)
+      .toList();
+  if (parts.isEmpty) return 'U';
+  if (parts.length == 1) {
+    final String first = parts.first;
+    return first.isNotEmpty ? first[0].toUpperCase() : 'U';
+  }
+  return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+}
+
+/// Builds the cache key for member markers
+String markerCacheKey({
+  required String uid,
+  required String displayName,
+  required Color statusColor,
+  required int? batteryLevel,
+}) {
+  final int? bucket = batteryBucket(batteryLevel);
+  return '$uid|${displayName.trim()}|${statusColor.toARGB32()}|$bucket';
+}
+
