@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/consent_management_service.dart';
+import '../../services/consent_service.dart';
 import '../../services/data_export_service.dart';
 import '../../services/privacy_controls_service.dart';
 
@@ -545,16 +546,35 @@ class _PrivacyDashboardScreenState extends State<PrivacyDashboardScreen> {
   }
 
   Future<void> _updateConsent(ConsentType type, bool value) async {
-    final String userId = _auth.currentUser!.uid;
-    await ConsentManagementService.recordConsent(
-      userId: userId,
-      type: type,
-      granted: value,
-    );
-    final Map<ConsentType, bool> status =
-        await ConsentManagementService.getConsentStatus(userId);
-    if (!mounted) return;
-    setState(() => _consentStatus = status);
+    final user = _auth.currentUser;
+    if (user == null) return;
+    final String userId = user.uid;
+
+    setState(() {
+      _consentStatus[type] = value;
+    });
+
+    try {
+      await ConsentManagementService.recordConsent(
+        userId: userId,
+        type: type,
+        granted: value,
+      );
+      if (type == ConsentType.aiProcessing || type == ConsentType.dataProcessing) {
+        await ConsentService().setConsent(value);
+      }
+      final Map<ConsentType, bool> status =
+          await ConsentManagementService.getConsentStatus(userId);
+      if (!mounted) return;
+      setState(() => _consentStatus = status);
+    } catch (e) {
+      debugPrint('Failed to record consent: $e');
+      if (mounted) {
+        final Map<ConsentType, bool> status =
+            await ConsentManagementService.getConsentStatus(userId);
+        setState(() => _consentStatus = status);
+      }
+    }
   }
 
   Future<void> _confirmAccountDeletion() async {

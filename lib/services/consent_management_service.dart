@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Records GDPR consent decisions with complete audit metadata.
 class ConsentManagementService {
@@ -24,16 +26,33 @@ class ConsentManagementService {
       'user_agent': await _getUserAgent(),
     };
 
-    await _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('consents')
-        .add(consent);
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('consents')
+          .add(consent);
+    } catch (e) {
+      debugPrint('ConsentManagementService audit log: $e');
+    }
 
-    await _firestore.collection('users').doc(userId).set(<String, dynamic>{
-      'consent_status.${type.name}': granted,
-      'consent_status.updated_at': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    try {
+      await _firestore.collection('users').doc(userId).set(<String, dynamic>{
+        'consent_status': <String, dynamic>{
+          type.name: granted,
+          'updated_at': FieldValue.serverTimestamp(),
+        },
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('ConsentManagementService firestore update: $e');
+    }
+
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('consent_${type.name}', granted);
+    } catch (e) {
+      debugPrint('ConsentManagementService prefs write: $e');
+    }
   }
 
   /// Convenience overload to record consent for the currently authenticated user.
@@ -56,16 +75,41 @@ class ConsentManagementService {
 
   /// Returns the latest consent state for all consent categories.
   static Future<Map<ConsentType, bool>> getConsentStatus(String userId) async {
-    final DocumentSnapshot<Map<String, dynamic>> doc =
-        await _firestore.collection('users').doc(userId).get();
-    final Map<String, dynamic> data = doc.data() ?? <String, dynamic>{};
-    final Map<String, dynamic> consentStatus =
-        data['consent_status'] as Map<String, dynamic>? ?? <String, dynamic>{};
+    final Map<ConsentType, bool> result = <ConsentType, bool>{};
 
-    return <ConsentType, bool>{
-      for (final ConsentType type in ConsentType.values)
-        type: consentStatus[type.name] as bool? ?? false,
-    };
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      for (final ConsentType type in ConsentType.values) {
+        if (prefs.containsKey('consent_${type.name}')) {
+          result[type] = prefs.getBool('consent_${type.name}') ?? false;
+        }
+      }
+    } catch (_) {}
+
+    try {
+      final DocumentSnapshot<Map<String, dynamic>> doc =
+          await _firestore.collection('users').doc(userId).get();
+      final Map<String, dynamic> data = doc.data() ?? <String, dynamic>{};
+      final Map<String, dynamic> consentStatus =
+          data['consent_status'] as Map<String, dynamic>? ?? <String, dynamic>{};
+
+      for (final ConsentType type in ConsentType.values) {
+        if (consentStatus.containsKey(type.name)) {
+          result[type] = consentStatus[type.name] as bool? ?? false;
+        } else if (data.containsKey('consent_status.${type.name}')) {
+          result[type] = data['consent_status.${type.name}'] as bool? ?? false;
+        } else if (!result.containsKey(type)) {
+          result[type] = false;
+        }
+      }
+    } catch (e) {
+      debugPrint('ConsentManagementService.getConsentStatus error: $e');
+      for (final ConsentType type in ConsentType.values) {
+        result.putIfAbsent(type, () => false);
+      }
+    }
+
+    return result;
   }
 
   /// Withdraws consent and optionally purges associated processed data.
