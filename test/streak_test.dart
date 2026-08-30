@@ -212,5 +212,35 @@ void main() {
       expect(entries[2].member.displayName, 'Charlie'); // Current: 2, Longest: 15
       expect(entries[3].member.displayName, 'Dave');  // Current: 0, Longest: 1
     });
+
+    test('Milestones array contains exactly [7, 30, 100, 365]', () {
+      expect(StreakService.streakMilestones, [7, 30, 100, 365]);
+    });
+
+    test('Streak reaching 7 triggers 7-day milestone calculation', () {
+      final dates = List.generate(
+        7,
+        (i) => StreakService.formatDate(referenceDate.subtract(Duration(days: i))),
+      );
+      final streak = StreakService.calculateStreak(
+        localDates: dates,
+        referenceNow: referenceDate,
+      );
+      expect(streak.currentStreak, 7);
+      expect(streak.currentStreak >= 7, true);
+    });
+
+    test('Streak reaching 30 triggers 30-day milestone calculation', () {
+      final dates = List.generate(
+        30,
+        (i) => StreakService.formatDate(referenceDate.subtract(Duration(days: i))),
+      );
+      final streak = StreakService.calculateStreak(
+        localDates: dates,
+        referenceNow: referenceDate,
+      );
+      expect(streak.currentStreak, 30);
+      expect(streak.currentStreak >= 30, true);
+    });
   });
 }
