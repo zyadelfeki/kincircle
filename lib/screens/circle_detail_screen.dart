@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../design/kincircle_screen_tokens.dart';
+import '../../widgets/circles/family_leaderboard.dart';
 import '../../widgets/nav_shell.dart';
 
 class CircleDetailScreen extends StatefulWidget {
@@ -201,6 +202,12 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    if (_circleId != null)
+                      FamilyLeaderboardWidget(
+                        familyId: _circleId!,
+                        circleName: _circleName,
+                      ),
                     if (members.isNotEmpty) ...[
                       Padding(
                         padding: const EdgeInsets.only(top: 16, bottom: 16),

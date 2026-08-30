@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../design/kincircle_screen_tokens.dart';
+import '../widgets/circles/family_leaderboard.dart';
 import '../widgets/dashboard/dashboard_card_shimmer.dart';
 import '../widgets/nav_shell.dart';
 
@@ -129,16 +130,24 @@ class _CirclesListState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String activeFamilyId = circles.first.id;
+    final String? circleName = circles.first.data()['name'] as String?;
+
     return Column(
       children: [
         Expanded(
-          child: ListView.separated(
+          child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            itemCount: circles.length,
-            itemBuilder: (BuildContext context, int index) {
-              return _CircleCard(circleDoc: circles[index]);
-            },
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            children: [
+              FamilyLeaderboardWidget(
+                familyId: activeFamilyId,
+                circleName: circleName,
+              ),
+              ...circles.map((doc) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _CircleCard(circleDoc: doc),
+                  )),
+            ],
           ),
         ),
         _BottomActions(
