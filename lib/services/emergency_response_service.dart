@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/emergency_contact.dart';
+import 'location_service.dart';
 
 /// Emergency risk levels
 enum EmergencyRiskLevel { low, medium, high, critical }
@@ -40,22 +41,42 @@ class EmergencyResponseService {
   }
 
   /// Manual SOS trigger from press-and-hold button
-  static Future<void> triggerManualSOS({FirebaseFirestore? firestore}) async {
-    final String? userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null || userId.isEmpty) {
+  static Future<void> triggerManualSOS({
+    String? userId,
+    FirebaseFirestore? firestore,
+    LocationService? locationService,
+  }) async {
+    final String? effectiveUserId =
+        userId ?? FirebaseAuth.instance.currentUser?.uid;
+    if (effectiveUserId == null || effectiveUserId.isEmpty) {
       debugPrint('EmergencyResponseService: No user signed in for SOS');
       return;
     }
 
     double currentLat = 0;
     double currentLng = 0;
-    try {
-      final Position? lastPos = await Geolocator.getLastKnownPosition();
-      if (lastPos != null) {
-        currentLat = lastPos.latitude;
-        currentLng = lastPos.longitude;
+
+    final LocationService locService = locationService ?? LocationService();
+    final Position? lastWritten = locService.lastWrittenPosition;
+
+    if (lastWritten != null) {
+      currentLat = lastWritten.latitude;
+      currentLng = lastWritten.longitude;
+    } else {
+      try {
+        final Position pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            timeLimit: Duration(seconds: 5),
+          ),
+        );
+        currentLat = pos.latitude;
+        currentLng = pos.longitude;
+      } catch (e) {
+        debugPrint(
+          '🚨 EmergencyResponseService: Location unavailable for SOS (lastWrittenPosition is null and getCurrentPosition failed: $e) — falling back to (0,0)',
+        );
       }
-    } catch (_) {}
+    }
 
     final EmergencyAlert alert = EmergencyAlert(
       currentLat: currentLat,
@@ -65,7 +86,7 @@ class EmergencyResponseService {
     );
 
     await triggerEmergencyResponse(
-      userId: userId,
+      userId: effectiveUserId,
       alert: alert,
       firestore: firestore,
     );
@@ -217,12 +238,9 @@ class EmergencyResponseService {
       if (otherMembers.isEmpty) return;
 
       // 4. Build title and message
-      final String title = 'SOS — $triggeredByName needs help now';
-      String message = title;
-      if (alert.currentLat != 0 || alert.currentLng != 0) {
-        message =
-            '$title: https://maps.google.com/?q=${alert.currentLat},${alert.currentLng}';
-      }
+      final String title = '🚨 SOS — $triggeredByName needs help now';
+      final String message =
+          'https://maps.google.com/?q=${alert.currentLat},${alert.currentLng}';
 
       // 5. Write one doc per other member via WriteBatch
       final WriteBatch batch = firestore.batch();

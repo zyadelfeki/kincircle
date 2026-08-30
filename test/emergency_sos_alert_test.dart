@@ -1,6 +1,8 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:kincircle/services/emergency_response_service.dart';
+import 'package:kincircle/services/location_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -71,7 +73,7 @@ void main() {
       expect(data['triggeredByUid'], equals(myUid));
       expect(data['triggeredByName'], equals(myName));
       expect(data['type'], equals('sos'));
-      expect(data['title'], equals('SOS — Alice needs help now'));
+      expect(data['title'], equals('🚨 SOS — Alice needs help now'));
       expect(
         data['message'],
         contains('https://maps.google.com/?q=37.7749,-122.4194'),
@@ -82,19 +84,31 @@ void main() {
   });
 
   test(
-      'triggering an emergency with 0,0 lat/lng formats title & message cleanly',
+      'triggerManualSOS attaches non-zero coordinates when a last written position exists',
       () async {
-    final alert = EmergencyAlert(
-      currentLat: 0,
-      currentLng: 0,
-      riskLevel: EmergencyRiskLevel.high,
-      riskFactors: <String>['fall_detected'],
+    final locationService = LocationService();
+    final testPosition = Position(
+      latitude: 40.7128,
+      longitude: -74.0060,
+      timestamp: DateTime.now(),
+      accuracy: 5.0,
+      altitude: 0.0,
+      altitudeAccuracy: 0.0,
+      heading: 0.0,
+      headingAccuracy: 0.0,
+      speed: 0.0,
+      speedAccuracy: 0.0,
     );
 
-    await EmergencyResponseService.triggerEmergencyResponse(
+    locationService.recordWrittenPositionForTesting(
+      testPosition,
+      DateTime.now(),
+    );
+
+    await EmergencyResponseService.triggerManualSOS(
       userId: myUid,
-      alert: alert,
       firestore: store,
+      locationService: locationService,
     );
 
     final alertsSnap = await store.collection('alerts').get();
@@ -103,8 +117,11 @@ void main() {
     for (final doc in alertsSnap.docs) {
       final data = doc.data();
       expect(data['type'], equals('sos'));
-      expect(data['title'], equals('SOS — Alice needs help now'));
-      expect(data['message'], equals('SOS — Alice needs help now'));
+      expect(data['title'], equals('🚨 SOS — Alice needs help now'));
+      expect(
+        data['message'],
+        contains('https://maps.google.com/?q=40.7128,-74.006'),
+      );
       expect(data['seen'], isFalse);
     }
   });
