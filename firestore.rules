@@ -126,10 +126,17 @@ service cloud.firestore {
 
     // Alert feedback collection
     match /alert_feedback/{feedbackId} {
-      allow read: if isSignedIn() && isFamilyMember(resource.data.familyId);
-      allow create: if isSignedIn() && isFamilyMember(request.resource.data.familyId);
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || (resource.data.familyId != null && isFamilyMember(resource.data.familyId)));
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update: if isSignedIn() && isOwnerUser(resource.data.userId);
       allow delete: if false; // Feedback cannot be deleted via client
+    }
+
+    // Emergency contacts collection
+    match /emergency_contacts/{contactId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Location events (subcollection under users)

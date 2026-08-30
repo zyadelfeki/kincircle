@@ -185,16 +185,15 @@ class StreakService {
   }) async {
     try {
       final String todayStr = formatDate(now);
-      Query<Map<String, dynamic>> query = _firestore
+      final QuerySnapshot<Map<String, dynamic>> snap = await _firestore
           .collection('checkins')
           .where('uid', isEqualTo: uid)
-          .where('localDate', isEqualTo: todayStr);
+          .where('localDate', isEqualTo: todayStr)
+          .get();
 
       if (familyId != null && familyId.isNotEmpty) {
-        query = query.where('familyId', isEqualTo: familyId);
+        return snap.docs.any((doc) => doc.data()['familyId'] == familyId);
       }
-
-      final QuerySnapshot<Map<String, dynamic>> snap = await query.limit(1).get();
       return snap.docs.isNotEmpty;
     } catch (e) {
       debugPrint('StreakService.hasCheckedInToday error: $e');
@@ -209,19 +208,25 @@ class StreakService {
   }) async {
     try {
       final DateTime cutoff = now.subtract(const Duration(days: 60));
-      Query<Map<String, dynamic>> query = _firestore
+      final QuerySnapshot<Map<String, dynamic>> snap = await _firestore
           .collection('checkins')
-          .where('uid', isEqualTo: uid);
-
-      if (familyId != null && familyId.isNotEmpty) {
-        query = query.where('familyId', isEqualTo: familyId);
-      }
-
-      final QuerySnapshot<Map<String, dynamic>> snap = await query
-          .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(cutoff))
+          .where('uid', isEqualTo: uid)
           .get();
 
       final List<String> localDates = snap.docs
+          .where((doc) {
+            final data = doc.data();
+            if (familyId != null &&
+                familyId.isNotEmpty &&
+                data['familyId'] != familyId) {
+              return false;
+            }
+            final dynamic ts = data['timestamp'];
+            if (ts is Timestamp && ts.toDate().isBefore(cutoff)) {
+              return false;
+            }
+            return true;
+          })
           .map((doc) => doc.data()['localDate'] as String?)
           .whereType<String>()
           .toList();

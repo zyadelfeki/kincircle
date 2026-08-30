@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../design/kincircle_screen_tokens.dart';
 import '../../widgets/circles/family_leaderboard.dart';
-import '../../widgets/nav_shell.dart';
 
 class CircleDetailScreen extends StatefulWidget {
   const CircleDetailScreen({super.key});
@@ -94,9 +93,19 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
       );
     }
 
-    return NavShell(
-      currentIndex: 1,
-      title: _circleName ?? 'Circle Details',
+    return Scaffold(
+      backgroundColor: palette.background,
+      appBar: AppBar(
+        title: Text(
+          _circleName ?? 'Circle Details',
+          style: KinCircleTypography.cardTitle16(
+            color: palette.textPrimary,
+          ),
+        ),
+        backgroundColor: palette.background,
+        elevation: 0,
+        leading: BackButton(color: palette.textPrimary),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
