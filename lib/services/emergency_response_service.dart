@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/emergency_contact.dart';
 
@@ -29,19 +30,36 @@ class EmergencyAlert {
 
 /// Emergency Response Service - AI-powered crisis coordination
 class EmergencyResponseService {
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static FirebaseFirestore? _customFirestore;
+  static FirebaseFirestore get _firestore =>
+      _customFirestore ?? FirebaseFirestore.instance;
+
+  @visibleForTesting
+  static void setFirestoreForTesting(FirebaseFirestore? firestore) {
+    _customFirestore = firestore;
+  }
 
   /// Manual SOS trigger from press-and-hold button
-  static Future<void> triggerManualSOS() async {
+  static Future<void> triggerManualSOS({FirebaseFirestore? firestore}) async {
     final String? userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null || userId.isEmpty) {
       debugPrint('EmergencyResponseService: No user signed in for SOS');
       return;
     }
 
+    double currentLat = 0;
+    double currentLng = 0;
+    try {
+      final Position? lastPos = await Geolocator.getLastKnownPosition();
+      if (lastPos != null) {
+        currentLat = lastPos.latitude;
+        currentLng = lastPos.longitude;
+      }
+    } catch (_) {}
+
     final EmergencyAlert alert = EmergencyAlert(
-      currentLat: 0,
-      currentLng: 0,
+      currentLat: currentLat,
+      currentLng: currentLng,
       riskLevel: EmergencyRiskLevel.critical,
       riskFactors: <String>['manual_sos_button'],
     );
@@ -49,10 +67,11 @@ class EmergencyResponseService {
     await triggerEmergencyResponse(
       userId: userId,
       alert: alert,
+      firestore: firestore,
     );
   }
 
-  Future<void> triggerCrashAlert({double? peakG}) async {
+  Future<void> triggerCrashAlert({double? peakG, FirebaseFirestore? firestore}) async {
     final String? userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null || userId.isEmpty) {
       throw StateError('No authenticated user for crash alert');
@@ -71,6 +90,7 @@ class EmergencyResponseService {
     await EmergencyResponseService.triggerEmergencyResponse(
       userId: userId,
       alert: alert,
+      firestore: firestore,
     );
   }
 
@@ -78,7 +98,10 @@ class EmergencyResponseService {
   static Future<EmergencyResponse> triggerEmergencyResponse({
     required String userId,
     required EmergencyAlert alert,
+    FirebaseFirestore? firestore,
   }) async {
+    final FirebaseFirestore db = firestore ?? _firestore;
+
     // Create response record
     final response = EmergencyResponse(
       responseId: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -89,14 +112,21 @@ class EmergencyResponseService {
       currentLng: alert.currentLng,
     );
 
-    // Store in Firestore
-    await _firestore
+    // Store in Firestore (audit log)
+    await db
         .collection('emergency_responses')
         .doc(response.responseId)
         .set(response.toFirestore());
 
+    // Broadcast SOS alert documents to all other family members
+    await _broadcastSosAlerts(
+      firestore: db,
+      userId: userId,
+      alert: alert,
+    );
+
     // Get emergency contacts
-    final contacts = await getEmergencyContacts(userId);
+    final contacts = await getEmergencyContacts(userId, firestore: db);
 
     // Execute appropriate cascade based on risk level
     switch (alert.riskLevel) {
@@ -115,6 +145,107 @@ class EmergencyResponseService {
     }
 
     return response;
+  }
+
+  /// Dispatches one SOS alert document per other family member into the alerts collection via WriteBatch.
+  static Future<void> _broadcastSosAlerts({
+    required FirebaseFirestore firestore,
+    required String userId,
+    required EmergencyAlert alert,
+  }) async {
+    try {
+      // 1. Resolve user display name and current family ID
+      String triggeredByName = '';
+      String? familyId;
+
+      try {
+        final DocumentSnapshot<Map<String, dynamic>> userDoc =
+            await firestore.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          final Map<String, dynamic>? userData = userDoc.data();
+          triggeredByName =
+              (userData?['displayName'] as String? ?? '').trim();
+          familyId = userData?['currentFamilyId'] as String?;
+        }
+      } catch (_) {}
+
+      if (triggeredByName.isEmpty) {
+        final User? currentUser = FirebaseAuth.instance.currentUser;
+        if (currentUser != null && currentUser.uid == userId) {
+          triggeredByName = (currentUser.displayName ?? '').trim();
+          if (triggeredByName.isEmpty) {
+            final String email = (currentUser.email ?? '').trim();
+            if (email.contains('@')) {
+              triggeredByName = email.split('@').first.trim();
+            }
+          }
+        }
+      }
+      if (triggeredByName.isEmpty) {
+        triggeredByName = 'Family member';
+      }
+
+      // 2. Resolve familyId if not in user doc
+      if (familyId == null || familyId.isEmpty) {
+        final QuerySnapshot<Map<String, dynamic>> familiesSnap = await firestore
+            .collection('families')
+            .where('members', arrayContains: userId)
+            .limit(1)
+            .get();
+        if (familiesSnap.docs.isNotEmpty) {
+          familyId = familiesSnap.docs.first.id;
+        }
+      }
+
+      if (familyId == null || familyId.isEmpty) {
+        debugPrint(
+            'EmergencyResponseService: No familyId found for SOS broadcast');
+        return;
+      }
+
+      // 3. Get family members
+      final DocumentSnapshot<Map<String, dynamic>> familyDoc =
+          await firestore.collection('families').doc(familyId).get();
+      if (!familyDoc.exists) return;
+
+      final List<String> members =
+          (familyDoc.data()?['members'] as List<dynamic>? ?? <dynamic>[])
+              .cast<String>();
+
+      final List<String> otherMembers =
+          members.where((uid) => uid != userId).toList();
+      if (otherMembers.isEmpty) return;
+
+      // 4. Build title and message
+      final String title = 'SOS — $triggeredByName needs help now';
+      String message = title;
+      if (alert.currentLat != 0 || alert.currentLng != 0) {
+        message =
+            '$title: https://maps.google.com/?q=${alert.currentLat},${alert.currentLng}';
+      }
+
+      // 5. Write one doc per other member via WriteBatch
+      final WriteBatch batch = firestore.batch();
+      for (final String otherUid in otherMembers) {
+        final DocumentReference docRef = firestore.collection('alerts').doc();
+        batch.set(docRef, <String, dynamic>{
+          'userId': otherUid,
+          'familyId': familyId,
+          'triggeredByUid': userId,
+          'triggeredByName': triggeredByName,
+          'title': title,
+          'message': message,
+          'timestamp': FieldValue.serverTimestamp(),
+          'type': 'sos',
+          'seen': false,
+        });
+      }
+      await batch.commit();
+      debugPrint(
+          'EmergencyResponseService: Dispatched SOS alerts to ${otherMembers.length} family members');
+    } catch (e) {
+      debugPrint('EmergencyResponseService: Error broadcasting SOS alerts: $e');
+    }
   }
 
   /// MEDIUM RISK: Contact primary family + enhanced tracking
@@ -482,9 +613,12 @@ Contact family coordinator or respond to this emergency.''';
 
   /// Get emergency contacts for user
   static Future<List<EmergencyContact>> getEmergencyContacts(
-      String userId) async {
+    String userId, {
+    FirebaseFirestore? firestore,
+  }) async {
+    final FirebaseFirestore db = firestore ?? _firestore;
     try {
-      final snapshot = await _firestore
+      final snapshot = await db
           .collection('emergency_contacts')
           .where('userId', isEqualTo: userId)
           .where('isAvailable', isEqualTo: true)
@@ -694,9 +828,13 @@ Contact family coordinator or respond to this emergency.''';
 
   static Future<void> _emergencyFallback(EmergencyAlert alert) async {
     // Last resort: Direct 911 call if all systems fail
-    final Uri phoneUri = Uri(scheme: 'tel', path: '911');
-    if (await canLaunchUrl(phoneUri)) {
-      await launchUrl(phoneUri);
+    try {
+      final Uri phoneUri = Uri(scheme: 'tel', path: '911');
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri);
+      }
+    } catch (e) {
+      debugPrint('Error in emergency fallback: $e');
     }
   }
 }
