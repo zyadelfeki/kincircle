@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../services/firestore_service.dart';
@@ -41,6 +42,7 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
   }
 
   Future<void> _handleAccept(String familyId) async {
+    await HapticFeedback.lightImpact();
     try {
       setState(() => _submitting = true);
       await FirestoreService().acceptInvite(inviteId: widget.inviteId);

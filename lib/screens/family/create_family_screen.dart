@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../design/kincircle_screen_tokens.dart';
 import '../../services/firestore_service.dart';
@@ -16,6 +17,7 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
   bool _loading = false;
 
   Future<void> _createCircle() async {
+    await HapticFeedback.lightImpact();
     final existingFamilyId = await _firestoreService.getCurrentFamilyId();
     if (!mounted) return;
 
@@ -74,6 +76,7 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
   }
 
   Future<void> _joinWithCode() async {
+    await HapticFeedback.lightImpact();
     if (!mounted) return;
     final TextEditingController codeController = TextEditingController();
     final palette = KinCirclePalette.of(context);

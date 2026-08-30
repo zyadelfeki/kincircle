@@ -27,6 +27,7 @@ class _JoinFamilyScreenState extends State<JoinFamilyScreen> {
   }
 
   Future<void> _joinFamily() async {
+    await HapticFeedback.lightImpact();
     final String code = _codeController.text.trim();
     if (code.isEmpty) {
       setState(() => _error = 'Please enter an invite code');

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/consent_management_service.dart';
@@ -603,6 +604,7 @@ class _PrivacyDashboardScreenState extends State<PrivacyDashboardScreen> {
     );
 
     if (confirmed == true) {
+      await HapticFeedback.heavyImpact();
       await _deleteAccount();
     }
   }

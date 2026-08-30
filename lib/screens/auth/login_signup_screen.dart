@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 // Note: Firebase is initialized in main.dart; this import provides FirebaseException type.
 import 'package:google_fonts/google_fonts.dart';
@@ -116,6 +117,7 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
   // A helper function to handle auth calls, loading state, and errors
   Future<void> _handleAuthAction(
       Future<dynamic> Function() authFunction) async {
+    await HapticFeedback.mediumImpact();
     setState(() => _isLoading = true);
     setState(() => _inlineError = null);
     try {

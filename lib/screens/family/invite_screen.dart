@@ -101,6 +101,8 @@ class _InviteScreenState extends State<InviteScreen> {
                     icon: Icons.share_rounded,
                     title: 'Share invite',
                     onTap: () async {
+                      await HapticFeedback.lightImpact();
+                      if (!context.mounted) return;
                       Navigator.of(context).pop();
                       await SharePlus.instance.share(
                         ShareParams(
@@ -113,6 +115,8 @@ class _InviteScreenState extends State<InviteScreen> {
                     icon: Icons.copy_rounded,
                     title: 'Copy invite code',
                     onTap: () async {
+                      await HapticFeedback.lightImpact();
+                      if (!context.mounted) return;
                       Navigator.of(context).pop();
                       await Clipboard.setData(ClipboardData(text: code));
                       if (!mounted) return;
@@ -125,6 +129,8 @@ class _InviteScreenState extends State<InviteScreen> {
                     icon: Icons.sms_outlined,
                     title: 'Send via SMS',
                     onTap: () async {
+                      await HapticFeedback.lightImpact();
+                      if (!context.mounted) return;
                       Navigator.of(context).pop();
                       final Uri uri = Uri.parse('sms:?body=Join my KinCircle: $link');
                       if (await canLaunchUrl(uri)) {
@@ -136,6 +142,8 @@ class _InviteScreenState extends State<InviteScreen> {
                     icon: Icons.chat_bubble_outline_rounded,
                     title: 'Send via WhatsApp',
                     onTap: () async {
+                      await HapticFeedback.lightImpact();
+                      if (!context.mounted) return;
                       Navigator.of(context).pop();
                       final Uri uri = Uri.parse('https://wa.me/?text=Join my KinCircle: $link');
                       if (await canLaunchUrl(uri)) {

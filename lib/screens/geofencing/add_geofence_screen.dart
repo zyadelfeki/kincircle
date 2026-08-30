@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../design/kincircle_screen_tokens.dart';
@@ -304,6 +305,7 @@ class _AddGeofenceScreenState extends State<AddGeofenceScreen> {
                         onPressed: () async {
                           final ctx = context;
                           final messenger = ScaffoldMessenger.of(ctx);
+                          await HapticFeedback.lightImpact();
                           final name = _nameController.text.trim();
                           if (name.isEmpty) {
                             messenger.showSnackBar(

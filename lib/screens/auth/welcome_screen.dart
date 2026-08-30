@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -46,7 +47,11 @@ class WelcomeScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 62,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pushNamed('/auth'),
+                  onPressed: () async {
+                    await HapticFeedback.mediumImpact();
+                    if (!context.mounted) return;
+                    Navigator.of(context).pushNamed('/auth');
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorScheme.primary,
                     foregroundColor: colorScheme.onPrimary,
@@ -67,10 +72,14 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               TextButton(
-                onPressed: () => Navigator.of(context).pushNamed(
-                  '/auth',
-                  arguments: {'mode': 'login'},
-                ),
+                onPressed: () async {
+                  await HapticFeedback.mediumImpact();
+                  if (!context.mounted) return;
+                  Navigator.of(context).pushNamed(
+                    '/auth',
+                    arguments: {'mode': 'login'},
+                  );
+                },
                 style: TextButton.styleFrom(
                   foregroundColor: colorScheme.onSurface,
                   minimumSize: const Size(44, 44),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../utils/link_builder.dart';
@@ -30,12 +31,15 @@ class ShareInviteScreen extends StatelessWidget {
             Text(url, textAlign: TextAlign.center),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: () => SharePlus.instance.share(
-                ShareParams(
-                  text:
-                      'Join my family circle on KinCircle: https://kincircle-live.web.app/invite/$inviteId',
-                ),
-              ),
+              onPressed: () async {
+                await HapticFeedback.lightImpact();
+                await SharePlus.instance.share(
+                  ShareParams(
+                    text:
+                        'Join my family circle on KinCircle: https://kincircle-live.web.app/invite/$inviteId',
+                  ),
+                );
+              },
               icon: const Icon(Icons.ios_share),
               label: const Text('Share invite'),
             ),

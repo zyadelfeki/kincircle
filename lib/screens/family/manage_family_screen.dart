@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../design/kincircle_screen_tokens.dart';
 import '../../models/family.dart';
 import '../../services/firestore_service.dart';
@@ -193,6 +194,7 @@ class _ManageFamilyScreenState extends State<ManageFamilyScreen> {
     );
 
     if (confirmed != true) return;
+    await HapticFeedback.heavyImpact();
 
     try {
       final familyId = _targetFamilyId ?? await _firestoreService.getCurrentFamilyId();
@@ -261,6 +263,7 @@ class _ManageFamilyScreenState extends State<ManageFamilyScreen> {
     );
 
     if (confirmed != true) return;
+    await HapticFeedback.heavyImpact();
 
     try {
       final familyId = _targetFamilyId ?? await _firestoreService.getCurrentFamilyId();
@@ -329,6 +332,7 @@ class _ManageFamilyScreenState extends State<ManageFamilyScreen> {
     );
 
     if (confirmed != true) return;
+    await HapticFeedback.heavyImpact();
 
     try {
       final familyId = _targetFamilyId ?? await _firestoreService.getCurrentFamilyId();

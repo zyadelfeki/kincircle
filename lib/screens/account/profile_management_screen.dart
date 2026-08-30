@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -551,6 +552,7 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
             onPressed: () async {
               final nav = Navigator.of(context);
               final messenger = ScaffoldMessenger.of(context);
+              await HapticFeedback.heavyImpact();
               try {
                 final user = FirebaseAuth.instance.currentUser;
                 if (user != null && user.email != null) {
