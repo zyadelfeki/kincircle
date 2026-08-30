@@ -27,14 +27,14 @@ class _DrivingModeScreenState extends State<DrivingModeScreen> {
     try {
       await _ensureHive();
       setState(() => _status = 'Starting…');
-      // Preflight: ensure the TFLite model is bundled; otherwise show coming soon and bail early.
+      // Preflight: ensure the TFLite model is bundled; otherwise show unavailable and bail early.
       final exists = await _assetExists(_modelPath);
       if (!exists) {
         if (!mounted) return;
-        setState(() => _status = 'Driving mode is coming soon');
+        setState(() => _status = 'Driver safety model unavailable');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Driving mode is coming soon'),
+            content: Text('Driver safety model is not available on this device'),
           ),
         );
         return;
@@ -51,10 +51,10 @@ class _DrivingModeScreenState extends State<DrivingModeScreen> {
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _status = 'Driving mode is coming soon');
+      setState(() => _status = 'Unable to start driving mode');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Driving mode is coming soon'),
+          content: Text('Unable to start driving mode right now'),
         ),
       );
     }

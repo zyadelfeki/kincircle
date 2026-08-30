@@ -112,11 +112,86 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _showComingSoon() async {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Coming soon')),
+  Future<void> _showChangePasswordDialog() async {
+    final String email = FirebaseAuth.instance.currentUser?.email ?? '';
+    final palette = KinCirclePalette.of(context);
+    final emailController = TextEditingController(text: email);
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: palette.surface,
+        title: Text(
+          'Change Password',
+          style: KinCircleTypography.cardTitle16(
+            color: palette.textPrimary,
+            weight: FontWeight.w600,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "We'll send a password reset link to your email address.",
+              style: KinCircleTypography.body14(color: palette.textMuted),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: KinCircleDecorations.input(palette),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: TextField(
+                controller: emailController,
+                readOnly: true,
+                style: KinCircleTypography.body14(color: palette.textPrimary),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  labelText: 'Email',
+                  labelStyle: KinCircleTypography.body14(color: palette.textMuted),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Cancel',
+              style: KinCircleTypography.body14(color: palette.textMuted),
+            ),
+          ),
+          ElevatedButton(
+            style: KinCircleButtons.primary(),
+            onPressed: () async {
+              final nav = Navigator.of(ctx);
+              final messenger = ScaffoldMessenger.of(context);
+              try {
+                await FirebaseAuth.instance.sendPasswordResetEmail(
+                  email: emailController.text.trim(),
+                );
+                nav.pop();
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: const Text('Password reset email sent!'),
+                    backgroundColor: palette.accent,
+                  ),
+                );
+              } catch (e) {
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Error: $e'),
+                    backgroundColor: palette.error,
+                  ),
+                );
+              }
+            },
+            child: const Text('Send Reset Link'),
+          ),
+        ],
+      ),
     );
+    emailController.dispose();
   }
 
   bool get _canChangePassword {
@@ -130,6 +205,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!mounted) return;
     Navigator.of(context)
         .pushNamedAndRemoveUntil('/auth', (Route<dynamic> route) => false);
+  }
+
+  Future<void> _handleLeaveFamily() async {
+    final String? familyId = await _firestoreService.getCurrentFamilyId();
+    if (familyId == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You are not currently in a circle')),
+      );
+      return;
+    }
+    await _confirmDestructive(
+      title: 'Leave circle?',
+      body: 'You will lose access to this circle and its map updates.',
+      onConfirmed: () async {
+        try {
+          await _firestoreService.leaveFamily(familyId);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Left circle successfully')),
+          );
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to leave circle: $e')),
+          );
+        }
+      },
+    );
+  }
+
+  Future<void> _handleDeleteAccount() async {
+    await _confirmDestructive(
+      title: 'Delete account?',
+      body: 'This action is permanent and will delete your account and associated session.',
+      onConfirmed: () async {
+        try {
+          final user = FirebaseAuth.instance.currentUser;
+          if (user != null) {
+            await user.delete();
+          }
+          if (!mounted) return;
+          Navigator.of(context).pushNamedAndRemoveUntil('/auth', (route) => false);
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete account (may require recent login): $e')),
+          );
+        }
+      },
+    );
   }
 
   Future<void> _confirmDestructive({
@@ -297,7 +423,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _row(
                     icon: Icons.lock_outline_rounded,
                     title: 'Change Password',
-                    onTap: _showComingSoon,
+                    onTap: _showChangePasswordDialog,
                   ),
                 _sectionSpacer(),
                 _sectionLabel('Notifications'),
@@ -459,22 +585,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   icon: Icons.exit_to_app_rounded,
                   iconColor: palette.textMuted,
                   title: 'Leave family',
-                  onTap: () => _confirmDestructive(
-                    title: 'Leave family?',
-                    body: 'You will lose access to family updates.',
-                    onConfirmed: _showComingSoon,
-                  ),
+                  onTap: _handleLeaveFamily,
                 ),
                 _row(
                   icon: Icons.delete_forever_outlined,
                   iconColor: palette.error,
                   title: 'Delete account',
                   titleColor: palette.error,
-                  onTap: () => _confirmDestructive(
-                    title: 'Delete account?',
-                    body: 'This action is permanent.',
-                    onConfirmed: _showComingSoon,
-                  ),
+                  onTap: _handleDeleteAccount,
                 ),
                 const SizedBox(height: 28),
                 Center(

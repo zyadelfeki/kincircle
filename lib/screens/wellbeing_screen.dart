@@ -64,30 +64,7 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
     }
   }
 
-  Widget _banner() {
-    final palette = KinCirclePalette.of(context);
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: palette.accent.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: palette.accent, width: 1),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.lightbulb_outline_rounded, color: palette.accent),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Wellbeing insights coming soon to include richer trends and family-level summaries.',
-              style: KinCircleTypography.caption12(color: palette.accent),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _loadingView() {
     final palette = KinCirclePalette.of(context);
@@ -299,7 +276,6 @@ class _WellbeingScreenState extends State<WellbeingScreen> {
     if (_error != null) return _errorView();
     return ListView(
       children: [
-        _banner(),
         _scoreCard(),
         _recommendationsCard(),
         _insightsCard(),
