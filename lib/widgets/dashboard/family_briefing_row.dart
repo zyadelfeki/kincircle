@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../design/kincircle_screen_tokens.dart';
 import '../../models/user_model.dart';
+import '../../screens/member_timeline_screen.dart';
 import '../../services/family_snapshot_service.dart';
 import '../../utils/time_utils.dart';
 
@@ -177,7 +178,7 @@ class _FamilyBriefingRowState extends State<FamilyBriefingRow> {
                                   ],
                                 ),
                               ),
-                              if (isNeedsHelp)
+                               if (isNeedsHelp) ...[
                                 ElevatedButton.icon(
                                   onPressed: () {
                                     Navigator.of(sheetContext).pop();
@@ -208,6 +209,34 @@ class _FamilyBriefingRowState extends State<FamilyBriefingRow> {
                                   icon: const Icon(Icons.check_circle_outline, size: 14),
                                   label: const Text('Check in'),
                                 ),
+                                const SizedBox(width: 8),
+                              ],
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(sheetContext).pop();
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) => MemberTimelineScreen(
+                                        member: member,
+                                        familyId: widget.familyId,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 6,
+                                  ),
+                                ),
+                                child: Text(
+                                  'View today',
+                                  style: KinCircleTypography.caption12(
+                                    color: palette.accent,
+                                    weight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         );

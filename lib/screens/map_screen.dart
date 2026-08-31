@@ -18,6 +18,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../design/kincircle_screen_tokens.dart';
 import '../models/user_model.dart';
+import 'member_timeline_screen.dart';
 import '../services/circle_status_service.dart';
 import '../services/anomaly_alert_service.dart';
 import '../services/location_service.dart';
@@ -1104,7 +1105,6 @@ class _MapScreenState extends State<MapScreen> {
                                 final bool stationary = row.speedKmh <= 0;
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 10),
-                                  padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
                                     color: palette.surfaceAlt,
                                     borderRadius: BorderRadius.circular(16),
@@ -1113,84 +1113,103 @@ class _MapScreenState extends State<MapScreen> {
                                       width: 1,
                                     ),
                                   ),
-                                  child: Row(
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 20,
-                                        backgroundColor:
-                                            palette.accent.withValues(alpha: 0.2),
-                                        child: Text(
-                                          initialsFor(_safeDisplayName(
-                                              row.user.displayName)),
-                                          style: KinCircleTypography.caption12(
-                                            color: palette.textPrimary,
-                                            weight: FontWeight.w700,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(16),
+                                    onTap: () {
+                                      if (_currentFamilyId != null &&
+                                          _currentFamilyId!.isNotEmpty) {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute<void>(
+                                            builder: (_) => MemberTimelineScreen(
+                                              member: row.user,
+                                              familyId: _currentFamilyId!,
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              _safeDisplayName(
-                                                  row.user.displayName),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: KinCircleTypography.body14(
-                                                color: palette.textPrimary,
-                                                weight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              _formatRelative(
-                                                  row.user.lastUpdated),
-                                              style:
-                                                  KinCircleTypography.caption12(
-                                                color: palette.textMuted,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
+                                        );
+                                      }
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Row(
                                         children: [
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                Icons.battery_std_rounded,
-                                                size: 15,
-                                                color: _batteryColor(battery),
+                                          CircleAvatar(
+                                            radius: 20,
+                                            backgroundColor:
+                                                palette.accent.withValues(alpha: 0.2),
+                                            child: Text(
+                                              initialsFor(_safeDisplayName(
+                                                  row.user.displayName)),
+                                              style: KinCircleTypography.caption12(
+                                                color: palette.textPrimary,
+                                                weight: FontWeight.w700,
                                               ),
-                                              const SizedBox(width: 4),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  _safeDisplayName(
+                                                      row.user.displayName),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: KinCircleTypography.body14(
+                                                    color: palette.textPrimary,
+                                                    weight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  _formatRelative(
+                                                      row.user.lastUpdated),
+                                                  style:
+                                                      KinCircleTypography.caption12(
+                                                    color: palette.textMuted,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.battery_std_rounded,
+                                                    size: 15,
+                                                    color: _batteryColor(battery),
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '$battery%',
+                                                    style:
+                                                        KinCircleTypography.caption12(
+                                                      color: _batteryColor(battery),
+                                                      weight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 4),
                                               Text(
-                                                '$battery%',
-                                                style:
-                                                    KinCircleTypography.caption12(
-                                                  color: _batteryColor(battery),
-                                                  weight: FontWeight.w600,
+                                                stationary
+                                                    ? 'At current location'
+                                                    : '${row.speedKmh.toStringAsFixed(0)} km/h',
+                                                style: KinCircleTypography.caption12(
+                                                  color: palette.textSecondary,
                                                 ),
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            stationary
-                                                ? 'At current location'
-                                                : '${row.speedKmh.toStringAsFixed(0)} km/h',
-                                            style: KinCircleTypography.caption12(
-                                              color: palette.textSecondary,
-                                            ),
-                                          ),
                                         ],
                                       ),
-                                    ],
+                                    ),
                                   ),
                                 );
                               },
