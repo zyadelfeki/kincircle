@@ -87,19 +87,19 @@ class _NavShellState extends State<NavShell> {
     return <Widget>[
       widget.currentIndex == 0
           ? widget.body
-          : const _NavShellEmbeddedScope(child: MapScreen()),
+          : const NavShellEmbeddedScope(child: MapScreen()),
       widget.currentIndex == 1
           ? widget.body
-          : const _NavShellEmbeddedScope(child: CirclesScreen()),
+          : const NavShellEmbeddedScope(child: CirclesScreen()),
       widget.currentIndex == 2
           ? widget.body
-          : const _NavShellEmbeddedScope(child: PlacesScreen()),
+          : const NavShellEmbeddedScope(child: PlacesScreen()),
       widget.currentIndex == 3
           ? widget.body
-          : const _NavShellEmbeddedScope(child: AlertsScreen()),
+          : const NavShellEmbeddedScope(child: AlertsScreen()),
       widget.currentIndex == 4
           ? widget.body
-          : const _NavShellEmbeddedScope(child: SettingsScreen()),
+          : const NavShellEmbeddedScope(child: SettingsScreen()),
     ];
   }
 
@@ -112,8 +112,11 @@ class _NavShellState extends State<NavShell> {
   @override
   Widget build(BuildContext context) {
     final palette = KinCirclePalette.of(context);
-    if (_NavShellEmbeddedScope.isInScope(context)) {
-      return widget.body;
+    if (NavShellEmbeddedScope.isInScope(context)) {
+      return Scaffold(
+        backgroundColor: palette.background,
+        body: widget.body,
+      );
     }
 
     final String? appBarTitle = _effectiveTitle();
@@ -150,14 +153,15 @@ class _NavShellState extends State<NavShell> {
   }
 }
 
-class _NavShellEmbeddedScope extends InheritedWidget {
-  const _NavShellEmbeddedScope({
+class NavShellEmbeddedScope extends InheritedWidget {
+  const NavShellEmbeddedScope({
+    super.key,
     required super.child,
   });
 
   static bool isInScope(BuildContext context) {
     return context
-            .dependOnInheritedWidgetOfExactType<_NavShellEmbeddedScope>() !=
+            .dependOnInheritedWidgetOfExactType<NavShellEmbeddedScope>() !=
         null;
   }
 

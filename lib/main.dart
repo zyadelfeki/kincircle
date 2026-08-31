@@ -28,6 +28,8 @@ import 'screens/family/invite_screen.dart';
 import 'screens/family/create_family_screen.dart';
 import 'screens/family/manage_family_screen.dart';
 import 'screens/settings/settings_screen.dart';
+import 'screens/settings/ai_settings_screen.dart';
+import 'screens/support/feedback_screen.dart';
 import 'screens/family/accept_invite_screen.dart';
 import 'screens/family/manage_invites_screen.dart';
 import 'screens/geofencing/add_geofence_screen.dart';
@@ -516,6 +518,8 @@ final bool isDark = Theme.of(context).brightness == Brightness.dark;
                   '/accept-invite': (context) => const Scaffold(),
                   '/manage-invites': (context) => const ManageInvitesScreen(),
                   '/diagnostics': (context) => const DiagnosticsScreen(),
+                  '/feedback': (context) => const FeedbackScreen(),
+                  '/settings/ai': (context) => const AiSettingsScreen(),
                   '/account': (context) => const ProfileManagementScreen(),
                   '/subscription': (context) =>
                       const SubscriptionManagementScreen(),

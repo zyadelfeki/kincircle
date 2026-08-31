@@ -1,19 +1,25 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../design/kincircle_screen_tokens.dart';
 import '../../services/firestore_service.dart';
-import '../../services/theme_controller.dart';
 import '../../services/privacy_controls_service.dart';
+import '../../services/theme_controller.dart';
 import '../../widgets/nav_shell.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  final FirestoreService? firestoreService;
+
+  const SettingsScreen({
+    super.key,
+    this.firestoreService,
+  });
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -25,6 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   static const String _kQuietHours = 'settings.quiet_hours';
   static const String _kLocationSharing = 'settings.location_sharing';
   static const String _kCircleVisibility = 'settings.circle_visibility';
+  static const String _kAppLanguage = 'settings.app_language';
 
   bool _loading = true;
   bool _pushNotifications = true;
@@ -32,44 +39,82 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _quietHours = false;
   bool _locationSharing = true;
   bool _circleVisibility = true;
-
   String _appLanguage = 'English';
-  bool _busyToggle = false;
+  String _userRole = 'family_member';
+  bool _busyLocationToggle = false;
 
-  final FirestoreService _firestoreService = FirestoreService();
+  User? get _currentUser {
+    try {
+      return FirebaseAuth.instance.currentUser;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  late final FirestoreService _firestoreService;
 
   @override
   void initState() {
     super.initState();
-    _loadPrefs();
+    _firestoreService = widget.firestoreService ?? FirestoreService();
+    _loadAllSettings();
   }
 
-  Future<void> _loadPrefs() async {
+  Future<void> _loadAllSettings() async {
+    PrivacyControlsService? privacy;
+    try {
+      privacy = context.read<PrivacyControlsService>();
+    } catch (_) {}
+
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
-    setState(() {
-      _pushNotifications = prefs.getBool(_kPushNotifications) ?? true;
-      _alertSounds = prefs.getBool(_kAlertSounds) ?? true;
-      _quietHours = prefs.getBool(_kQuietHours) ?? false;
-      _locationSharing = prefs.getBool(_kLocationSharing) ?? true;
-      _circleVisibility = prefs.getBool(_kCircleVisibility) ?? true;
-      _appLanguage = prefs.getString('settings.app_language') ?? 'English';
-      _loading = false;
-    });
-    _loadPrivacyFromService();
-  }
+    final User? user = _currentUser;
 
-  Future<void> _loadPrivacyFromService() async {
-    final String? userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) return;
-    final PrivacyControlsService privacy =
-        context.read<PrivacyControlsService>();
-    await privacy.loadPrivacySettings(userId);
-    final PrivacySettings? settings = privacy.settings;
-    if (settings == null) return;
+    bool push = prefs.getBool(_kPushNotifications) ?? true;
+    bool sound = prefs.getBool(_kAlertSounds) ?? true;
+    bool quiet = prefs.getBool(_kQuietHours) ?? false;
+    bool locSharing = prefs.getBool(_kLocationSharing) ?? true;
+    bool visibility = prefs.getBool(_kCircleVisibility) ?? true;
+    String lang = prefs.getString(_kAppLanguage) ?? 'English';
+    String role = 'family_member';
+
+    if (user != null) {
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get()
+            .timeout(const Duration(seconds: 4));
+        if (doc.exists) {
+          final data = doc.data();
+          if (data != null) {
+            role = (data['role'] as String?) ?? 'family_member';
+            if (data.containsKey('notificationsEnabled')) {
+              push = data['notificationsEnabled'] as bool;
+            }
+          }
+        }
+      } catch (_) {}
+
+      if (privacy != null) {
+        try {
+          await privacy.loadPrivacySettings(user.uid);
+          if (privacy.settings != null) {
+            locSharing = privacy.settings!.locationSharingEnabled;
+          }
+        } catch (_) {}
+      }
+    }
+
     if (!mounted) return;
     setState(() {
-      _locationSharing = settings.locationSharingEnabled;
+      _pushNotifications = push;
+      _alertSounds = sound;
+      _quietHours = quiet;
+      _locationSharing = locSharing;
+      _circleVisibility = visibility;
+      _appLanguage = lang;
+      _userRole = role;
+      _loading = false;
     });
   }
 
@@ -83,38 +128,197 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await prefs.setString(key, value);
   }
 
-  Future<void> _handleLocationSharing(bool value) async {
-    if (_busyToggle) return;
-    setState(() => _busyToggle = true);
+  Future<void> _handlePushNotificationToggle(bool value) async {
+    setState(() => _pushNotifications = value);
+    await _saveBool(_kPushNotifications, value);
+
+    final User? user = _currentUser;
+    if (user != null) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .set({
+          'notificationsEnabled': value,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _handleLocationSharingToggle(bool value) async {
+    if (_busyLocationToggle) return;
+    setState(() {
+      _busyLocationToggle = true;
+      _locationSharing = value;
+    });
+
     try {
-      final String? userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId != null) {
+      final User? user = _currentUser;
+      if (user != null) {
         final PrivacyControlsService privacy =
             context.read<PrivacyControlsService>();
         await privacy.updateLocationSharing(
-          userId: userId,
+          userId: user.uid,
           enabled: value,
         );
       }
       await _firestoreService.updateVisibility(isInvisible: !value);
       await _saveBool(_kLocationSharing, value);
-      if (!mounted) return;
-      setState(() => _locationSharing = value);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Unable to update location sharing right now')),
+          content: Text('Unable to update location sharing right now'),
+        ),
       );
     } finally {
       if (mounted) {
-        setState(() => _busyToggle = false);
+        setState(() => _busyLocationToggle = false);
       }
     }
   }
 
+  Future<void> _handleLocationModePicker() async {
+    final User? user = _currentUser;
+    if (user == null) return;
+    final privacy = context.read<PrivacyControlsService>();
+    final currentMode =
+        privacy.settings?.locationSharingMode ?? LocationSharingMode.familyOnly;
+
+    final palette = KinCirclePalette.of(context);
+    final LocationSharingMode? selected =
+        await showModalBottomSheet<LocationSharingMode>(
+      context: context,
+      backgroundColor: palette.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Location Sharing Mode',
+                    style: KinCircleTypography.cardTitle16(
+                      color: palette.textPrimary,
+                      weight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _modeTile(
+                  ctx,
+                  palette,
+                  'Always',
+                  'Share live location continuously',
+                  LocationSharingMode.everyone,
+                  currentMode == LocationSharingMode.everyone,
+                ),
+                _modeTile(
+                  ctx,
+                  palette,
+                  'Circle Only',
+                  'Share only when circle members request or nearby',
+                  LocationSharingMode.familyOnly,
+                  currentMode == LocationSharingMode.familyOnly,
+                ),
+                _modeTile(
+                  ctx,
+                  palette,
+                  'Emergency Only',
+                  'Share only when an SOS is triggered',
+                  LocationSharingMode.emergencyOnly,
+                  currentMode == LocationSharingMode.emergencyOnly,
+                ),
+                _modeTile(
+                  ctx,
+                  palette,
+                  'Off',
+                  'Pause all location broadcasts',
+                  LocationSharingMode.disabled,
+                  currentMode == LocationSharingMode.disabled,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected != null) {
+      await privacy.updateLocationSharing(
+        userId: user.uid,
+        enabled: selected != LocationSharingMode.disabled,
+        mode: selected,
+      );
+      await _firestoreService.updateVisibility(
+        isInvisible: selected == LocationSharingMode.disabled,
+      );
+      await _saveBool(
+        _kLocationSharing,
+        selected != LocationSharingMode.disabled,
+      );
+      if (mounted) {
+        setState(() {
+          _locationSharing = selected != LocationSharingMode.disabled;
+        });
+      }
+    }
+  }
+
+  Widget _modeTile(
+    BuildContext ctx,
+    KinCirclePaletteData palette,
+    String title,
+    String subtitle,
+    LocationSharingMode mode,
+    bool isSelected,
+  ) {
+    return ListTile(
+      title: Text(
+        title,
+        style: KinCircleTypography.body14(
+          color: isSelected ? palette.accent : palette.textPrimary,
+          weight: isSelected ? FontWeight.w700 : FontWeight.w500,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: KinCircleTypography.caption12(color: palette.textMuted),
+      ),
+      trailing: isSelected
+          ? Icon(Icons.check_circle, color: palette.accent, size: 20)
+          : null,
+      onTap: () => Navigator.of(ctx).pop(mode),
+    );
+  }
+
+  Future<void> _handleSafeClearCache() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final palette = KinCirclePalette.of(context);
+
+    // Purge only in-memory image cache - preserve prefs, auth, Pro status
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
+
+    if (!mounted) return;
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Image & temporary cache cleared'),
+        backgroundColor: palette.success,
+      ),
+    );
+  }
+
   Future<void> _showChangePasswordDialog() async {
-    final String email = FirebaseAuth.instance.currentUser?.email ?? '';
+    final String email = _currentUser?.email ?? '';
     final palette = KinCirclePalette.of(context);
     final emailController = TextEditingController(text: email);
 
@@ -123,10 +327,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: palette.surface,
         title: Text(
-          'Change Password',
+          'Reset Password',
           style: KinCircleTypography.cardTitle16(
             color: palette.textPrimary,
-            weight: FontWeight.w600,
+            weight: FontWeight.w700,
           ),
         ),
         content: Column(
@@ -134,13 +338,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "We'll send a password reset link to your email address.",
+              "We'll send a password reset link to your registered email address.",
               style: KinCircleTypography.body14(color: palette.textMuted),
             ),
             const SizedBox(height: 16),
             Container(
               decoration: KinCircleDecorations.input(palette),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               child: TextField(
                 controller: emailController,
                 readOnly: true,
@@ -148,7 +352,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 decoration: InputDecoration(
                   border: InputBorder.none,
                   labelText: 'Email',
-                  labelStyle: KinCircleTypography.body14(color: palette.textMuted),
+                  labelStyle:
+                      KinCircleTypography.caption12(color: palette.textMuted),
                 ),
               ),
             ),
@@ -175,7 +380,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 messenger.showSnackBar(
                   SnackBar(
                     content: const Text('Password reset email sent!'),
-                    backgroundColor: palette.accent,
+                    backgroundColor: palette.success,
                   ),
                 );
               } catch (e) {
@@ -196,13 +401,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   bool get _canChangePassword {
-    final User? user = FirebaseAuth.instance.currentUser;
+    final User? user = _currentUser;
     if (user == null) return false;
-    return user.providerData.any((UserInfo info) => info.providerId == 'password');
+    return user.providerData
+        .any((UserInfo info) => info.providerId == 'password');
   }
 
   Future<void> _signOut() async {
-    await FirebaseAuth.instance.signOut();
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (_) {}
     if (!mounted) return;
     Navigator.of(context)
         .pushNamedAndRemoveUntil('/auth', (Route<dynamic> route) => false);
@@ -219,7 +427,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
     await _confirmDestructive(
       title: 'Leave circle?',
-      body: 'You will lose access to this circle and its map updates.',
+      body: 'You will lose access to this circle and its live safety updates.',
       onConfirmed: () async {
         try {
           await _firestoreService.leaveFamily(familyId);
@@ -240,19 +448,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _handleDeleteAccount() async {
     await _confirmDestructive(
       title: 'Delete account?',
-      body: 'This action is permanent and will delete your account and associated session.',
+      body:
+          'This action is permanent and will completely erase your account and data.',
       onConfirmed: () async {
         try {
-          final user = FirebaseAuth.instance.currentUser;
+          final user = _currentUser;
           if (user != null) {
             await user.delete();
           }
           if (!mounted) return;
-          Navigator.of(context).pushNamedAndRemoveUntil('/auth', (route) => false);
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil('/auth', (route) => false);
         } catch (e) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete account (may require recent login): $e')),
+            SnackBar(
+              content: Text(
+                  'Failed to delete account (may require recent login): $e'),
+            ),
           );
         }
       },
@@ -270,22 +483,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: palette.surface,
-          title: Text(title, style: KinCircleTypography.cardTitle16()),
+          title: Text(
+            title,
+            style: KinCircleTypography.cardTitle16(
+              color: palette.textPrimary,
+              weight: FontWeight.w700,
+            ),
+          ),
           content: Text(
             body,
-            style:
-                KinCircleTypography.body14(color: palette.textMuted),
+            style: KinCircleTypography.body14(color: palette.textMuted),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(
+                'Cancel',
+                style: KinCircleTypography.body14(color: palette.textMuted),
+              ),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
               child: Text(
                 'Confirm',
-                style: TextStyle(color: palette.error),
+                style: KinCircleTypography.body14(
+                  color: palette.error,
+                  weight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -298,10 +522,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Widget _sectionLabel(String value, {Key? key, Color? color}) {
+  String _formatRole(String role) {
+    switch (role) {
+      case 'caregiver':
+        return 'Caregiver';
+      case 'care_recipient':
+        return 'Care Recipient';
+      case 'parent':
+        return 'Parent';
+      case 'child':
+        return 'Child';
+      default:
+        return 'Member';
+    }
+  }
+
+  Widget _sectionLabel(String value, {Color? color}) {
     final palette = KinCirclePalette.of(context);
     return Padding(
-      key: key,
       padding: const EdgeInsets.only(left: 16, top: 24, bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,8 +547,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             value,
             style: KinCircleTypography.caption12(
-              // Default to textMuted (gray), not accent (teal)
-              // Only Danger Zone passes palette.error explicitly
               color: color ?? palette.textMuted,
               weight: FontWeight.w700,
             ),
@@ -326,23 +562,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _sectionSpacer() {
-    final palette = KinCirclePalette.of(context);
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      height: 6,
-      decoration: BoxDecoration(
-        color: palette.background.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(999),
-      ),
-    );
-  }
-
   Widget _row({
     required IconData icon,
     required String title,
     String? subtitle,
-    TextStyle? subtitleStyle,
     Widget? trailing,
     Color? iconColor,
     Color? titleColor,
@@ -350,35 +573,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }) {
     final palette = KinCirclePalette.of(context);
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: palette.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: palette.border, width: 1),
       ),
-      child: ListTile(
-        onTap: onTap,
-        leading: Icon(icon, color: iconColor ?? palette.textSecondary),
-        title: Text(
-          title,
-          style: KinCircleTypography.body14(
-            weight: FontWeight.w600,
-            color: titleColor ?? palette.textPrimary,
-          ),
-        ),
-        subtitle: subtitle == null
-            ? null
-            : Text(
-                subtitle,
-            style: subtitleStyle ??
-              KinCircleTypography.caption12(
-                color: palette.textMuted),
-              ),
-        trailing: trailing ??
-            Icon(
-              Icons.chevron_right_rounded,
-              color: palette.textMuted,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: ListTile(
+          onTap: onTap,
+          leading: Icon(icon, color: iconColor ?? palette.textSecondary),
+          title: Text(
+            title,
+            style: KinCircleTypography.body14(
+              weight: FontWeight.w600,
+              color: titleColor ?? palette.textPrimary,
             ),
+          ),
+          subtitle: subtitle == null
+              ? null
+              : Text(
+                  subtitle,
+                  style: KinCircleTypography.caption12(
+                    color: palette.textMuted,
+                  ),
+                ),
+          trailing: trailing ??
+              Icon(
+                Icons.chevron_right_rounded,
+                color: palette.textMuted,
+              ),
+        ),
       ),
     );
   }
@@ -386,17 +613,157 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _toggleRow({
     required IconData icon,
     required String title,
+    String? subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
     final palette = KinCirclePalette.of(context);
-    return _row(
-      icon: icon,
-      title: title,
-      trailing: CupertinoSwitch(
-        activeTrackColor: palette.accent,
-        value: value,
-        onChanged: onChanged,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: palette.border, width: 1),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: ListTile(
+          leading: Icon(icon, color: palette.textSecondary),
+          title: Text(
+            title,
+            style: KinCircleTypography.body14(
+              weight: FontWeight.w600,
+              color: palette.textPrimary,
+            ),
+          ),
+          subtitle: subtitle == null
+              ? null
+              : Text(
+                  subtitle,
+                  style: KinCircleTypography.caption12(
+                    color: palette.textMuted,
+                  ),
+                ),
+          trailing: CupertinoSwitch(
+            activeTrackColor: palette.accent,
+            value: value,
+            onChanged: onChanged,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserHeaderCard(
+    KinCirclePaletteData palette,
+    User? user,
+    bool isPro,
+  ) {
+    final displayName = user?.displayName ?? 'KinCircle Member';
+    final email = user?.email ?? '';
+    final initial = displayName.isNotEmpty
+        ? displayName[0].toUpperCase()
+        : (email.isNotEmpty ? email[0].toUpperCase() : 'U');
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: palette.border, width: 1),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: palette.accent.withValues(alpha: 0.2),
+            backgroundImage:
+                user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
+            child: user?.photoURL == null
+                ? Text(
+                    initial,
+                    style: KinCircleTypography.heading22(
+                      color: palette.accent,
+                      weight: FontWeight.bold,
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        displayName,
+                        style: KinCircleTypography.body16(
+                          color: palette.textPrimary,
+                          weight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isPro) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: palette.warning.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: palette.warning),
+                        ),
+                        child: Text(
+                          'PRO',
+                          style: KinCircleTypography.caption10(
+                            color: palette.warning,
+                            weight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  email,
+                  style: KinCircleTypography.caption12(
+                    color: palette.textMuted,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: palette.surfaceAlt,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: palette.border),
+                  ),
+                  child: Text(
+                    _formatRole(_userRole),
+                    style: KinCircleTypography.caption10(
+                      color: palette.textSecondary,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -404,8 +771,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final palette = KinCirclePalette.of(context);
-    final ThemeController themeController = context.watch<ThemeController>();
+    final themeController = context.watch<ThemeController>();
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final bool isPro = themeController.isPro;
+    final User? user = _currentUser;
+
     return NavShell(
       currentIndex: 4,
       title: 'Profile & Settings',
@@ -413,35 +783,109 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: _loading
           ? _buildLoadingState()
           : ListView(
-              padding: const EdgeInsets.only(bottom: 26),
+              padding: const EdgeInsets.only(bottom: 32),
               children: [
-                _sectionLabel('Account'),
+                // 1. Account & Membership
+                _buildUserHeaderCard(palette, user, isPro),
+                _sectionLabel('1. Account & Membership'),
                 _row(
-                  icon: Icons.person_outline,
+                  icon: Icons.person_outline_rounded,
                   title: 'Edit Profile',
+                  subtitle: 'Name, phone, photo, and family role',
                   onTap: () => Navigator.of(context).pushNamed('/account'),
+                ),
+                _row(
+                  icon: Icons.workspace_premium_outlined,
+                  title: 'Subscription & Pro Plan',
+                  subtitle: isPro ? 'Sage Pro Active' : 'Free Tier — Tap to Upgrade',
+                  iconColor: isPro ? palette.warning : palette.accent,
+                  onTap: () => Navigator.of(context).pushNamed('/subscription'),
                 ),
                 if (_canChangePassword)
                   _row(
-                    icon: Icons.lock_outline_rounded,
-                    title: 'Change Password',
+                    icon: Icons.lock_reset_rounded,
+                    title: 'Password & Security',
+                    subtitle: 'Reset password via registered email',
                     onTap: _showChangePasswordDialog,
                   ),
-                _sectionSpacer(),
-                _sectionLabel('Notifications'),
+
+                // 2. Family & Circle
+                _sectionLabel('2. Family & Circle'),
+                _row(
+                  icon: Icons.group_outlined,
+                  title: 'Manage Circle',
+                  subtitle: 'Circle name, members, and roles',
+                  onTap: () => Navigator.of(context).pushNamed('/manage-family'),
+                ),
+                _row(
+                  icon: Icons.mail_outline_rounded,
+                  title: 'Invites & Join Codes',
+                  subtitle: 'Invite codes and member requests',
+                  onTap: () => Navigator.of(context).pushNamed('/manage-invites'),
+                ),
+                _row(
+                  icon: Icons.contact_emergency_outlined,
+                  title: 'Emergency Contacts & SOS Setup',
+                  subtitle: 'Priority responders and fast emergency actions',
+                  onTap: () =>
+                      Navigator.of(context).pushNamed('/emergency-contacts'),
+                ),
+
+                // 3. Safety & Privacy
+                _sectionLabel('3. Safety & Privacy'),
+                _toggleRow(
+                  icon: Icons.location_on_outlined,
+                  title: 'Location Sharing',
+                  subtitle: _locationSharing
+                      ? 'Sharing live updates with circle'
+                      : 'Location sharing is paused',
+                  value: _locationSharing,
+                  onChanged: _handleLocationSharingToggle,
+                ),
+                _row(
+                  icon: Icons.tune_rounded,
+                  title: 'Location Sharing Mode',
+                  subtitle: 'Always, Circle Only, or Emergency Only',
+                  onTap: _handleLocationModePicker,
+                ),
+                _toggleRow(
+                  icon: Icons.visibility_outlined,
+                  title: 'Circle Visibility (Ghost mode)',
+                  subtitle: 'Show your avatar on the live circle map',
+                  value: _circleVisibility,
+                  onChanged: (bool value) async {
+                    await _saveBool(_kCircleVisibility, value);
+                    if (!mounted) return;
+                    setState(() => _circleVisibility = value);
+                  },
+                ),
+                _row(
+                  icon: Icons.security_outlined,
+                  title: 'Privacy & Data Center',
+                  subtitle: 'GDPR consents, retention rules, and JSON/CSV export',
+                  onTap: () =>
+                      Navigator.of(context).pushNamed('/privacy/dashboard'),
+                ),
+                _row(
+                  icon: Icons.psychology_outlined,
+                  title: 'AI Smart Alerts & Routine Insights',
+                  subtitle: 'Configure routine learning and smart silence',
+                  onTap: () => Navigator.of(context).pushNamed('/settings/ai'),
+                ),
+
+                // 4. Notifications & Alerts
+                _sectionLabel('4. Notifications & Alerts'),
                 _toggleRow(
                   icon: Icons.notifications_active_outlined,
-                  title: 'Push notifications',
+                  title: 'Push Notifications',
+                  subtitle: 'Receive real-time circle updates and check-ins',
                   value: _pushNotifications,
-                  onChanged: (bool value) async {
-                    await _saveBool(_kPushNotifications, value);
-                    if (!mounted) return;
-                    setState(() => _pushNotifications = value);
-                  },
+                  onChanged: _handlePushNotificationToggle,
                 ),
                 _toggleRow(
                   icon: Icons.volume_up_outlined,
-                  title: 'Alert sounds',
+                  title: 'Sound & Critical Alerts',
+                  subtitle: 'Play audible sirens during emergency alerts',
                   value: _alertSounds,
                   onChanged: (bool value) async {
                     await _saveBool(_kAlertSounds, value);
@@ -450,8 +894,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                 ),
                 _toggleRow(
-                  icon: Icons.nightlight_round,
-                  title: 'Quiet hours',
+                  icon: Icons.bedtime_outlined,
+                  title: 'Quiet Hours & Sleep Schedule',
+                  subtitle: 'Silence non-urgent notifications during sleep',
                   value: _quietHours,
                   onChanged: (bool value) async {
                     await _saveBool(_kQuietHours, value);
@@ -459,58 +904,74 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     setState(() => _quietHours = value);
                   },
                 ),
-                _sectionSpacer(),
-                _sectionLabel('Privacy'),
-                _toggleRow(
-                  icon: Icons.location_on_outlined,
-                  title: 'Location sharing',
-                  value: _locationSharing,
-                  onChanged: _handleLocationSharing,
-                ),
-                _toggleRow(
-                  icon: Icons.visibility_outlined,
-                  title: 'Visibility to circle members',
-                  value: _circleVisibility,
-                  onChanged: (bool value) async {
-                    await _saveBool(_kCircleVisibility, value);
-                    if (!mounted) return;
-                    setState(() => _circleVisibility = value);
-                  },
-                ),
-                _sectionSpacer(),
-                _sectionLabel('App'),
+
+                // 5. App Experience & Accessibility
+                _sectionLabel('5. App Experience & Accessibility'),
                 _toggleRow(
                   icon: Icons.dark_mode_outlined,
-                  title: 'Theme (${isDarkMode ? 'Dark' : 'Light'})',
+                  title: 'Dark Theme',
+                  subtitle: isDarkMode ? 'Dark mode enabled' : 'Light mode enabled',
                   value: isDarkMode,
                   onChanged: (bool value) {
-                    themeController
-                        .setMode(value ? ThemeMode.dark : ThemeMode.light);
+                    themeController.setMode(
+                      value ? ThemeMode.dark : ThemeMode.light,
+                    );
                   },
                 ),
                 _row(
+                  icon: Icons.accessibility_new_rounded,
+                  title: 'Sensory & Comfort Controls',
+                  subtitle: 'Calm mode, haptic feedback, and reading comfort',
+                  onTap: () => Navigator.of(context)
+                      .pushNamed('/settings/sensory-controls'),
+                ),
+                _row(
                   icon: Icons.language_rounded,
-                  title: 'App language',
+                  title: 'App Language',
                   subtitle: _appLanguage,
                   onTap: () async {
-                    final palette = KinCirclePalette.of(context);
-                    final String? selected = await showModalBottomSheet<String>(
+                    final String? selected =
+                        await showModalBottomSheet<String>(
                       context: context,
                       backgroundColor: palette.surface,
-                      builder: (BuildContext context) {
+                      shape: const RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.vertical(top: Radius.circular(20)),
+                      ),
+                      builder: (BuildContext ctx) {
                         return SafeArea(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               ListTile(
-                                title: const Text('English'),
-                                onTap: () =>
-                                    Navigator.of(context).pop('English'),
+                                title: Text(
+                                  'English',
+                                  style: KinCircleTypography.body14(
+                                    color: palette.textPrimary,
+                                    weight: _appLanguage == 'English'
+                                        ? FontWeight.w700
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                                trailing: _appLanguage == 'English'
+                                    ? Icon(Icons.check, color: palette.accent)
+                                    : null,
+                                onTap: () => Navigator.of(ctx).pop('English'),
                               ),
                               ListTile(
-                                title: const Text('Arabic'),
-                                onTap: () =>
-                                    Navigator.of(context).pop('Arabic'),
+                                title: Text(
+                                  'Arabic',
+                                  style: KinCircleTypography.body14(
+                                    color: palette.textPrimary,
+                                    weight: _appLanguage == 'Arabic'
+                                        ? FontWeight.w700
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                                trailing: _appLanguage == 'Arabic'
+                                    ? Icon(Icons.check, color: palette.accent)
+                                    : null,
+                                onTap: () => Navigator.of(ctx).pop('Arabic'),
                               ),
                             ],
                           ),
@@ -518,84 +979,107 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       },
                     );
                     if (selected == null) return;
-                    await _saveString('settings.app_language', selected);
+                    await _saveString(_kAppLanguage, selected);
                     if (!mounted) return;
                     setState(() => _appLanguage = selected);
                   },
                 ),
                 _row(
                   icon: Icons.cleaning_services_outlined,
-                  title: 'Clear cache',
-                  subtitle: 'Free up local storage',
-                  onTap: () async {
-                    final ScaffoldMessengerState messenger =
-                        ScaffoldMessenger.of(context);
-                    final SharedPreferences prefs =
-                        await SharedPreferences.getInstance();
-                    await prefs.clear();
-                    if (!mounted) return;
-                    messenger.showSnackBar(
-                      const SnackBar(content: Text('Cache cleared')),
+                  title: 'Storage & Cache',
+                  subtitle: 'Safe purge of cached images and temporary files',
+                  onTap: _handleSafeClearCache,
+                ),
+
+                // 6. Help, Support & Session
+                _sectionLabel('6. Help, Support & Session'),
+                _row(
+                  icon: Icons.help_outline_rounded,
+                  title: 'Help Center & FAQs',
+                  subtitle: 'Frequently asked questions and guides',
+                  onTap: () => Navigator.of(context).pushNamed('/help'),
+                ),
+                _row(
+                  icon: Icons.feedback_outlined,
+                  title: 'Send Feedback',
+                  subtitle: 'Share suggestions or report an issue',
+                  onTap: () => Navigator.of(context).pushNamed('/feedback'),
+                ),
+                _row(
+                  icon: Icons.medical_services_outlined,
+                  title: 'Diagnostics & System Health',
+                  subtitle: 'View crash diagnostics and telemetry status',
+                  onTap: () => Navigator.of(context).pushNamed('/diagnostics'),
+                ),
+                _row(
+                  icon: Icons.policy_outlined,
+                  title: 'Privacy Policy & Terms of Service',
+                  subtitle: 'Review legal terms and privacy disclosures',
+                  onTap: () {
+                    showDialog<void>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        backgroundColor: palette.surface,
+                        title: Text(
+                          'Legal & Privacy',
+                          style: KinCircleTypography.cardTitle16(
+                            color: palette.textPrimary,
+                            weight: FontWeight.w700,
+                          ),
+                        ),
+                        content: Text(
+                          'KinCircle is committed to your family\'s safety and privacy. Your location data is strictly encrypted and never sold to third parties.',
+                          style: KinCircleTypography.body14(
+                            color: palette.textMuted,
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(),
+                            child: Text(
+                              'Close',
+                              style: KinCircleTypography.body14(
+                                color: palette.accent,
+                                weight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     );
-                    await _loadPrefs();
                   },
                 ),
                 _row(
                   icon: Icons.logout_rounded,
-                  title: 'Sign out',
+                  title: 'Sign Out',
+                  subtitle: 'Disconnect current session',
                   titleColor: palette.error,
                   iconColor: palette.error,
                   onTap: () => _confirmDestructive(
                     title: 'Sign out?',
-                    body: 'You can sign back in anytime.',
+                    body: 'You can sign back in anytime with your credentials.',
                     onConfirmed: _signOut,
                   ),
                 ),
-                _sectionSpacer(),
-                _sectionLabel('AI & Wellbeing'),
-                _row(
-                  icon: Icons.smart_toy_outlined,
-                  title: 'Companion settings',
-                  subtitle: 'Your AI family companion',
-                  subtitleStyle: TextStyle(
-                    color: palette.textMuted,
-                    fontSize: 12,
-                  ),
-                  onTap: () =>
-                      Navigator.of(context).pushNamed('/companion/select'),
-                ),
-                _row(
-                  icon: Icons.analytics_outlined,
-                  title: 'Wellbeing analytics',
-                  subtitle: 'Family health insights',
-                  subtitleStyle: TextStyle(
-                    color: palette.textMuted,
-                    fontSize: 12,
-                  ),
-                  onTap: () =>
-                      Navigator.of(context).pushNamed('/analytics/wellbeing'),
-                ),
-                _row(
-                  icon: Icons.privacy_tip_outlined,
-                  title: 'Privacy dashboard',
-                  onTap: () =>
-                      Navigator.of(context).pushNamed('/privacy/dashboard'),
-                ),
-                _sectionSpacer(),
-                _sectionLabel('Danger zone', color: palette.error),
+
+                // Danger zone
+                _sectionLabel('Danger Zone', color: palette.error),
                 _row(
                   icon: Icons.exit_to_app_rounded,
+                  title: 'Leave Family Circle',
+                  subtitle: 'Remove yourself from the current circle',
                   iconColor: palette.textMuted,
-                  title: 'Leave family',
                   onTap: _handleLeaveFamily,
                 ),
                 _row(
                   icon: Icons.delete_forever_outlined,
-                  iconColor: palette.error,
-                  title: 'Delete account',
+                  title: 'Delete Account',
+                  subtitle: 'Permanently delete your account and all history',
                   titleColor: palette.error,
+                  iconColor: palette.error,
                   onTap: _handleDeleteAccount,
                 ),
+
                 const SizedBox(height: 28),
                 Center(
                   child: Column(
@@ -621,7 +1105,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           color: palette.textMuted,
                         ),
                       ),
-                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
@@ -636,13 +1119,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       baseColor: palette.surfaceAlt,
       highlightColor: palette.border,
       child: ListView.builder(
-        itemCount: 9,
+        itemCount: 8,
         itemBuilder: (_, int index) {
           return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             height: 64,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: palette.surface,
               borderRadius: BorderRadius.circular(14),
             ),
           );
@@ -651,3 +1134,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
+
