@@ -44,6 +44,7 @@ class CircleStatusService {
         <String, dynamic>{
           'uid': uid,
           'circleId': circleId,
+          'familyId': circleId,
           'status': _statusToString(status),
           'updatedAt': FieldValue.serverTimestamp(),
         },
@@ -92,7 +93,8 @@ class CircleStatusService {
     try {
       final DocumentSnapshot<Map<String, dynamic>> doc =
           await _firestore.collection('users').doc(uid).get();
-      return doc.data()?['circleId'] as String?;
+      final Map<String, dynamic>? data = doc.data();
+      return (data?['currentFamilyId'] ?? data?['circleId']) as String?;
     } catch (e) {
       debugPrint('CircleStatusService getCurrentCircleId error: $e');
       return null;

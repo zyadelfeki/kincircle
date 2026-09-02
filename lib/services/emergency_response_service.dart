@@ -303,7 +303,11 @@ class EmergencyResponseService {
     }
 
     // 2. Send location updates
-    await _sendLocationToContacts(primaryContacts.take(2).toList(), alert);
+    await _sendLocationToContacts(
+      primaryContacts.take(2).toList(),
+      alert,
+      userId: response.userId,
+    );
 
     // 3. Activate enhanced tracking (30-second intervals)
     await _activateEnhancedTracking(response.userId);
@@ -693,8 +697,23 @@ Contact family coordinator or respond to this emergency.''';
 
   static Future<void> _sendLocationToContacts(
     List<EmergencyContact> contacts,
-    EmergencyAlert alert,
-  ) async {
+    EmergencyAlert alert, {
+    String? userId,
+  }) async {
+    final String? effectiveUserId =
+        userId ?? FirebaseAuth.instance.currentUser?.uid;
+    if (effectiveUserId == null || effectiveUserId.isEmpty) {
+      debugPrint('EmergencyResponseService: No user ID for location shares');
+      return;
+    }
+
+    String? familyId;
+    try {
+      final userDoc =
+          await _firestore.collection('users').doc(effectiveUserId).get();
+      familyId = userDoc.data()?['currentFamilyId'] as String?;
+    } catch (_) {}
+
     // Send real-time location updates to emergency contacts
     final locationData = {
       'lat': alert.currentLat,
@@ -707,9 +726,14 @@ Contact family coordinator or respond to this emergency.''';
       try {
         // Store location share in Firestore for contacts to access
         await _firestore.collection('emergency_location_shares').add({
+          'userId': effectiveUserId,
+          'createdBy': effectiveUserId,
+          'familyId': familyId,
           'contactId': contact.id,
           'contactPhone': contact.phoneNumber,
           'location': locationData,
+          'status': 'active',
+          'createdAt': FieldValue.serverTimestamp(),
           'expiresAt': DateTime.now().add(const Duration(hours: 24)).toIso8601String(),
         });
       } catch (e) {
